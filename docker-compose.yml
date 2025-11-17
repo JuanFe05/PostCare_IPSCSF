@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-
+     
   # DATABASE MYSQL
   mysql:
     image: mysql:8.0
@@ -15,17 +15,21 @@ services:
     ports:
       - "45321:3306" # Puerto MySQL externo
     expose:
-      - "3306" # Solo visible dentro de la red interna
+      - "3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
       - postcare_net
+    shm_size: "512mb"  # mejora rendimiento
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
       interval: 10s
       timeout: 5s
       retries: 5
-       
+
+           
   # BACKEND
   backend:
     build:
@@ -34,7 +38,7 @@ services:
     container_name: postcare_backend
     restart: unless-stopped
     ports:
-      - "48555:8000" # Puerto seguro para FastAPI
+      - "48555:8000" # Puerto FastAPI seguro
     environment:
       DATABASE_URL: mysql+mysqlconnector://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
       ENV: "production"
@@ -43,12 +47,16 @@ services:
         condition: service_healthy
     networks:
       - postcare_net
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/docs || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
-      
+    profiles: ["backend"]
+
+           
   # FRONTEND
   frontend:
     build:
@@ -57,22 +65,29 @@ services:
     container_name: postcare_frontend
     restart: unless-stopped
     ports:
-      - "41777:80" # Puerto seguro para el frontend
+      - "41777:80" # Puerto Frontend
     depends_on:
       backend:
         condition: service_healthy
     networks:
       - postcare_net
+    read_only: true # seguridad: frontend no necesita escribir
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
-     
+    profiles: ["frontend"]
+
+        
 # NETWORK
 networks:
   postcare_net:
-    
+    driver: bridge
+
+        
 # VOLUMES
 volumes:
   mysql_data:
