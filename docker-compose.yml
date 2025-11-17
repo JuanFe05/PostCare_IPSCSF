@@ -1,0 +1,78 @@
+version: "3.9"
+
+services:
+
+  # DATABASE MYSQL
+  mysql:
+    image: mysql:8.0
+    container_name: postcare_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "45321:3306" # Puerto MySQL externo
+    expose:
+      - "3306" # Solo visible dentro de la red interna
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - postcare_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+       
+  # BACKEND
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: postcare_backend
+    restart: unless-stopped
+    ports:
+      - "48555:8000" # Puerto seguro para FastAPI
+    environment:
+      DATABASE_URL: mysql+mysqlconnector://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
+      ENV: "production"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - postcare_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/docs || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      
+  # FRONTEND
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: postcare_frontend
+    restart: unless-stopped
+    ports:
+      - "41777:80" # Puerto seguro para el frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - postcare_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+     
+# NETWORK
+networks:
+  postcare_net:
+    
+# VOLUMES
+volumes:
+  mysql_data:
