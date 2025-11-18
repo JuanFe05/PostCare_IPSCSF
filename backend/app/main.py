@@ -11,7 +11,9 @@ app = FastAPI(title="PostCare Backend")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:41777"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
