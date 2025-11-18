@@ -1,13 +1,11 @@
 import time
-import pkgutil
-import importlib
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from app.configuration.app.config import settings
 
 Base = declarative_base()
 
-# Conexión con reintentos
+# Engine con reintentos
 MAX_RETRIES = 10
 RETRY_DELAY = 5  # segundos
 
@@ -26,20 +24,9 @@ else:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
-
-# Importar dinámicamente todas las entidades dentro de persistence.entity
-import app.persistence.entity
-
-for loader, module_name, is_pkg in pkgutil.iter_modules(app.persistence.entity.__path__):
-    importlib.import_module(f"app.persistence.entity.{module_name}")
-
-# Crear todas las tablas
-Base.metadata.create_all(bind=engine)

@@ -10,7 +10,10 @@ service = UserServiceImpl()
 
 @router.post("", response_model=UserResponseDto, dependencies=[Depends(get_current_admin)])
 def create_user(data: UserCreateDto):
-    return service.create_user(data)
+    try:
+        return service.create_user(data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("", response_model=list[UserResponseDto], dependencies=[Depends(get_current_admin)])

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.persistence.entity.user_role_entity import UserRole
 
+
 class UserRoleRepository:
 
     def assign_role(self, db: Session, user_role: UserRole):
