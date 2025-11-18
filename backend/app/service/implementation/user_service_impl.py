@@ -111,7 +111,7 @@ class UserServiceImpl:
                 role_name = role.nombre
             else:
                 # Obtener rol actual
-                role_rel = self.user_role_repo.get_roles_of_user(db, user_id)
+                role_rel = self.user_role_repo.get_role_of_user(db, user_id)
                 if role_rel:
                     rr = role_rel[0]
                     role = db.query(Role).filter(Role.id == rr.id_rol).first()
