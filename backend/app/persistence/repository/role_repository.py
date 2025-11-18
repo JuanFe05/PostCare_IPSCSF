@@ -19,3 +19,10 @@ class RoleRepository:
     def delete(self, db: Session, role: Role):
         db.delete(role)
         db.commit()
+
+    def update(self, db: Session, role: Role, new_data: dict):
+        for key, value in new_data.items():
+            setattr(role, key, value)
+        db.commit()
+        db.refresh(role)
+        return role

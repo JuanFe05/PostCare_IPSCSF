@@ -19,3 +19,10 @@ class UserRepository:
     def delete(self, db: Session, user: User):
         db.delete(user)
         db.commit()
+
+    def update(self, db: Session, user: User, new_data: dict):
+        for key, value in new_data.items():
+            setattr(user, key, value)
+        db.commit()
+        db.refresh(user)
+        return user

@@ -3,7 +3,6 @@ from fastapi.security import OAuth2PasswordBearer
 import jwt
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
 SECRET = "SUPER_SECRET_KEY_IPSCF"
 ALGORITHM = "HS256"
 
@@ -12,5 +11,12 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
         return payload
-    except:
+    except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Token inválido")
+
+
+def get_current_admin(current_user: dict = Depends(get_current_user)):
+    roles = current_user.get("roles", [])
+    if "Administrador" not in roles:
+        raise HTTPException(status_code=403, detail="No autorizado, requiere rol Administrador")
+    return current_user

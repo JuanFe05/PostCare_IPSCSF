@@ -15,3 +15,10 @@ class UserResponseDto(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class UserUpdateDto(BaseModel):
+    username: str | None = None
+    password: str | None = None
+    email: EmailStr | None = None
+    estado: bool | None = None
