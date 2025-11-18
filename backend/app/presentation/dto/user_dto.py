@@ -13,7 +13,8 @@ class UserResponseDto(BaseModel):
     username: str
     email: str
     estado: bool
-    role_id: int  # opcional, mostrar el rol asignado
+    role_id: int | None = None
+    role_name: str | None = None
 
     class Config:
         orm_mode = True

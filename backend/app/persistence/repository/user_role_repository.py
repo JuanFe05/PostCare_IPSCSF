@@ -9,5 +9,9 @@ class UserRoleRepository:
         db.commit()
         return user_role
 
-    def get_roles_of_user(self, db: Session, user_id: int):
-        return db.query(UserRole).filter(UserRole.id_usuario == user_id).all()
+    def get_role_of_user(self, db: Session, user_id: int):
+        return db.query(UserRole).filter(UserRole.id_usuario == user_id).first()
+
+    def delete_role_of_user(self, db: Session, user_id: int):
+        db.query(UserRole).filter(UserRole.id_usuario == user_id).delete()
+        db.commit()

@@ -12,18 +12,30 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post("/login", response_model=TokenResponse)
 def login(data: LoginDto):
     db = SessionLocal()
+
     user_repo = UserRepository()
     user = user_repo.get_by_username(db, data.username)
 
+    # Validación de credenciales
     if not user or not verify_password(data.password, user.password_hash):
         db.close()
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
-    # Obtener roles del usuario
+    # Obtener rol del usuario (SOLO UN ROL)
     user_role_repo = UserRoleRepository()
-    roles_rel = user_role_repo.get_roles_of_user(db, user.id)
-    roles = [r.id_rol for r in roles_rel]
+    role_rel = user_role_repo.get_role_of_user(db, user.id)
+
+    if not role_rel:
+        db.close()
+        raise HTTPException(status_code=401, detail="El usuario no tiene un rol asignado")
+
+    rol = role_rel.rol.nombre  # <--- Rol único
+
     db.close()
 
-    token = create_token({"sub": user.username, "id": user.id}, roles=roles)
+    # Crear token con un único rol
+    token = create_token(
+        {"sub": user.username, "id": user.id, "rol": rol}
+    )
+
     return TokenResponse(access_token=token)

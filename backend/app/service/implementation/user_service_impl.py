@@ -1,80 +1,148 @@
-from app.service.interface.user_service_interface import UserServiceInterface
-from app.persistence.entity.user_entity import User
-from app.persistence.repository.user_repository import UserRepository
+from sqlalchemy.orm import Session
 from app.configuration.app.database import SessionLocal
+from app.persistence.repository.user_repository import UserRepository
+from app.persistence.repository.user_role_repository import UserRoleRepository
+from app.persistence.entity.role_entity import Role
+from app.presentation.dto.user_dto import UserCreateDto, UserResponseDto, UserUpdateDto
 from app.configuration.security.password_utils import hash_password
-from app.presentation.dto.user_dto import UserCreateDto, UserUpdateDto
+from app.persistence.entity.user_entity import User
 from app.persistence.entity.user_role_entity import UserRole
 
 
-class UserServiceImpl(UserServiceInterface):
+class UserServiceImpl:
 
     def __init__(self):
-        self.repo = UserRepository()
+        self.user_repo = UserRepository()
+        self.user_role_repo = UserRoleRepository()
 
     def create_user(self, data: UserCreateDto):
-        db = SessionLocal()
+        db: Session = SessionLocal()
+
         try:
             # Crear usuario
-            user = User(
+            new_user = User(
                 username=data.username,
                 email=data.email,
-                password_hash=hash_password(data.password)
+                password_hash=hash_password(data.password),
+                estado=True
             )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
+            user = self.user_repo.create(db, new_user)
 
             # Asignar rol
-            user_role = UserRole(id_usuario=user.id, id_rol=data.role_id)
-            db.add(user_role)
-            db.commit()
+            user_role = UserRole(
+                id_usuario=user.id,
+                id_rol=data.role_id
+            )
+            self.user_role_repo.assign_role(db, user_role)
 
-            # Agregar role_id al response (opcional)
-            user.role_id = data.role_id
+            # Buscar nombre del rol
+            role = db.query(Role).filter(Role.id == data.role_id).first()
 
-            return user
+            return UserResponseDto(
+                id=user.id,
+                username=user.username,
+                email=user.email,
+                estado=user.estado,
+                role_id=role.id,
+                role_name=role.nombre
+            )
+
         finally:
             db.close()
 
     def get_all_users(self):
         db = SessionLocal()
-        result = self.repo.get_all(db)
+        users = self.user_repo.get_all(db)
+
+        result = []
+        for u in users:
+            rel = self.user_role_repo.get_role_of_user(db, u.id)
+            role_name = rel.rol.nombre if rel else None
+
+            result.append({
+                "id": u.id,
+                "username": u.username,
+                "email": u.email,
+                "estado": u.estado,
+                "role_id": rel.id_rol if rel else None,
+                "role_name": role_name
+            })
+
         db.close()
         return result
 
     def update_user(self, user_id: int, data: UserUpdateDto):
-        db = SessionLocal()
+        db: Session = SessionLocal()
+
         try:
-            user = db.query(User).filter(User.id == user_id).first()
+            user = self.user_repo.get_by_id(db, user_id)
             if not user:
                 raise Exception("Usuario no encontrado")
 
-            update_data = data.dict(exclude_unset=True)
-            if "password" in update_data:
-                update_data["password_hash"] = hash_password(update_data.pop("password"))
+            update_data = {}
+
+            if data.username:
+                update_data["username"] = data.username
+            if data.email:
+                update_data["email"] = data.email
+            if data.password:
+                update_data["password_hash"] = hash_password(data.password)
+            if data.estado is not None:
+                update_data["estado"] = data.estado
 
             # Actualizar usuario
-            self.repo.update(db, user, update_data)
+            updated_user = self.user_repo.update(db, user, update_data)
 
-            # Cambiar rol si se envía role_id
-            if "role_id" in update_data:
-                user_role = db.query(UserRole).filter(UserRole.id_usuario == user.id).first()
-                if user_role:
-                    user_role.id_rol = update_data["role_id"]
-                else:
-                    db.add(UserRole(id_usuario=user.id, id_rol=update_data["role_id"]))
+            # Actualizar rol (si cambió)
+            role_id = None
+            role_name = None
+
+            if data.role_id is not None:
+                # Borrar rol anterior
+                db.query(UserRole).filter(UserRole.id_usuario == user_id).delete()
                 db.commit()
 
-            return user
+                # Asignar nuevo
+                new_role_rel = UserRole(id_usuario=user_id, id_rol=data.role_id)
+                self.user_role_repo.assign_role(db, new_role_rel)
+
+                role = db.query(Role).filter(Role.id == data.role_id).first()
+                role_id = role.id
+                role_name = role.nombre
+            else:
+                # Obtener rol actual
+                role_rel = self.user_role_repo.get_roles_of_user(db, user_id)
+                if role_rel:
+                    rr = role_rel[0]
+                    role = db.query(Role).filter(Role.id == rr.id_rol).first()
+                    role_id = role.id
+                    role_name = role.nombre
+
+            return UserResponseDto(
+                id=updated_user.id,
+                username=updated_user.username,
+                email=updated_user.email,
+                estado=updated_user.estado,
+                role_id=role_id,
+                role_name=role_name
+            )
+
         finally:
             db.close()
 
     def delete_user(self, user_id: int):
-        db = SessionLocal()
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
+        db: Session = SessionLocal()
+
+        try:
+            user = self.user_repo.get_by_id(db, user_id)
+            if not user:
+                raise Exception("Usuario no encontrado")
+
+            # Eliminar relación rol primero
+            db.query(UserRole).filter(UserRole.id_usuario == user_id).delete()
+            db.commit()
+
+            self.user_repo.delete(db, user)
+
+        finally:
             db.close()
-            raise Exception("Usuario no encontrado")
-        self.repo.delete(db, user)
-        db.close()
