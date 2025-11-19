@@ -1,22 +1,17 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from app.configuration.app.cors_config import configure_cors
+from app.configuration.app.router_config import configure_routers
+from app.configuration.app.startup import run_startup_tables
 
-from app.configuration.app.database import Base, engine
-from app.presentation.router.index import router as api_router
 
-# Crear tablas al iniciar
-Base.metadata.create_all(bind=engine)
+def create_app():
+    app = FastAPI(title="PostCare Backend")
 
-app = FastAPI(title="PostCare Backend")
+    configure_cors(app)
+    configure_routers(app)
+    run_startup_tables()   # solo en desarrollo
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:41777"
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    return app
 
-app.include_router(api_router)
+
+app = create_app()

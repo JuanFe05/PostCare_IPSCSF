@@ -19,7 +19,6 @@ class UserServiceImpl:
         db: Session = SessionLocal()
 
         try:
-            # Crear usuario
             new_user = User(
                 username=data.username,
                 email=data.email,
@@ -35,7 +34,6 @@ class UserServiceImpl:
             )
             self.user_role_repo.assign_role(db, user_role)
 
-            # Buscar nombre del rol
             role = db.query(Role).filter(Role.id == data.role_id).first()
 
             return UserResponseDto(
@@ -90,17 +88,15 @@ class UserServiceImpl:
             if data.estado is not None:
                 update_data["estado"] = data.estado
 
-            # Actualizar usuario
             updated_user = self.user_repo.update(db, user, update_data)
 
-            # Actualizar rol (si cambió)
+            # Actualización de rol
             role_id = None
             role_name = None
 
             if data.role_id is not None:
-                # Borrar rol anterior
-                db.query(UserRole).filter(UserRole.id_usuario == user_id).delete()
-                db.commit()
+                # Eliminar rol anterior
+                self.user_role_repo.delete_role_of_user(db, user_id)
 
                 # Asignar nuevo
                 new_role_rel = UserRole(id_usuario=user_id, id_rol=data.role_id)
@@ -111,12 +107,10 @@ class UserServiceImpl:
                 role_name = role.nombre
             else:
                 # Obtener rol actual
-                role_rel = self.user_role_repo.get_role_of_user(db, user_id)
-                if role_rel:
-                    rr = role_rel[0]
-                    role = db.query(Role).filter(Role.id == rr.id_rol).first()
-                    role_id = role.id
-                    role_name = role.nombre
+                rel = self.user_role_repo.get_role_of_user(db, user_id)
+                if rel:
+                    role_id = rel.id_rol
+                    role_name = rel.rol.nombre
 
             return UserResponseDto(
                 id=updated_user.id,
@@ -138,10 +132,7 @@ class UserServiceImpl:
             if not user:
                 raise Exception("Usuario no encontrado")
 
-            # Eliminar relación rol primero
-            db.query(UserRole).filter(UserRole.id_usuario == user_id).delete()
-            db.commit()
-
+            self.user_role_repo.delete_role_of_user(db, user_id)
             self.user_repo.delete(db, user)
 
         finally:
