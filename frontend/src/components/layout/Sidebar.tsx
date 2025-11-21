@@ -23,12 +23,22 @@ const Sidebar = () => {
     error: "#e63946",
   };
 
-  const navItems = [
-    { label: "Registrar", icon: <RiHome3Line />, path: "/dashboard" },
-    { label: "Usuarios", icon: <RiFileCopyLine />, path: "/dashboard/usuarios" },
-    { label: "Pacientes", icon: <RiWalletLine />, path: "/dashboard/pacientes" },
-    { label: "Reportes", icon: <RiPieChartLine />, path: "/dashboard/reportes" },
-  ];
+  const { auth } = useAuth();
+  const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+  const navItems =
+    role === 'ASESOR'
+      ? [
+          { label: "Atenciones", icon: <RiHome3Line />, path: "/dashboard/atenciones" },
+          { label: "Pacientes", icon: <RiWalletLine />, path: "/dashboard/pacientes" },
+        ]
+      : [
+          { label: "Atenciones", icon: <RiHome3Line />, path: "/dashboard/atenciones" },
+          { label: "Pacientes", icon: <RiWalletLine />, path: "/dashboard/pacientes" },
+          { label: "Empresas", icon: <RiFileCopyLine />, path: "/dashboard/empresas" },
+          { label: "Servicios", icon: <RiPieChartLine />, path: "/dashboard/servicios" },
+          { label: "Usuarios", icon: <RiFileCopyLine />, path: "/dashboard/usuarios" },
+          { label: "Roles", icon: <RiPieChartLine />, path: "/dashboard/roles" },
+        ];
 
   const { setAuth } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);

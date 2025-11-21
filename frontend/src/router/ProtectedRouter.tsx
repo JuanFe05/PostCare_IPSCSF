@@ -17,7 +17,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) =>
 
   // Si no hay token o usuario, redirige
   if (!token || !usuario) {
-    return <Navigate to="/unauthorized" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Normalizar rol

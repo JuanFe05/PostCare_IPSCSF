@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 
 const Header = () => {
   const [username, setUsername] = useState<string | null>(null);
+  const [role, setRole] = useState<string>("");
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem('user');
       if (raw) {
         const u = JSON.parse(raw);
-        // Prefer `username`, fallback to `name` or `role_name`
         setUsername(u?.username || u?.name || null);
+        setRole(u?.role_name || u?.rol || "");
       }
     } catch (e) {
       setUsername(null);
@@ -24,9 +25,11 @@ const Header = () => {
     >
       {/* Saludo institucional alineado a la derecha (sin ícono) */}
       <div className="leading-tight text-right">
-        <p className="text-xs lg:text-sm opacity-80">Bienvenido</p>
+        <p className="text-xs lg:text-sm opacity-80">
+          {role ? `Bienvenido ${role}` : "Bienvenido"}
+        </p>
         <h1 className="text-sm lg:text-base font-semibold">
-          {username ? `${username} – Panel Administrativo IPS` : 'Panel Administrativo IPS'}
+          {username ? `${username}, panel de gestión IPSCSF` : 'Panel de gestión IPSCSF'}
         </h1>
       </div>
     </header>

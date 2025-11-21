@@ -15,6 +15,7 @@ export interface User {
   name: string;
   username: string;
   estado: 'activo' | 'inactivo';
+  role_name?: string; // Para compatibilidad con Sidebar y roles
 }
 
 export interface AuthResponse {
