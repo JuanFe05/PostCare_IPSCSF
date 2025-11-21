@@ -2,8 +2,9 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,jsx,ts,tsx}"
+    "./src/**/*.{js,jsx,ts,tsx}",
   ],
+
   theme: {
     extend: {
       colors: {
@@ -12,13 +13,15 @@ export default {
         background: '#f6f9f7',
         textBase: '#45484a',
         textAccent: '#373c8b',
-        success: '#00AA06E',
+        success: '#00AA06',
         error: '#e63946',
+        deepBlue100: "#3A00B0",
+        deepBlue300: "#29007D",
+        deepBlue900: "#120037",
       },
       borderRadius: {
-        xl2: '1rem', // rounded-2xl
+        xl2: '1rem',
       }
-
     },
   },
   plugins: [],
