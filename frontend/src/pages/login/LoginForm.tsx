@@ -35,38 +35,37 @@ export default function LoginForm() {
       const token = res.access_token;
       localStorage.setItem('access_token', token);
 
-      // Paso 2: obtener usuario completo
-      console.log('Token que se usará en el header:', token);
-      const userRes = await axios.get('http://localhost:48555/users', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Decodificar payload del JWT para obtener datos del usuario sin llamar a endpoints protegidos
+      const parseJwt = (tk: string) => {
+        try {
+          const payload = tk.split('.')[1];
+          const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+          return decoded;
+        } catch (e) {
+          return null;
+        }
+      };
 
-      const user = userRes.data[0];
-      localStorage.setItem('user', JSON.stringify(user));
-      console.log('Usuario guardado en localStorage:', JSON.parse(localStorage.getItem('user') || '{}'));
-      setAuth({ token, user });
+      const payload = parseJwt(token) as any;
+      // Build frontend user object that satisfies the `User` type
+      const frontendUser: any = {
+        id: payload?.id ?? null,
+        username: payload?.sub ?? data.username,
+        name: payload?.name ?? payload?.sub ?? data.username,
+        // frontend `User.estado` expects 'activo' | 'inactivo'
+        estado: 'activo',
+        // keep role_name for UI checks (not part of User type but useful at runtime)
+        role_name: payload?.rol ?? null,
+      };
 
-      console.log("Tipo de userRes.data:", typeof userRes.data);
-      console.log("Contenido completo:", userRes.data);
+      localStorage.setItem('user', JSON.stringify(frontendUser));
+      setAuth({ token, user: frontendUser as unknown as import('../../types/Auth.types').User });
 
-
-      // Paso 3: redirigir según rol
-      const rol = (user.role_name || "").trim().toUpperCase();
-      console.log('Rol detectado:', rol);
-
-
-      if (rol === "ADMINISTRADOR") {
-  console.log("Redirigiendo a /dashboard");
-  navigate("/dashboard");
-} else if (rol === "ASESOR") {
-  console.log("Redirigiendo a /not-found");
-  navigate("/not-found");
-} else {
-  console.log("Redirigiendo a /unauthorized");
-  navigate("/unauthorized");
-}
+      // Redirigir según rol
+      const rol = String(frontendUser.role_name ?? '').trim().toUpperCase();
+      if (rol === 'ADMINISTRADOR') navigate('/dashboard');
+      else if (rol === 'ASESOR') navigate('/not-found');
+      else navigate('/unauthorized');
 
 
 

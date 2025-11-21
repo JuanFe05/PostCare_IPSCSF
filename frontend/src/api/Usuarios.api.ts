@@ -14,12 +14,12 @@ type UsuarioBackend = {
   rol: string;
 };
 
-// Helper para obtener el token desde localStorage
+// Helper para obtener el token desde localStorage (la app guarda `access_token`)
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('access_token');
   return {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: token ? `Bearer ${token}` : undefined,
     },
   };
 };
@@ -33,7 +33,8 @@ export const getUsuarios = async (): Promise<Usuario[]> => {
   email: u.email,
   estado: u.estado,
   role_id: u.role_id,
-  rol: u.rol,
+  // El backend devuelve `role_name` para el nombre legible del rol
+  rol: (u as any).role_name || (u as any).rol || undefined,
 }));
 };
 

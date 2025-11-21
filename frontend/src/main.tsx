@@ -3,14 +3,14 @@ import { createRoot } from 'react-dom/client';
 import AppRouter from './router';
 import './index.css';
 import { AuthProvider } from './hooks/useAuth';
-import { ThemeProvider } from '@material-tailwind/react';
+import ErrorBoundary from './components/ErrorBoundary';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider> {}
+    <ErrorBoundary>
       <AuthProvider>
         <AppRouter />
       </AuthProvider>
-    </ThemeProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );

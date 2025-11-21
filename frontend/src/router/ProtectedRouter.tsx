@@ -11,9 +11,9 @@ const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) =>
   const usuario = rawUser ? JSON.parse(rawUser) : null;
   const token = localStorage.getItem("access_token");
 
-  // 👇 Logs de depuración
-  console.log("Token:", token);
-  console.log("Usuario:", usuario);
+  // 👇 Logs de depuración (no mostrar el token completo por seguridad)
+  console.log("Token presente:", !!token);
+  console.log("Usuario presente:", !!usuario);
 
   // Si no hay token o usuario, redirige
   if (!token || !usuario) {
