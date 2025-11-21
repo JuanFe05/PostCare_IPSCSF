@@ -14,7 +14,7 @@ type UsuarioBackend = {
   rol: string;
 };
 
-// Helper para obtener el token desde localStorage (la app guarda `access_token`)
+// Helper para obtener el token desde localStorage (la app guarda 'access_token')
 const getAuthHeaders = () => {
   const token = localStorage.getItem('access_token');
   return {
