@@ -1,25 +1,34 @@
 import React from 'react';
 
-interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
-    label?: string;
-    icon?: React.ReactNode;
-    error?: string | null;
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  icon?: React.ReactNode;
+  error?: string;
 }
 
-const Input: React.FC<Props> = ({ label, icon, error, ...props }) => {
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ label, icon, error, ...props }, ref) => {
     return (
-        <div className="mb-4">
-            {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
-            <div className="relative">
-                {icon && <div className="absolute left-3 top-3 text-gray-400">{icon}</div>}
-                <input
-                    {...props}
-                    className={`w-full border rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-200 ${icon ? 'pl-10' : ''}`}
-                />
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <div className="relative">
+          {icon && (
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              {icon}
             </div>
-            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+          )}
+          <input
+            ref={ref}
+            {...props}
+            className={`w-full pl-10 pr-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              error ? 'border-red-500' : 'border-gray-300'
+            }`}
+          />
         </div>
+        {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
+      </div>
     );
-};
+  }
+);
 
 export default Input;

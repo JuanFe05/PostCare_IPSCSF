@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Input from '../../components/forms/Input';
-import Button from '../../components/forms/Button';
 import { FiLock, FiUser } from 'react-icons/fi';
 import { register as registerApi } from '../../api/Auth.api';
 
@@ -53,9 +52,6 @@ export default function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <h2 className="text-2xl font-bold mb-2">Crear cuenta</h2>
-      <p className="text-sm text-gray-500 mb-6">Regístrate como personal autorizado</p>
-
       <Input
         label="Nombre completo"
         icon={<FiUser />}
@@ -89,11 +85,6 @@ export default function RegisterForm() {
       {serverError && <div className="text-sm text-red-500 mb-3">{serverError}</div>}
       {serverMessage && <div className="text-sm text-green-500 mb-3">{serverMessage}</div>}
 
-      <Button loading={formState.isSubmitting}>Crear cuenta</Button>
-
-      <div className="mt-4 text-sm text-center">
-        <a className="text-primary hover:underline" href="/">Ya tengo cuenta</a>
-      </div>
     </form>
   );
 }
