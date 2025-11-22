@@ -1,3 +1,4 @@
+// ...existing code...
 import {
   Dialog,
   DialogTitle,
@@ -10,9 +11,10 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import { useState } from 'react';
 import { createUsuario } from '../../api/Usuarios.api';
-import type { Usuario } from '../../types/Usuario';
+import type { Usuario, NewUsuario } from '../../types/Usuario';
 
 interface Props {
   open: boolean;
@@ -21,18 +23,25 @@ interface Props {
 }
 
 const EmpleadoForm = ({ open, onClose, onUsuarioCreado }: Props) => {
-  const [form, setForm] = useState<Usuario>({
-    id: 0,
+  const [form, setForm] = useState<NewUsuario>({
     username: '',
     email: '',
     password: '',
     estado: true,
-    role_id: 0,
-    role_name: '',
+    role_id: 2, // 2 = ASESOR por defecto
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRoleChange = (e: SelectChangeEvent<string | number>) => {
+    setForm((prev) => ({ ...prev, role_id: Number(e.target.value) }));
+  };
+
+  const handleEstadoChange = (e: SelectChangeEvent<string>) => {
+    setForm((prev) => ({ ...prev, estado: (e.target.value as string) === 'activo' }));
   };
 
   const handleSubmit = async () => {
@@ -45,8 +54,17 @@ const EmpleadoForm = ({ open, onClose, onUsuarioCreado }: Props) => {
       const nuevo = await createUsuario(form);
       onUsuarioCreado(nuevo);
       onClose();
+      // opcional: limpiar formulario
+      setForm({
+        username: '',
+        email: '',
+        password: '',
+        estado: true,
+        role_id: 2,
+      });
     } catch (error) {
       console.error('Error al registrar usuario:', error);
+      alert('Error al registrar usuario. Revisa la consola.');
     }
   };
 
@@ -60,7 +78,7 @@ const EmpleadoForm = ({ open, onClose, onUsuarioCreado }: Props) => {
           name="username"
           fullWidth
           value={form.username}
-          onChange={handleChange}
+          onChange={handleInputChange}
         />
         <TextField
           margin="dense"
@@ -68,7 +86,7 @@ const EmpleadoForm = ({ open, onClose, onUsuarioCreado }: Props) => {
           name="email"
           fullWidth
           value={form.email}
-          onChange={handleChange}
+          onChange={handleInputChange}
         />
         <TextField
           margin="dense"
@@ -77,20 +95,20 @@ const EmpleadoForm = ({ open, onClose, onUsuarioCreado }: Props) => {
           type="password"
           fullWidth
           value={form.password}
-          onChange={handleChange}
+          onChange={handleInputChange}
         />
 
         <FormControl fullWidth margin="dense">
           <InputLabel id="rol-label">Rol</InputLabel>
           <Select
             labelId="rol-label"
-            name="rol"
+            name="role_id"
             value={form.role_id}
-            onChange={(e) => setForm({ ...form, role_id: Number(e.target.value) })}
+            onChange={handleRoleChange}
             label="Rol"
           >
-            <MenuItem value="ASESOR">ASESOR</MenuItem>
-            <MenuItem value="ADMINISTRADOR">ADMINISTRADOR</MenuItem>
+            <MenuItem value={2}>ASESOR</MenuItem>
+            <MenuItem value={1}>ADMINISTRADOR</MenuItem>
           </Select>
         </FormControl>
 
@@ -99,9 +117,7 @@ const EmpleadoForm = ({ open, onClose, onUsuarioCreado }: Props) => {
           <Select
             labelId="estado-label"
             value={form.estado ? 'activo' : 'inactivo'}
-            onChange={(e) =>
-              setForm({ ...form, estado: e.target.value === 'activo' })
-            }
+            onChange={handleEstadoChange}
             label="Estado"
           >
             <MenuItem value="activo">Activo</MenuItem>
