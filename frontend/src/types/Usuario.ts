@@ -1,10 +1,20 @@
-export interface Usuario {
-  id: number;
+// ...existing code...
+export type Usuario = {
+  id?: number;
   username: string;
   email: string;
-  password?: string;
-  estado: boolean; // true = ACTIVO, false = INACTIVO
-  role_id: number;       // viene del token
-  rol?: string;        // nombre corto del rol (viene del token)
-  role_name?: string;  // viene del endpoint /users
-}
+  estado?: boolean;
+  role_id?: number;
+  role_name?: string;
+  password_hash?: string;
+  password?: string; // uso temporal en frontend (formularios)
+};
+
+export type NewUsuario = {
+  username: string;
+  email: string;
+  password?: string; // contraseña en texto plano desde UI
+  password_hash?: string; // opcional si ya hay hash
+  estado?: boolean;
+  role_id?: number; // <- opcional para evitar errores de asignación; validar en call-sites
+};
