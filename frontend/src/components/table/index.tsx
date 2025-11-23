@@ -75,7 +75,7 @@ const Table = () => {
     if (page > totalPages) {
       setPage(totalPages);
     }
-  }, [usuarios, rowsPerPage, page]); // ← incluye `page` en dependencias
+  }, [usuarios, rowsPerPage, page]); // incluye `page` en dependencias
 
 
   const handleChange = (

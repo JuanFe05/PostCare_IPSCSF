@@ -1,14 +1,16 @@
 import {
-  RiHome3Line,
+  CiMedicalClipboard,
   RiFileCopyLine,
-  RiWalletLine,
-  RiPieChartLine,
+  IoPersonOutline,
+  MdMedicalServices,
   RiLogoutBoxRLine,
+  BsBuildingAdd,
+  RiUserSettingsLine,
 } from "react-icons/ri";
 import logoIPS from "../../assets/IPS.png";
-import { Link, useLocation, useNavigate } from "react-router-dom"; // ✅ incluye useNavigate
+import { Link, useLocation, useNavigate } from "react-router-dom"; // incluye useNavigate
 import { useAuth } from '../../hooks/useAuth';
-import { useState } from 'react';
+import Swal from 'sweetalert2';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -28,39 +30,41 @@ const Sidebar = () => {
   const navItems =
     role === 'ASESOR'
       ? [
-          { label: "Atenciones", icon: <RiHome3Line />, path: "/dashboard/atenciones" },
-          { label: "Pacientes", icon: <RiWalletLine />, path: "/dashboard/pacientes" },
+          { label: "Atenciones", icon: <CiMedicalClipboard />, path: "/dashboard/atenciones" },
+          { label: "Pacientes", icon: <IoPersonOutline />, path: "/dashboard/pacientes" },
         ]
       : [
-          { label: "Atenciones", icon: <RiHome3Line />, path: "/dashboard/atenciones" },
-          { label: "Pacientes", icon: <RiWalletLine />, path: "/dashboard/pacientes" },
-          { label: "Empresas", icon: <RiFileCopyLine />, path: "/dashboard/empresas" },
-          { label: "Servicios", icon: <RiPieChartLine />, path: "/dashboard/servicios" },
-          { label: "Usuarios", icon: <RiFileCopyLine />, path: "/dashboard/usuarios" },
-          { label: "Roles", icon: <RiPieChartLine />, path: "/dashboard/roles" },
+          { label: "Atenciones", icon: <CiMedicalClipboard />, path: "/dashboard/atenciones" },
+          { label: "Pacientes", icon: <IoPersonOutline />, path: "/dashboard/pacientes" },
+          { label: "Empresas", icon: <BsBuildingAdd />, path: "/dashboard/empresas" },
+          { label: "Servicios", icon: <MdMedicalServices />, path: "/dashboard/servicios" },
+          { label: "Usuarios", icon: <RiUserSettingsLine />, path: "/dashboard/usuarios" },
+          { label: "Roles", icon: <RiFileCopyLine />, path: "/dashboard/roles" },
         ];
 
   const { setAuth } = useAuth();
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const handleLogout = () => {
-    // Abrir modal de confirmación
-    setConfirmOpen(true);
-  };
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: 'Confirmar cierre de sesión',
+      text: '¿Estás seguro que deseas cerrar la sesión?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Cerrar sesión',
+      cancelButtonText: 'Cancelar',
+    });
 
-  const confirmLogout = () => {
-    // Limpiar almacenamiento y contexto de autenticación
-    localStorage.removeItem('user');
-    localStorage.removeItem('access_token');
-    if (setAuth) setAuth({ token: null, user: null });
+    if (result.isConfirmed) {
+      // Limpiar almacenamiento y contexto de autenticación
+      localStorage.removeItem('user');
+      localStorage.removeItem('access_token');
+      if (setAuth) setAuth({ token: null, user: null });
 
-    // Cerrar modal y redirigir al login
-    setConfirmOpen(false);
-    navigate('/login');
-  };
-
-  const cancelLogout = () => {
-    setConfirmOpen(false);
+      // Redirigir al login
+      navigate('/login');
+    }
   };
 
   return (
@@ -112,20 +116,7 @@ const Sidebar = () => {
         <span className="text-sm font-medium">Cerrar Sesión</span>
       </button>
 
-      {/* Confirmación de logout (modal) */}
-      {confirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black opacity-50" onClick={cancelLogout} />
-          <div className="bg-white rounded-lg p-6 z-60 w-11/12 max-w-sm">
-            <h3 className="text-lg font-semibold mb-2">Confirmar cierre de sesión</h3>
-            <p className="text-sm text-gray-700 mb-4">¿Estás seguro que deseas cerrar la sesión?</p>
-            <div className="flex justify-end gap-3">
-              <button onClick={cancelLogout} className="px-4 py-2 rounded bg-gray-200">Cancelar</button>
-              <button onClick={confirmLogout} className="px-4 py-2 rounded bg-red-600 text-white">Cerrar sesión</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* confirmation handled by SweetAlert2 */}
     </div>
   );
 };

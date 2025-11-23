@@ -24,7 +24,7 @@ export default function UsuariosPanel() {
       .finally(() => setLoading(false));
   }, []);
 
-  // 🔴 Nuevo: función para eliminar usuario
+  // Nuevo: función para eliminar usuario
   const handleEliminar = async (id: number, username: string) => {
     const result = await Swal.fire({
       title: `¿Eliminar a ${username}?`,
