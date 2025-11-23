@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import logoIPS from '../../assets/IPS.png';
 
 const Header = () => {
   const [username, setUsername] = useState<string | null>(null);
@@ -19,18 +20,24 @@ const Header = () => {
 
   return (
     <header
-      className="h-14 lg:h-16 bg-gradient-to-r from-[#0f033f] to-[#1f0b68]
-      flex items-center justify-end px-6 shadow-md text-white
-      pl-60 pr-8 fixed top-0 left-0 right-0 z-40"
+      className="h-14 lg:h-16 bg-gradient-to-r from-[#0f033f] to-[#1f0b68] flex items-center px-6 shadow-md text-white pr-8 fixed top-0 z-40"
+      style={{ left: '15rem', width: 'calc(100% - 15rem)' }}
     >
-      {/* Saludo institucional alineado a la derecha */}
-      <div className="leading-tight text-right">
-        <p className="text-xs lg:text-sm opacity-80">
-          {role ? `Bienvenido ${role}` : "Bienvenido"}
-        </p>
-        <h1 className="text-sm lg:text-base font-semibold">
-          {username ? `${username}, panel de gestión IPSCSF` : 'Panel de gestión IPSCSF'}
-        </h1>
+      {/* Logo a la izquierda y saludo a la derecha, ambos alineados con el main */}
+      <div className="w-full flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img src={logoIPS} alt="IPS" className="h-7 w-7" />
+          <span className="hidden md:inline-block text-sm font-medium">Sistema de Seguimiento IPSCSF</span>
+        </div>
+
+        <div className="leading-tight flex flex-col items-end pr-6">
+          <p className="text-xs lg:text-sm opacity-80 text-right">
+            {role ? `Bienvenido ${role}` : "Bienvenido"}
+          </p>
+          <h1 className="text-sm lg:text-base font-semibold text-right">
+            {username ? `${username}, panel de gestión IPSCSF` : 'Panel de gestión IPSCSF'}
+          </h1>
+        </div>
       </div>
     </header>
   );

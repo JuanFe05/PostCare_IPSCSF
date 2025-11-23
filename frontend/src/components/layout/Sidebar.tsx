@@ -5,6 +5,7 @@ import { MdMedicalServices } from 'react-icons/md';
 import { BsBuildingAdd } from 'react-icons/bs';
 import logoIPS from "../../assets/IPS.png";
 import { Link, useLocation, useNavigate } from "react-router-dom"; // incluye useNavigate
+import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import Swal from 'sweetalert2';
 
@@ -23,6 +24,8 @@ const Sidebar = () => {
 
   const { auth } = useAuth();
   const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+  const [hoverPath, setHoverPath] = useState<string | null>(null);
+  const [hoverLogout, setHoverLogout] = useState(false);
   const navItems =
     role === 'ASESOR' || role === 'FACTURADOR'
       ? [
@@ -84,29 +87,38 @@ const Sidebar = () => {
           const active = location.pathname === item.path;
 
           return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-4 px-5 py-3 rounded-xl mx-3 transition-all duration-300 ${
-                active ? "bg-opacity-90" : "bg-transparent"
-              }`}
-              style={{
-                backgroundColor: active ? colors.primary : "transparent",
-                color: "white",
-              }}
-            >
-              <span className="text-2xl">{item.icon}</span>
-              <span className="text-sm font-medium">{item.label}</span>
-            </Link>
-          );
+              <Link
+                key={item.path}
+                to={item.path}
+                onMouseEnter={() => setHoverPath(item.path)}
+                onMouseLeave={() => setHoverPath(null)}
+                className={`flex items-center gap-4 px-5 py-3 rounded-xl mx-3 transition-all duration-300 ${
+                  active ? "bg-opacity-90" : "bg-transparent"
+                }`}
+                style={{
+                  backgroundColor: active ? colors.primary : (hoverPath === item.path ? colors.primary : "transparent"),
+                  color: "white",
+                }}
+              >
+                <span className="text-2xl">{item.icon}</span>
+                <span className="text-sm font-medium">{item.label}</span>
+              </Link>
+            );
         })}
       </nav>
 
       {/* LOGOUT BOTTOM */}
       <button
         onClick={handleLogout}
-        className="absolute bottom-6 left-0 w-full flex items-center gap-4 px-5 py-3 text-white cursor-pointer hover:bg-opacity-80"
+        onMouseEnter={() => setHoverLogout(true)}
+        onMouseLeave={() => setHoverLogout(false)}
+        className={`absolute bottom-6 flex items-center gap-4 px-5 py-3 text-white cursor-pointer transition-all duration-300 rounded-xl`}
         aria-label="Cerrar sesión"
+        style={{
+          left: '0.75rem',
+          width: 'calc(100% - 1.5rem)',
+          backgroundColor: hoverLogout ? colors.primary : 'transparent'
+        }}
       >
         <RiLogoutBoxRLine className="text-2xl" />
         <span className="text-sm font-medium">Cerrar Sesión</span>
