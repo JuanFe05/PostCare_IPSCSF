@@ -64,7 +64,7 @@ export default function LoginForm() {
       // Redirigir según rol
       const rol = String(frontendUser.role_name ?? '').trim().toUpperCase();
       if (rol === 'ADMINISTRADOR') navigate('/dashboard/atenciones');
-      else if (rol === 'ASESOR') navigate('/dashboard/atenciones');
+      else if (rol === 'ASESOR' || rol === 'FACTURADOR') navigate('/dashboard/atenciones');
       else navigate('/unauthorized');
 
 

@@ -21,6 +21,11 @@ def login(data: LoginDto):
         db.close()
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
+    # Verificar que el usuario esté activo
+    if hasattr(user, 'estado') and not user.estado:
+        db.close()
+        raise HTTPException(status_code=403, detail="Usuario inactivo")
+
     # Obtener rol del usuario (SOLO UN ROL)
     user_role_repo = UserRoleRepository()
     role_rel = user_role_repo.get_role_of_user(db, user.id)

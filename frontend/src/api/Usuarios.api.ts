@@ -28,8 +28,14 @@ export const getUsuarios = async (): Promise<Usuario[]> => {
     email: u.email,
     estado: u.estado,
     role_id: u.role_id,
-    rol: u.role_name ?? u.rol ?? undefined,
+    role_name: u.role_name ?? u.rol ?? undefined,
   }));
+};
+
+export const getRoles = async (): Promise<{ id: number; nombre: string }[]> => {
+  // roles endpoint requires admin auth
+  const response = await axios.get(`${API_URL}/roles`, getAuthHeaders());
+  return Array.isArray(response.data) ? response.data : [response.data];
 };
 
 // createUsuario acepta password o password_hash y mapea a lo que espera el backend
@@ -37,7 +43,7 @@ export const createUsuario = async (usuario: NewUsuario): Promise<Usuario> => {
   const payload = {
     username: usuario.username,
     email: usuario.email,
-    password_hash: usuario.password_hash ?? usuario.password ?? '',
+    password: usuario.password ?? usuario.password_hash ?? '',
     estado: usuario.estado ?? true,
     role_id: usuario.role_id,
   };

@@ -1,12 +1,8 @@
-import {
-  CiMedicalClipboard,
-  RiFileCopyLine,
-  IoPersonOutline,
-  MdMedicalServices,
-  RiLogoutBoxRLine,
-  BsBuildingAdd,
-  RiUserSettingsLine,
-} from "react-icons/ri";
+import { RiFileCopyLine, RiLogoutBoxRLine, RiUserSettingsLine } from 'react-icons/ri';
+import { CiMedicalClipboard } from 'react-icons/ci';
+import { IoPersonOutline } from 'react-icons/io5';
+import { MdMedicalServices } from 'react-icons/md';
+import { BsBuildingAdd } from 'react-icons/bs';
 import logoIPS from "../../assets/IPS.png";
 import { Link, useLocation, useNavigate } from "react-router-dom"; // incluye useNavigate
 import { useAuth } from '../../hooks/useAuth';
@@ -28,7 +24,7 @@ const Sidebar = () => {
   const { auth } = useAuth();
   const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
   const navItems =
-    role === 'ASESOR'
+    role === 'ASESOR' || role === 'FACTURADOR'
       ? [
           { label: "Atenciones", icon: <CiMedicalClipboard />, path: "/dashboard/atenciones" },
           { label: "Pacientes", icon: <IoPersonOutline />, path: "/dashboard/pacientes" },

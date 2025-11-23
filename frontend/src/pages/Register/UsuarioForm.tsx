@@ -1,78 +1,137 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { getRoles } from "../../api/Usuarios.api";
 
 interface UsuarioFormProps {
   onCancel: () => void;
-  onSave: (data: { username: string; email: string; rol: string; password: string; estado: boolean }) => void;
-  initial?: { username?: string; email?: string; rol?: string; password?: string; estado?: boolean };
+  onSave: (data: { username: string; email: string; role_id: number; password?: string; estado: boolean }) => void;
+  initial?: { username?: string; email?: string; role_id?: number; rol?: string; password?: string; estado?: boolean };
   isEdit?: boolean;
 }
 
 export default function UsuarioForm({ onCancel, onSave, initial = {}, isEdit = false }: UsuarioFormProps) {
-  const [username, setUsername] = useState(initial.username || "");
-  const [email, setEmail] = useState(initial.email || "");
-  const [rol, setRol] = useState(initial.rol || "");
-  const [password, setPassword] = useState(initial.password || "");
-  const [estado, setEstado] = useState(initial.estado ?? true);
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm();
+  const [roles, setRoles] = useState<{ id: number; nombre: string }[]>([]);
+
+  useEffect(() => {
+    // Load roles from backend
+    getRoles()
+      .then((r) => setRoles(r))
+      .catch((e) => console.error("Error cargando roles:", e));
+
+    // initialize values
+    if (initial.username) setValue("username", initial.username);
+    if (initial.email) setValue("email", initial.email);
+    if (initial.role_id) setValue("role_id", initial.role_id);
+    if (initial.estado !== undefined) setValue("estado", initial.estado ? 'activo' : 'inactivo');
+  }, []);
+
+  const passwordValue = watch('password');
+
+  const onSubmit = (data: any) => {
+    const payload = {
+      username: data.username,
+      email: data.email,
+      role_id: Number(data.role_id),
+      password: data.password,
+      // map 'activo'/'inactivo' to boolean
+      estado: data.estado === undefined ? true : (String(data.estado) === 'activo'),
+    };
+    onSave(payload);
+  };
 
   return (
-    <div className="bg-white p-6 rounded shadow w-96">
+    <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 rounded shadow w-96">
       <h3 className="text-xl font-bold mb-4">{isEdit ? "Editar usuario" : "Nuevo usuario"}</h3>
-      <div className="mb-2">
-        <input
-          type="text"
-          placeholder="Usuario"
-          className="border p-2 rounded w-full mb-2"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-        />
-        <input
-          type="email"
-          placeholder="Correo"
-          className="border p-2 rounded w-full mb-2"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-        />
-        <select
-          className="border p-2 rounded w-full mb-2"
-          value={rol}
-          onChange={e => setRol(e.target.value)}
-        >
-          <option value="">Selecciona un rol</option>
-          <option value="ADMINISTRADOR">Administrador</option>
-          <option value="ASESOR">Asesor</option>
-        </select>
-        {!isEdit && (
+      <div className="grid gap-3">
+        <div>
+          <label className="block text-sm font-medium mb-1">Usuario</label>
           <input
-            type="password"
-            placeholder="Contraseña"
-            className="border p-2 rounded w-full mb-2"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
+            {...register("username", { required: 'Usuario es obligatorio', minLength: { value: 3, message: 'Mínimo 3 caracteres' } })}
+            type="text"
+            placeholder="Nombre de usuario"
+            className={`border p-2 rounded w-full ${errors.username ? 'border-red-500' : ''}`}
           />
-        )}
-        <select
-          className="border p-2 rounded w-full mb-2"
-          value={estado ? "activo" : "inactivo"}
-          onChange={e => setEstado(e.target.value === "activo")}
-        >
-          <option value="activo">Activo</option>
-          <option value="inactivo">Inactivo</option>
-        </select>
+          {errors.username && <p className="text-xs text-red-600 mt-1">{String((errors.username as any).message)}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Correo</label>
+          <input
+            {...register("email", { required: 'Correo es obligatorio', pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Correo inválido' } })}
+            type="email"
+            placeholder="correo@dominio.com"
+            className={`border p-2 rounded w-full ${errors.email ? 'border-red-500' : ''}`}
+          />
+          {errors.email && <p className="text-xs text-red-600 mt-1">{String((errors.email as any).message)}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Rol</label>
+          <select {...register("role_id", { required: 'Selecciona un rol' })} className={`border p-2 rounded w-full ${errors.role_id ? 'border-red-500' : ''}`} disabled={roles.length === 0}>
+            <option value="">{roles.length === 0 ? 'Cargando roles...' : 'Selecciona un rol'}</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.role_id && <p className="text-xs text-red-600 mt-1">{String((errors.role_id as any).message)}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Contraseña{isEdit ? ' (dejar vacío para no cambiar)' : ''}</label>
+          <input
+            {...register("password", {
+              validate: (val: string) => {
+                if (!val) return true;
+                return val.length >= 6 || 'Mínimo 6 caracteres';
+              },
+              ...(isEdit ? {} : { required: 'Contraseña obligatoria' }),
+            })}
+            type="password"
+            placeholder="********"
+            className={`border p-2 rounded w-full ${errors.password ? 'border-red-500' : ''}`}
+          />
+          {errors.password && <p className="text-xs text-red-600 mt-1">{String((errors.password as any).message)}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Confirmar contraseña{isEdit ? ' (si cambia)' : ''}</label>
+          <input
+            {...register("passwordConfirm", {
+              validate: (val: string) => {
+                const pwd = passwordValue;
+                if (!pwd && !val) return true;
+                return val === pwd || 'Las contraseñas no coinciden';
+              }
+            })}
+            type="password"
+            placeholder="Repite la contraseña"
+            className={`border p-2 rounded w-full ${errors.passwordConfirm ? 'border-red-500' : ''}`}
+          />
+          {errors.passwordConfirm && <p className="text-xs text-red-600 mt-1">{String((errors.passwordConfirm as any).message)}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Estado</label>
+          <select {...register("estado", { required: 'Selecciona un estado' })} className={`border p-2 rounded w-full ${errors.estado ? 'border-red-500' : ''}`}>
+            <option value="">Selecciona un estado</option>
+            <option value={"activo"}>Activo</option>
+            <option value={"inactivo"}>Inactivo</option>
+          </select>
+          {errors.estado && <p className="text-xs text-red-600 mt-1">{String((errors.estado as any).message)}</p>}
+        </div>
+
       </div>
-      <div className="flex justify-end gap-2">
-        <button
-          className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-          onClick={onCancel}
-        >
+      <div className="flex justify-end gap-2 mt-4">
+        <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500" onClick={onCancel}>
           Cancelar
         </button>
-        <button
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer"
-          onClick={() => onSave({ username, email, rol, password, estado })}
-        >
+        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer" disabled={roles.length === 0 && !isEdit}>
           {isEdit ? "Guardar cambios" : "Guardar"}
         </button>
       </div>
-    </div>
+    </form>
   );
 }

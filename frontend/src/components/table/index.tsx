@@ -350,7 +350,7 @@ const Table = () => {
           />
           <TextField
             margin="dense"
-            label="Rol (Asesor o Administrador)"
+            label="Rol (Asesor, Facturador o Administrador)"
             name="rol"
             fullWidth
             value={nuevoEmpleado.role_id ?? nuevoEmpleado.role_name ?? ''}

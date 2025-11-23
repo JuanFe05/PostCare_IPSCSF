@@ -1,5 +1,6 @@
 // src/components/panels/UsuariosPanel.tsx
 import { useState, useEffect } from "react";
+import { useAuth } from '../../hooks/useAuth';
 import type { Usuario } from "../../types/Usuario";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import UsuarioForm from "../../pages/Register/UsuarioForm";
@@ -84,40 +85,47 @@ export default function UsuariosPanel() {
         <span>Usuarios</span>
       </h2>
 
-      <button
-        onClick={() => setShowAddUser(true)}
-        className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2"
-      >
-        Agregar nuevo usuario
-      </button>
+      {/* Solo administradores pueden crear/editar/ eliminar usuarios */}
+      {(() => {
+        const role = String(useAuth().auth?.user?.role_name ?? '').trim().toUpperCase();
+        if (role === 'ADMINISTRADOR') {
+          return (
+            <button
+              onClick={() => setShowAddUser(true)}
+              className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2"
+            >
+              Agregar nuevo usuario
+            </button>
+          );
+        }
+        return <p className="mb-4 text-sm text-gray-600">Solo administradores pueden gestionar usuarios.</p>;
+      })()}
 
       {/* Modal para crear usuario */}
       {showAddUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <UsuarioForm
             onCancel={() => setShowAddUser(false)}
-            onSave={async ({ username, email, rol, password, estado }) => {
-              if (!username || !email || !password || !rol) {
-                window.alert("Completa usuario, email, contraseña y rol.");
+            onSave={async ({ username, email, role_id, password, estado }) => {
+              if (!username || !email || (!password && !role_id)) {
+                await Swal.fire({ icon: 'warning', title: 'Datos incompletos', text: 'Completa usuario, email, contraseña y rol.' });
                 return;
               }
-              let role_id = 2; // Asesor por defecto
-              if (rol === "ADMINISTRADOR") role_id = 1;
               setLoading(true);
               try {
                 const nuevo = await createUsuario({
                   username,
                   email,
-                  password_hash: password,
+                  password: password, // send password field
                   estado,
                   role_id,
                 });
                 setUsuarios((prev) => [nuevo, ...prev]);
                 setShowAddUser(false);
-                window.alert("Usuario creado correctamente.");
+                await Swal.fire({ icon: 'success', title: 'Usuario creado', text: `Usuario ${username} creado correctamente.` });
               } catch (err) {
                 console.error("Error creando usuario:", err);
-                window.alert("Error al crear usuario. Revisa la consola.");
+                await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear el usuario. Revisa la consola.' });
               } finally {
                 setLoading(false);
               }
@@ -130,27 +138,28 @@ export default function UsuariosPanel() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <UsuarioForm
             onCancel={() => setShowEditUser(false)}
-            onSave={async ({ username, email, rol }) => {
+            onSave={async ({ username, email, role_id, estado }) => {
               if (!editUser) return;
-              let role_id = editUser.role_id ?? 2;
-              if (rol === "ADMINISTRADOR") role_id = 1;
+              let new_role_id = editUser.role_id ?? 2;
+              if (typeof role_id === 'number') new_role_id = role_id;
               setLoading(true);
               try {
                 const actualizado = await updateUsuario({
                   ...editUser,
                   username,
                   email,
-                  role_id,
+                  role_id: new_role_id,
+                  estado,
                 });
                 setUsuarios((prev) =>
                   prev.map((u) => (u.id === actualizado.id ? actualizado : u))
                 );
                 setShowEditUser(false);
                 setEditUser(null);
-                window.alert("Usuario actualizado.");
+                await Swal.fire({ icon: 'success', title: 'Usuario actualizado', text: `Usuario ${username} actualizado.` });
               } catch (err) {
                 console.error("Error actualizando usuario:", err);
-                window.alert("Error al actualizar usuario.");
+                await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el usuario.' });
               } finally {
                 setLoading(false);
               }
@@ -158,7 +167,8 @@ export default function UsuariosPanel() {
             initial={{
               username: editUser.username,
               email: editUser.email,
-              rol: String(editUser.role_name || editUser.role_id || ""),
+              role_id: editUser.role_id,
+              estado: editUser.estado,
             }}
             isEdit={true}
           />
@@ -208,23 +218,33 @@ export default function UsuariosPanel() {
                     </span>
                   </td>
                   <td className="p-3 flex gap-2 justify-center">
-                    <button
-                      className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                      onClick={() => {
-                        setEditUser(u);
-                        setShowEditUser(true);
-                      }}
-                      title="Editar"
-                    >
-                      <FiEdit className="text-xl" />
-                    </button>
-                    <button
-                      className="text-red-600 hover:text-red-800 cursor-pointer"
-                      onClick={() => handleEliminar(u.id!, u.username)}
-                      title="Eliminar"
-                    >
-                      <FiTrash2 className="text-xl" />
-                    </button>
+                    {(() => {
+                      const role = String(useAuth().auth?.user?.role_name ?? '').trim().toUpperCase();
+                      if (role === 'ADMINISTRADOR') {
+                        return (
+                          <>
+                            <button
+                              className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                              onClick={() => {
+                                setEditUser(u);
+                                setShowEditUser(true);
+                              }}
+                              title="Editar"
+                            >
+                              <FiEdit className="text-xl" />
+                            </button>
+                            <button
+                              className="text-red-600 hover:text-red-800 cursor-pointer"
+                              onClick={() => handleEliminar(u.id!, u.username)}
+                              title="Eliminar"
+                            >
+                              <FiTrash2 className="text-xl" />
+                            </button>
+                          </>
+                        );
+                      }
+                      return <span className="text-sm text-gray-500">Sin acciones</span>;
+                    })()}
                   </td>
                 </tr>
               ))}

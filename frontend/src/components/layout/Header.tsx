@@ -23,7 +23,7 @@ const Header = () => {
       flex items-center justify-end px-6 shadow-md text-white
       pl-60 pr-8 fixed top-0 left-0 right-0 z-40"
     >
-      {/* Saludo institucional alineado a la derecha (sin ícono) */}
+      {/* Saludo institucional alineado a la derecha */}
       <div className="leading-tight text-right">
         <p className="text-xs lg:text-sm opacity-80">
           {role ? `Bienvenido ${role}` : "Bienvenido"}

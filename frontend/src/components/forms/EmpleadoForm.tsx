@@ -108,6 +108,7 @@ const EmpleadoForm = ({ open, onClose, onUsuarioCreado }: Props) => {
             label="Rol"
           >
             <MenuItem value={2}>ASESOR</MenuItem>
+            <MenuItem value={3}>FACTURADOR</MenuItem>
             <MenuItem value={1}>ADMINISTRADOR</MenuItem>
           </Select>
         </FormControl>

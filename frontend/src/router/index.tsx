@@ -9,8 +9,8 @@ import EmpresasPanel from '../components/panels/EmpresasPanel';
 import ServiciosPanel from '../components/panels/ServiciosPanel';
 import UsuariosPanel from '../components/panels/UsuariosPanel';
 import RolesPanel from '../components/panels/RolesPanel';
-import NotFoundPage from '../pages/NotFoundPage';
-import UnauthorizedPage from '../pages/UnauthorizedPage';
+import NotFoundPage from '../pages/not-found/NotFoundPage';
+import UnauthorizedPage from '../pages/unauthorized/UnauthorizedPage';
 import ProtectedRoute from '../router/ProtectedRouter';
 
 export default function AppRouter() {
@@ -26,7 +26,7 @@ export default function AppRouter() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["ADMINISTRADOR", "ASESOR"]}>
+            <ProtectedRoute allowedRoles={["ADMINISTRADOR", "ASESOR", "FACTURADOR"]}>
               <DashboardLayout />
             </ProtectedRoute>
           }
