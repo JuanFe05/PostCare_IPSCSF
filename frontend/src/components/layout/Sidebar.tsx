@@ -74,15 +74,15 @@ const Sidebar = () => {
       }}
     >
       {/* LOGO */}
-      <div className="flex items-center gap-3 px-4 py-6">
-        <img src={logoIPS} alt="Logo" className="h-10 w-10" />
-        <h1 className="text-white font-semibold text-sm leading-tight">
-          Sistema de Seguimiento<br />Clínico IPSCSF
+      <div className="flex flex-col items-center justify-center gap-2 px-4 py-6">
+        <img src={logoIPS} alt="Logo" className="h-12 w-12" />
+        <h1 className="text-white font-semibold text-base leading-tight text-center">
+          IPS Clínica<br />Salud Florida
         </h1>
       </div>
 
       {/* NAV */}
-      <nav className="mt-6 flex flex-col gap-1">
+      <nav className="flex flex-col gap-1">
         {navItems.map((item) => {
           const active = location.pathname === item.path;
 

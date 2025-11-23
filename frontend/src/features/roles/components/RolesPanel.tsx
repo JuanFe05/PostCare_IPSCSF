@@ -1,4 +1,3 @@
-// src/components/panels/ServiciosPanel.tsx
 export default function RolesPanel() {
   return (
     <div className="p-6">

@@ -1,4 +1,3 @@
-// src/components/panels/ServiciosPanel.tsx
 export default function ServiciosPanel() {
   return (
     <div className="p-6">

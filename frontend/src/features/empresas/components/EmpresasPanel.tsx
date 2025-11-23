@@ -1,4 +1,3 @@
-// src/components/panels/EmpresasPanel.tsx
 export default function EmpresasPanel() {
   return (
     <div className="p-6">

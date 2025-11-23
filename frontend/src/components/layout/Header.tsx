@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import logoIPS from '../../assets/IPS.png';
 
 const Header = () => {
   const [username, setUsername] = useState<string | null>(null);
@@ -24,12 +23,7 @@ const Header = () => {
       style={{ left: '15rem', width: 'calc(100% - 15rem)' }}
     >
       {/* Logo a la izquierda y saludo a la derecha, ambos alineados con el main */}
-      <div className="w-full flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img src={logoIPS} alt="IPS" className="h-7 w-7" />
-          <span className="hidden md:inline-block text-sm font-medium">Sistema de Seguimiento IPSCSF</span>
-        </div>
-
+      <div className="w-full flex items-center justify-end">
         <div className="leading-tight flex flex-col items-end pr-6">
           <p className="text-xs lg:text-sm opacity-80 text-right">
             {role ? `Bienvenido ${role}` : "Bienvenido"}

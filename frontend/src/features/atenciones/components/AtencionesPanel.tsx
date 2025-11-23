@@ -1,4 +1,3 @@
-// src/components/panels/AtencionesPanel.tsx
 export default function AtencionesPanel() {
   return (
     <div className="p-6">

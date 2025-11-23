@@ -1,14 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/login/Login';
-import Register from '../pages/Register/Register';
+import Register from '../pages/register/Register';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import OverviewPanel from '../pages/dashboard/OverviewPanel';
-import AtencionesPanel from '../components/panels/AtencionesPanel';
-import PacientesPanel from '../components/panels/PacientesPanel';
-import EmpresasPanel from '../components/panels/EmpresasPanel';
-import ServiciosPanel from '../components/panels/ServiciosPanel';
-import UsuariosPanel from '../components/panels/UsuariosPanel';
-import RolesPanel from '../components/panels/RolesPanel';
+import AtencionesPage from '../features/atenciones/pages/AtencionesPage';
+import PacientesPage from '../features/pacientes/pages/PacientesPage';
+import EmpresasPage from '../features/empresas/pages/EmpresasPage';
+import ServiciosPage from '../features/servicios/pages/ServiciosPage';
+import UsersPage from '../features/users/pages/UsersPage';
+import RolesPage from '../features/roles/pages/RolesPage';
 import NotFoundPage from '../pages/not-found/NotFoundPage';
 import UnauthorizedPage from '../pages/unauthorized/UnauthorizedPage';
 import ProtectedRoute from '../router/ProtectedRouter';
@@ -32,27 +32,27 @@ export default function AppRouter() {
           }
         >
           <Route index element={<OverviewPanel />} />
-          <Route path="atenciones" element={<AtencionesPanel />} />
-          <Route path="pacientes" element={<PacientesPanel />} />
+          <Route path="atenciones" element={<AtencionesPage />} />
+          <Route path="pacientes" element={<PacientesPage />} />
           {/* Solo ADMINISTRADOR puede ver las siguientes rutas */}
           <Route path="empresas" element={
             <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
-              <EmpresasPanel />
+              <EmpresasPage />
             </ProtectedRoute>
           } />
           <Route path="servicios" element={
             <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
-              <ServiciosPanel />
+              <ServiciosPage />
             </ProtectedRoute>
           } />
           <Route path="usuarios" element={
             <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
-              <UsuariosPanel />
+              <UsersPage />
             </ProtectedRoute>
           } />
           <Route path="roles" element={
             <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
-              <RolesPanel />
+              <RolesPage />
             </ProtectedRoute>
           } />
         </Route>

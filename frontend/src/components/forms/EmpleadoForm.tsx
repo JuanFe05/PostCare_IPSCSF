@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import { useState } from 'react';
-import { createUsuario } from '../../api/Usuarios.api';
+import { createUsuario } from '../../features/users/api';
 import type { Usuario, NewUsuario } from '../../types/Usuario';
 
 interface Props {

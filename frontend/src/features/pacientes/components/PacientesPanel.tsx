@@ -1,4 +1,3 @@
-// src/components/panels/PacientesPanel.tsx
 export default function PacientesPanel() {
   return (
     <div className="p-6">

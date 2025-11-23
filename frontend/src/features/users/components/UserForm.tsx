@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { getRoles } from "../../features/users/api";
+import { getRoles } from "../api";
 
 interface UsuarioFormProps {
   onCancel: () => void;
@@ -9,17 +9,15 @@ interface UsuarioFormProps {
   isEdit?: boolean;
 }
 
-export default function UsuarioForm({ onCancel, onSave, initial = {}, isEdit = false }: UsuarioFormProps) {
+export default function UserForm({ onCancel, onSave, initial = {}, isEdit = false }: UsuarioFormProps) {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm();
   const [roles, setRoles] = useState<{ id: number; nombre: string }[]>([]);
 
   useEffect(() => {
-    // Load roles from backend
     getRoles()
       .then((r) => setRoles(r))
       .catch((e) => console.error("Error cargando roles:", e));
 
-    // initialize values
     if (initial.username) setValue("username", initial.username);
     if (initial.email) setValue("email", initial.email);
     if (initial.role_id) setValue("role_id", initial.role_id);
@@ -34,7 +32,6 @@ export default function UsuarioForm({ onCancel, onSave, initial = {}, isEdit = f
       email: data.email,
       role_id: Number(data.role_id),
       password: data.password,
-      // map 'activo'/'inactivo' to boolean
       estado: data.estado === undefined ? true : (String(data.estado) === 'activo'),
     };
     onSave(payload);
