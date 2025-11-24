@@ -9,7 +9,7 @@ const Button: React.FC<Props> = ({ loading, children, ...props }) => {
         <button
             {...props}
             className={`w-full py-3 rounded-lg bg-[#1938BC] text-white font-semibold 
-                hover:bg-[#10298A] transition disabled:opacity-60`}
+                hover:bg-[#10298A] transition disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed`}
         >
             {loading ? "Cargando..." : children}
         </button>
