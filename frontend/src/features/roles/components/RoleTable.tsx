@@ -12,7 +12,6 @@ export default function RolesTable() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [searchTerm, setSearchTerm] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
 
@@ -26,15 +25,7 @@ export default function RolesTable() {
 
   // FILTRO + ORDENAMIENTO
   const displayed = useMemo(() => {
-    const filtered = roles.filter((r) => {
-      const q = searchTerm.toLowerCase().trim();
-      if (!q) return true;
-
-      return (
-        r.nombre.toLowerCase().includes(q) ||
-        r.descripcion.toLowerCase().includes(q)
-      );
-    });
+    const filtered = roles;
 
     if (!sortKey || !sortDir) return filtered;
 
@@ -50,7 +41,7 @@ export default function RolesTable() {
         ? String(va).localeCompare(String(vb))
         : String(vb).localeCompare(String(va));
     });
-  }, [roles, searchTerm, sortKey, sortDir]);
+  }, [roles, sortKey, sortDir]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) {
@@ -70,17 +61,6 @@ export default function RolesTable() {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6">Gestión de Roles</h2>
-
-      {/* BUSCADOR */}
-      <div className="mb-4 flex items-center justify-end">
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar rol..."
-          className="p-2 border rounded text-sm w-80"
-        />
-      </div>
 
       {/* TABLA */}
       {loading && <p>Cargando roles...</p>}
