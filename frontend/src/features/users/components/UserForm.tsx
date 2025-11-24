@@ -38,34 +38,48 @@ export default function UserForm({ onCancel, onSave, initial = {}, isEdit = fals
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 rounded shadow w-96">
-      <h3 className="text-xl font-bold mb-4">{isEdit ? "Editar usuario" : "Nuevo usuario"}</h3>
-      <div className="grid gap-3">
+    <form 
+      onSubmit={handleSubmit(onSubmit)} 
+      className="bg-white p-8 rounded-xl shadow-xl w-[420px] border border-gray-200"
+    >
+      <h3 className="text-2xl font-semibold mb-6 text-gray-800">
+        {isEdit ? "Editar usuario" : "Nuevo usuario"}
+      </h3>
+
+      <div className="grid gap-5">
+
+        {/* Usuario */}
         <div>
-          <label className="block text-sm font-medium mb-1">Usuario</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
           <input
             {...register("username", { required: 'Usuario es obligatorio', minLength: { value: 3, message: 'Mínimo 3 caracteres' } })}
             type="text"
             placeholder="Nombre de usuario"
-            className={`border p-2 rounded w-full ${errors.username ? 'border-red-500' : ''}`}
+            className={`w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${errors.username ? 'border-red-500' : 'border-gray-300'}`}
           />
           {errors.username && <p className="text-xs text-red-600 mt-1">{String((errors.username as any).message)}</p>}
         </div>
 
+        {/* Correo */}
         <div>
-          <label className="block text-sm font-medium mb-1">Correo</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Correo</label>
           <input
             {...register("email", { required: 'Correo es obligatorio', pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Correo inválido' } })}
             type="email"
             placeholder="correo@dominio.com"
-            className={`border p-2 rounded w-full ${errors.email ? 'border-red-500' : ''}`}
+            className={`w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
           />
           {errors.email && <p className="text-xs text-red-600 mt-1">{String((errors.email as any).message)}</p>}
         </div>
 
+        {/* Rol */}
         <div>
-          <label className="block text-sm font-medium mb-1">Rol</label>
-          <select {...register("role_id", { required: 'Selecciona un rol' })} className={`border p-2 rounded w-full ${errors.role_id ? 'border-red-500' : ''}`} disabled={roles.length === 0}>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+          <select
+            {...register("role_id", { required: 'Selecciona un rol' })}
+            className={`w-full p-2.5 border rounded-lg shadow-sm bg-white focus:ring-2 focus:ring-blue-500 transition ${errors.role_id ? 'border-red-500' : 'border-gray-300'}`}
+            disabled={roles.length === 0}
+          >
             <option value="">{roles.length === 0 ? 'Cargando roles...' : 'Selecciona un rol'}</option>
             {roles.map((r) => (
               <option key={r.id} value={r.id}>
@@ -76,8 +90,11 @@ export default function UserForm({ onCancel, onSave, initial = {}, isEdit = fals
           {errors.role_id && <p className="text-xs text-red-600 mt-1">{String((errors.role_id as any).message)}</p>}
         </div>
 
+        {/* Contraseña */}
         <div>
-          <label className="block text-sm font-medium mb-1">Contraseña{isEdit ? ' (dejar vacío para no cambiar)' : ''}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Contraseña{isEdit ? ' (opcional)' : ''}
+          </label>
           <input
             {...register("password", {
               validate: (val: string) => {
@@ -88,13 +105,16 @@ export default function UserForm({ onCancel, onSave, initial = {}, isEdit = fals
             })}
             type="password"
             placeholder="********"
-            className={`border p-2 rounded w-full ${errors.password ? 'border-red-500' : ''}`}
+            className={`w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
           />
           {errors.password && <p className="text-xs text-red-600 mt-1">{String((errors.password as any).message)}</p>}
         </div>
 
+        {/* Confirmar */}
         <div>
-          <label className="block text-sm font-medium mb-1">Confirmar contraseña{isEdit ? ' (si cambia)' : ''}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Confirmar contraseña{isEdit ? ' (si cambia)' : ''}
+          </label>
           <input
             {...register("passwordConfirm", {
               validate: (val: string) => {
@@ -105,14 +125,18 @@ export default function UserForm({ onCancel, onSave, initial = {}, isEdit = fals
             })}
             type="password"
             placeholder="Repite la contraseña"
-            className={`border p-2 rounded w-full ${errors.passwordConfirm ? 'border-red-500' : ''}`}
+            className={`w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition ${errors.passwordConfirm ? 'border-red-500' : 'border-gray-300'}`}
           />
           {errors.passwordConfirm && <p className="text-xs text-red-600 mt-1">{String((errors.passwordConfirm as any).message)}</p>}
         </div>
 
+        {/* Estado */}
         <div>
-          <label className="block text-sm font-medium mb-1">Estado</label>
-          <select {...register("estado", { required: 'Selecciona un estado' })} className={`border p-2 rounded w-full ${errors.estado ? 'border-red-500' : ''}`}>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+          <select 
+            {...register("estado", { required: 'Selecciona un estado' })}
+            className={`w-full p-2.5 border rounded-lg shadow-sm bg-white focus:ring-2 focus:ring-blue-500 transition ${errors.estado ? 'border-red-500' : 'border-gray-300'}`}
+          >
             <option value={"activo"}>Activo</option>
             <option value={"inactivo"}>Inactivo</option>
           </select>
@@ -120,11 +144,21 @@ export default function UserForm({ onCancel, onSave, initial = {}, isEdit = fals
         </div>
 
       </div>
-      <div className="flex justify-end gap-2 mt-4">
-        <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 cursor-pointer" onClick={onCancel}>
+
+      {/* Botones */}
+      <div className="flex justify-end gap-3 mt-8">
+        <button
+          type="button"
+          className="px-4 py-2 rounded-lg bg-gray-300 text-gray-800 hover:bg-gray-400 transition shadow"
+          onClick={onCancel}
+        >
           Cancelar
         </button>
-        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer" disabled={roles.length === 0 && !isEdit}>
+        <button
+          type="submit"
+          className="px-5 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition shadow"
+          disabled={roles.length === 0 && !isEdit}
+        >
           {isEdit ? "Guardar cambios" : "Guardar"}
         </button>
       </div>
