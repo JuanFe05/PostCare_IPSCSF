@@ -30,6 +30,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
+      RUN_STARTUP_TABLES: "true"
     depends_on:
       - mysql
     networks:

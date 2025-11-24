@@ -1,9 +1,3 @@
-"""initial
-
-Revision ID: 0001_initial
-Revises: 
-Create Date: 2025-11-23
-"""
 from alembic import op
 import sqlalchemy as sa
 

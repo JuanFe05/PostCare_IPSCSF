@@ -1,6 +1,7 @@
-from app.configuration.app.database import Base, engine
+from app.configuration.app.init_db import init_db
 
 
 def run_startup_tables():
     # Solo para desarrollo, NO en producción
-    Base.metadata.create_all(bind=engine)
+    # init_db() importa dinámicamente las entidades y crea todas las tablas
+    init_db()
