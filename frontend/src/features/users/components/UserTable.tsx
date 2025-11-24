@@ -49,7 +49,7 @@ export default function UserTable() {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <span>Usuarios</span>
+        <span>Gestion de Usuarios</span>
       </h2>
 
       {(() => {
