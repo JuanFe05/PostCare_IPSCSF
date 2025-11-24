@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from app.persistence.entity.atenciones_entity import Atencion
 
 
-def get_atencion_by_id(db: Session, atencion_id: int) -> Atencion | None:
+def get_atencion_by_id(db: Session, atencion_id: str) -> Atencion | None:
     return db.query(Atencion).filter(Atencion.id == atencion_id).first()
 
 

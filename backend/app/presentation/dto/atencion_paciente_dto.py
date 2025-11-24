@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class PacienteDto(BaseModel):
-    id: int
+    id: str
     id_tipo_documento: int
     primer_nombre: str
     segundo_nombre: Optional[str] = None
@@ -16,8 +16,8 @@ class PacienteDto(BaseModel):
 
 
 class AtencionDto(BaseModel):
-    id: int
-    id_paciente: int
+    id: str
+    id_paciente: str
     id_empresa: int
     id_estado_atencion: int
     id_seguimiento_atencion: Optional[int] = None
@@ -33,8 +33,8 @@ class AtencionPacienteCreateDto(BaseModel):
 
 
 class AtencionPacienteResponseDto(BaseModel):
-    atencion_id: int
-    paciente_id: int
+    atencion_id: str
+    paciente_id: str
 
     class Config:
         orm_mode = True

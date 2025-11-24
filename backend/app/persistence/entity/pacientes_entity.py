@@ -6,7 +6,7 @@ from app.configuration.app.database import Base
 class Paciente(Base):
 	__tablename__ = "pacientes"
 
-	id = Column(Integer, primary_key=True, autoincrement=False)
+	id = Column(String(50), primary_key=True)
 	id_tipo_documento = Column(Integer, ForeignKey("tipos_documentos.id"), nullable=False)
 	primer_nombre = Column(String(100), nullable=False)
 	segundo_nombre = Column(String(100))

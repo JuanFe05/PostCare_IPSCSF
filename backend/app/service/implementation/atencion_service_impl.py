@@ -35,7 +35,7 @@ class AtencionService:
             raise
 
     @staticmethod
-    def update_with_paciente(db: Session, atencion_id: int, atencion_data: dict, paciente_data: dict) -> tuple[Atencion, Paciente]:
+    def update_with_paciente(db: Session, atencion_id: str, atencion_data: dict, paciente_data: dict) -> tuple[Atencion, Paciente]:
         try:
             with db.begin():
                 atencion = get_atencion_by_id(db, atencion_id)
@@ -55,7 +55,7 @@ class AtencionService:
             raise
 
     @staticmethod
-    def delete_with_paciente(db: Session, atencion_id: int, borrar_paciente: bool = False) -> None:
+    def delete_with_paciente(db: Session, atencion_id: str, borrar_paciente: bool = False) -> None:
         try:
             with db.begin():
                 atencion = get_atencion_by_id(db, atencion_id)

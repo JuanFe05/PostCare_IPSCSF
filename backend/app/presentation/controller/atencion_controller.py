@@ -21,7 +21,7 @@ def create_atencion_with_paciente(data: AtencionPacienteCreateDto, db: Session =
 
 
 @router.put("/{atencion_id}/con-paciente", response_model=AtencionPacienteResponseDto)
-def update_atencion_with_paciente(atencion_id: int, data: AtencionPacienteCreateDto, db: Session = Depends(get_db)):
+def update_atencion_with_paciente(atencion_id: str, data: AtencionPacienteCreateDto, db: Session = Depends(get_db)):
     try:
         atencion, paciente = AtencionService.update_with_paciente(db, atencion_id, data.atencion.model_dump(), data.paciente.model_dump())
         return {"atencion_id": atencion.id, "paciente_id": paciente.id}
@@ -32,7 +32,7 @@ def update_atencion_with_paciente(atencion_id: int, data: AtencionPacienteCreate
 
 
 @router.delete("/{atencion_id}/con-paciente")
-def delete_atencion_with_paciente(atencion_id: int, delete_paciente: bool = Query(False), db: Session = Depends(get_db)):
+def delete_atencion_with_paciente(atencion_id: str, delete_paciente: bool = Query(False), db: Session = Depends(get_db)):
     try:
         AtencionService.delete_with_paciente(db, atencion_id, delete_paciente)
         return {"deleted": True}

@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     default-libmysqlclient-dev \
     pkg-config \
     libssl-dev \
+    freetds-dev \
+    freetds-bin \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar y instalar dependencias de Python
