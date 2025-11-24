@@ -1,7 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException , Depends
 from app.presentation.dto.user_dto import UserCreateDto, UserResponseDto, UserUpdateDto
 from app.service.implementation.user_service_impl import UserServiceImpl
-from fastapi import APIRouter, HTTPException, Depends
 from app.configuration.security.security_dependencies import get_current_admin
 
 router = APIRouter(prefix="/users", tags=["Users"])

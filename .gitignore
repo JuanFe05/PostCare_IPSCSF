@@ -302,3 +302,7 @@ thumb
 sketch
 
 # End of https://www.toptal.com/developers/gitignore/api/jetbrains,python,react
+
+# Ignore IDE project folders for subprojects
+backend/.idea/
+frontend/.idea/

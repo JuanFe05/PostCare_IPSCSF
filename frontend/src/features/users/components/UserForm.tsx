@@ -113,7 +113,6 @@ export default function UserForm({ onCancel, onSave, initial = {}, isEdit = fals
         <div>
           <label className="block text-sm font-medium mb-1">Estado</label>
           <select {...register("estado", { required: 'Selecciona un estado' })} className={`border p-2 rounded w-full ${errors.estado ? 'border-red-500' : ''}`}>
-            <option value="">Selecciona un estado</option>
             <option value={"activo"}>Activo</option>
             <option value={"inactivo"}>Inactivo</option>
           </select>
@@ -122,7 +121,7 @@ export default function UserForm({ onCancel, onSave, initial = {}, isEdit = fals
 
       </div>
       <div className="flex justify-end gap-2 mt-4">
-        <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500" onClick={onCancel}>
+        <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 cursor-pointer" onClick={onCancel}>
           Cancelar
         </button>
         <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer" disabled={roles.length === 0 && !isEdit}>
