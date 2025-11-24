@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from '../../../hooks/useAuth';
 import type { Usuario } from "../types";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
@@ -12,6 +12,7 @@ export default function UserTable() {
   const [editUser, setEditUser] = useState<Usuario | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   const { auth } = useAuth();
 
@@ -38,7 +39,7 @@ export default function UserTable() {
 
     try {
       await deleteUsuario(id);
-      setUsuarios((prev) => prev.filter((u) => u.id !== id));
+      setUsuarios((prev: Usuario[]) => prev.filter((u: Usuario) => u.id !== id));
       await Swal.fire({ title: "Eliminado", text: `El usuario ${username} ha sido eliminado.`, icon: "success" });
     } catch (error) {
       console.error("Error al eliminar:", error);
@@ -52,15 +53,31 @@ export default function UserTable() {
         <span>Gestion de Usuarios</span>
       </h2>
 
-      {(() => {
-        const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
-        if (role === 'ADMINISTRADOR') {
-          return (
-            <button onClick={() => setShowAddUser(true)} className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer">Agregar nuevo usuario</button>
-          );
-        }
-        return <p className="mb-4 text-sm text-gray-600">Solo administradores pueden gestionar usuarios.</p>;
-      })()}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex-shrink-0">
+          {(() => {
+            const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+            if (role === 'ADMINISTRADOR') {
+              return (
+                <button onClick={() => setShowAddUser(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer">
+                  Agregar nuevo usuario
+                </button>
+              );
+            }
+            return <p className="text-sm text-gray-600">Solo administradores pueden gestionar usuarios.</p>;
+          })()}
+        </div>
+        <div className="ml-4 flex-shrink-0">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+            placeholder="Buscar por usuario o correo"
+            className="w-full p-2 border rounded text-sm"
+            style={{ width: '360px' }}
+          />
+        </div>
+      </div>
 
       {showAddUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -72,7 +89,7 @@ export default function UserTable() {
             setLoading(true);
             try {
               const nuevo = await createUsuario({ username, email, password, estado, role_id });
-              setUsuarios((prev) => [nuevo, ...prev]);
+              setUsuarios((prev: Usuario[]) => [nuevo, ...prev]);
               setShowAddUser(false);
               await Swal.fire({ icon: 'success', title: 'Usuario creado', text: `Usuario ${username} creado correctamente.` });
             } catch (err) {
@@ -92,7 +109,7 @@ export default function UserTable() {
             setLoading(true);
             try {
               const actualizado = await updateUsuario({ ...editUser, username, email, role_id: new_role_id, estado });
-              setUsuarios((prev) => prev.map((u) => (u.id === actualizado.id ? actualizado : u)));
+              setUsuarios((prev: Usuario[]) => prev.map((u: Usuario) => (u.id === actualizado.id ? actualizado : u)));
               setShowEditUser(false);
               setEditUser(null);
               await Swal.fire({ icon: 'success', title: 'Usuario actualizado', text: `Usuario ${username} actualizado.` });
@@ -121,28 +138,36 @@ export default function UserTable() {
               </tr>
             </thead>
             <tbody className="bg-white">
-              {usuarios.map((u, idx) => (
-                <tr key={u.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
-                  <td className="p-3 text-center">{u.id}</td>
-                  <td className="p-3 text-center">{u.username}</td>
-                  <td className="p-3 text-center">{u.email}</td>
-                  <td className="p-3 text-center"><span className={`px-2 py-1 rounded text-xs font-bold ${u.estado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{u.estado ? 'Activo' : 'Inactivo'}</span></td>
-                  <td className="p-3 text-center"><span className={`px-2 py-1 rounded text-xs font-bold ${u.role_name === 'ADMINISTRADOR' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>{u.role_name || ''}</span></td>
-                  <td className="p-3 text-center">
-                    <div className="flex gap-2 justify-center">
-                      {(() => {
-                        const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
-                        if (role === 'ADMINISTRADOR') {
-                          return (<>
-                            <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => { setEditUser(u); setShowEditUser(true); }} title="Editar"><FiEdit className="text-xl" /></button>
-                            <button className="text-red-600 hover:text-red-800 cursor-pointer" onClick={() => handleEliminar(u.id!, u.username)} title="Eliminar"><FiTrash2 className="text-xl" /></button>
-                          </>);
-                        }
-                        return <span className="text-sm text-gray-500">Sin acciones</span>;
-                      })()}
-                    </div>
-                  </td>
-                </tr>
+              {usuarios
+                .filter((u) => {
+                  if (!searchTerm) return true;
+                  const q = searchTerm.trim().toLowerCase();
+                  const usernameMatch = String(u.username ?? '').toLowerCase().includes(q);
+                  const emailMatch = String(u.email ?? '').toLowerCase().includes(q);
+                  return usernameMatch || emailMatch;
+                })
+                .map((u, idx) => (
+                  <tr key={u.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
+                    <td className="p-3 text-center">{u.id}</td>
+                    <td className="p-3 text-center">{u.username}</td>
+                    <td className="p-3 text-center">{u.email}</td>
+                    <td className="p-3 text-center"><span className={`px-2 py-1 rounded text-xs font-bold ${u.estado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{u.estado ? 'Activo' : 'Inactivo'}</span></td>
+                    <td className="p-3 text-center"><span className={`px-2 py-1 rounded text-xs font-bold ${u.role_name === 'ADMINISTRADOR' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>{u.role_name || ''}</span></td>
+                    <td className="p-3 text-center">
+                      <div className="flex gap-2 justify-center">
+                        {(() => {
+                          const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+                          if (role === 'ADMINISTRADOR') {
+                            return (<>
+                              <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => { setEditUser(u); setShowEditUser(true); }} title="Editar"><FiEdit className="text-xl" /></button>
+                              <button className="text-red-600 hover:text-red-800 cursor-pointer" onClick={() => handleEliminar(u.id!, u.username)} title="Eliminar"><FiTrash2 className="text-xl" /></button>
+                            </>);
+                          }
+                          return <span className="text-sm text-gray-500">Sin acciones</span>;
+                        })()}
+                      </div>
+                    </td>
+                  </tr>
               ))}
             </tbody>
           </table>
