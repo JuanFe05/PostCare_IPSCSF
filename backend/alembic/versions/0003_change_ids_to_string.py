@@ -1,17 +1,10 @@
-"""change_ids_to_string
-
-Revision ID: 0003_change_ids_to_string
-Revises: 0002_add_atenciones_and_related
-Create Date: 2025-11-24
-
-"""
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
 revision = '0003_change_ids_to_string'
-down_revision = '0002_add_atenciones_and_related'
+down_revision = '0002_add_atenciones'
 branch_labels = None
 depends_on = None
 

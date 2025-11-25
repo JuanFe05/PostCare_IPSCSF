@@ -50,7 +50,7 @@ export default function UserTable() {
     }
   };
 
-  // attempt to acquire server-side lock before opening editor
+  // Intentar adquirir el bloqueo del lado del servidor antes de abrir el editor.
   const attemptEdit = async (u: Usuario) => {
     if (!u.id) {
       setEditUser(u);
@@ -58,7 +58,7 @@ export default function UserTable() {
       return;
     }
     try {
-      // first check if someone else holds the lock
+      // primero comprueba si alguien más tiene el bloqueo
       const status = await checkUserLock(u.id);
       if (status.locked) {
         const by = status.lockedBy;
@@ -66,7 +66,7 @@ export default function UserTable() {
         await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
         return;
       }
-      // not locked; try to acquire
+      // no bloqueado; intentar adquirir el bloqueo
       const res = await acquireUserLock(u.id);
       console.debug('acquireUserLock response', res);
       // If backend reports lockedBy someone else, block
@@ -86,7 +86,7 @@ export default function UserTable() {
         return;
       }
       if (res.ok && res.unsupported) {
-        // backend doesn't support locks; fall back to allow edit
+        // el backend no soporta bloqueos; permitir edición como alternativa
         setEditUser(u);
         setShowEditUser(true);
         return;
@@ -107,12 +107,12 @@ export default function UserTable() {
     setEditUser(null);
   };
 
-  // attempt best-effort release on unload (not guaranteed)
+  // intentar liberar el bloqueo al descargar la página (no garantizado)
   useEffect(() => {
     const handler = () => {
       if (heldLockId) {
         try {
-          // best-effort async release; may not complete on unload
+          // intento de liberación asíncrona de mejor esfuerzo; puede no completarse al descargar la página
           releaseUserLock(heldLockId);
         } catch (_) {
           // ignore
@@ -123,7 +123,7 @@ export default function UserTable() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [heldLockId]);
 
-  // compute filtered + sorted list
+  // calcular lista filtrada + ordenada
   const displayed = useMemo(() => {
     // filter
     const filtered = usuarios.filter((u) => {

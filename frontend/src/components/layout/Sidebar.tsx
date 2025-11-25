@@ -16,8 +16,8 @@ const Sidebar = () => {
   const colors = {
     primary: "#1938bc",
     secondary: "#5a8bea",
-    backgroundDark: "#120037",
-    backgroundMid: "#29007D",
+    backgroundDark: "#0c0d25ff",
+    backgroundMid: "#0c0d25ff",
     textBase: "#ffffff",
     error: "#e63946",
   };
@@ -70,8 +70,8 @@ const Sidebar = () => {
     <div
       className="fixed top-0 left-0 h-full w-60 z-50 shadow-2xl"
       style={{
-        background: `linear-gradient(180deg, ${colors.backgroundDark}, ${colors.backgroundMid})`,
-      }}
+          background: `${colors.backgroundDark}`,
+        }}
     >
       {/* LOGO */}
       <div className="flex flex-col items-center justify-center gap-2 px-4 py-6">

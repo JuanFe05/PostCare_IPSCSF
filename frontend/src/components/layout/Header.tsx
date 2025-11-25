@@ -19,8 +19,8 @@ const Header = () => {
 
   return (
     <header
-      className="h-14 lg:h-16 bg-gradient-to-r from-[#0f033f] to-[#1f0b68] flex items-center px-6 shadow-md text-white pr-8 fixed top-0 z-40"
-      style={{ left: '15rem', width: 'calc(100% - 15rem)' }}
+      className="h-14 lg:h-16 flex items-center px-6 shadow-md text-white pr-8 fixed top-0 z-40"
+      style={{ left: '15rem', width: 'calc(100% - 15rem)', background: '#0c0d25ff' }}
     >
       {/* Logo a la izquierda y saludo a la derecha, ambos alineados con el main */}
       <div className="w-full flex items-center justify-end">

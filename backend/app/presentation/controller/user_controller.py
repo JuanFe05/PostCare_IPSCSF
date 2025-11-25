@@ -41,7 +41,7 @@ def delete_user(user_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
 
-# --- Lock endpoints for edit concurrency control ---
+# --- Bloquear puntos finales para el control de concurrencia de edición ---
 @router.post("/{user_id}/lock", dependencies=[Depends(get_current_admin)])
 def acquire_lock(user_id: int, current_user: dict = Depends(get_current_admin)):
     try:
