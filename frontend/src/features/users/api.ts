@@ -40,3 +40,37 @@ export const updateUsuario = async (usuario: Usuario): Promise<Usuario> => {
 export const deleteUsuario = async (id: number): Promise<void> => {
   await client.delete(`/users/${id}`);
 };
+
+// Locking helpers (optional backend support)
+export const acquireUserLock = async (id: number): Promise<{ ok: boolean; lockedBy?: any; unsupported?: boolean }> => {
+  try {
+    const res = await client.post(`/users/${id}/lock`);
+    return { ok: true, lockedBy: res.data?.lockedBy };
+  } catch (err: any) {
+    if (err?.response?.status === 409) {
+      return { ok: false, lockedBy: err.response.data?.lockedBy };
+    }
+    // If backend doesn't expose lock endpoints, treat as unsupported
+    if (err?.response?.status === 404) return { ok: true, unsupported: true };
+    // other errors -> propagate as unsupported to avoid blocking
+    return { ok: true, unsupported: true };
+  }
+};
+
+export const releaseUserLock = async (id: number): Promise<void> => {
+  try {
+    await client.delete(`/users/${id}/lock`);
+  } catch (err) {
+    // ignore errors — best-effort
+    console.warn('releaseUserLock failed', err);
+  }
+};
+
+export const checkUserLock = async (id: number): Promise<{ locked: boolean; lockedBy?: any }> => {
+  try {
+    const res = await client.get(`/users/${id}/lock`);
+    return { locked: !!res.data?.locked, lockedBy: res.data?.lockedBy };
+  } catch (err) {
+    return { locked: false };
+  }
+};

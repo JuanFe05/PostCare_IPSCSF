@@ -3,7 +3,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import type { Usuario } from "../types";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import UserForm from "./UserForm";
-import { getUsuarios, createUsuario, updateUsuario, deleteUsuario } from "../api";
+import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, acquireUserLock, releaseUserLock, checkUserLock } from "../api";
 import Swal from "sweetalert2";
 
 export default function UserTable() {
@@ -17,6 +17,7 @@ export default function UserTable() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
 
   const { auth } = useAuth();
+  const [heldLockId, setHeldLockId] = useState<number | null>(null);
 
   useEffect(() => {
     getUsuarios()
@@ -48,6 +49,79 @@ export default function UserTable() {
       await Swal.fire({ title: "Error", text: "No se pudo eliminar el usuario.", icon: "error" });
     }
   };
+
+  // attempt to acquire server-side lock before opening editor
+  const attemptEdit = async (u: Usuario) => {
+    if (!u.id) {
+      setEditUser(u);
+      setShowEditUser(true);
+      return;
+    }
+    try {
+      // first check if someone else holds the lock
+      const status = await checkUserLock(u.id);
+      if (status.locked) {
+        const by = status.lockedBy;
+        const who = by?.username || by?.name || 'otro usuario';
+        await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
+        return;
+      }
+      // not locked; try to acquire
+      const res = await acquireUserLock(u.id);
+      console.debug('acquireUserLock response', res);
+      // If backend reports lockedBy someone else, block
+      if (res.lockedBy) {
+        const who = res.lockedBy?.username || res.lockedBy?.name || 'otro usuario';
+        // if it's locked by current user, allow editing
+        const meId = auth?.user?.id ?? auth?.user?.username;
+        if (res.lockedBy?.id && meId && String(res.lockedBy.id) !== String(meId)) {
+          await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
+          return;
+        }
+      }
+      if (res.ok && !res.unsupported) {
+        setHeldLockId(u.id);
+        setEditUser(u);
+        setShowEditUser(true);
+        return;
+      }
+      if (res.ok && res.unsupported) {
+        // backend doesn't support locks; fall back to allow edit
+        setEditUser(u);
+        setShowEditUser(true);
+        return;
+      }
+    } catch (err) {
+      console.warn('attemptEdit: lock check failed, allowing edit', err);
+      setEditUser(u);
+      setShowEditUser(true);
+    }
+  };
+
+  const closeEditor = async () => {
+    if (heldLockId) {
+      await releaseUserLock(heldLockId);
+      setHeldLockId(null);
+    }
+    setShowEditUser(false);
+    setEditUser(null);
+  };
+
+  // attempt best-effort release on unload (not guaranteed)
+  useEffect(() => {
+    const handler = () => {
+      if (heldLockId) {
+        try {
+          // best-effort async release; may not complete on unload
+          releaseUserLock(heldLockId);
+        } catch (_) {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [heldLockId]);
 
   // compute filtered + sorted list
   const displayed = useMemo(() => {
@@ -165,7 +239,7 @@ export default function UserTable() {
               console.error("Error actualizando usuario:", err);
               await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el usuario.' });
             } finally { setLoading(false); }
-          }} initial={{ username: editUser.username, email: editUser.email, role_id: editUser.role_id, estado: editUser.estado }} isEdit={true} />
+          }} initial={{ username: editUser.username, email: editUser.email, role_id: editUser.role_id, rol: editUser.role_name, estado: editUser.estado }} isEdit={true} />
         </div>
       )}
 
@@ -239,7 +313,7 @@ export default function UserTable() {
                           const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
                           if (role === 'ADMINISTRADOR') {
                             return (<>
-                              <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => { setEditUser(u); setShowEditUser(true); }} title="Editar"><FiEdit className="text-xl" /></button>
+                              <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => attemptEdit(u)} title="Editar"><FiEdit className="text-xl" /></button>
                               <button className="text-red-600 hover:text-red-800 cursor-pointer" onClick={() => handleEliminar(u.id!, u.username)} title="Eliminar"><FiTrash2 className="text-xl" /></button>
                             </>);
                           }
@@ -251,6 +325,31 @@ export default function UserTable() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {showEditUser && editUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <UserForm onCancel={closeEditor} onSave={async ({ username, email, role_id, estado }) => {
+            if (!editUser) return;
+            let new_role_id = editUser.role_id ?? 2;
+            if (typeof role_id === 'number') new_role_id = role_id;
+            setLoading(true);
+            try {
+              const actualizado = await updateUsuario({ ...editUser, username, email, role_id: new_role_id, estado });
+              setUsuarios((prev: Usuario[]) => prev.map((u: Usuario) => (u.id === actualizado.id ? actualizado : u)));
+              // release lock if held
+              if (heldLockId) {
+                await releaseUserLock(heldLockId);
+                setHeldLockId(null);
+              }
+              setShowEditUser(false);
+              setEditUser(null);
+              await Swal.fire({ icon: 'success', title: 'Usuario actualizado', text: `Usuario ${username} actualizado.` });
+            } catch (err) {
+              console.error("Error actualizando usuario:", err);
+              await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el usuario.' });
+            } finally { setLoading(false); }
+          }} initial={{ username: editUser.username, email: editUser.email, role_id: editUser.role_id, rol: editUser.role_name, estado: editUser.estado }} isEdit={true} />
         </div>
       )}
     </div>

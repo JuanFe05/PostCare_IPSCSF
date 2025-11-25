@@ -1,0 +1,40 @@
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
+
+
+class PacienteDto(BaseModel):
+    id: str
+    id_tipo_documento: int
+    primer_nombre: str
+    segundo_nombre: Optional[str] = None
+    primer_apellido: str
+    segundo_apellido: Optional[str] = None
+    telefono_uno: Optional[str] = None
+    telefono_dos: Optional[str] = None
+    email: Optional[str] = None
+
+
+class AtencionDto(BaseModel):
+    id: str
+    id_paciente: str
+    id_empresa: int
+    id_estado_atencion: int
+    id_seguimiento_atencion: Optional[int] = None
+    fecha_ingreso: Optional[datetime] = None
+    id_usuario: Optional[int] = None
+    fecha_modificacion: Optional[datetime] = None
+    observacion: Optional[str] = None
+
+
+class AtencionPacienteCreateDto(BaseModel):
+    atencion: AtencionDto
+    paciente: PacienteDto
+
+
+class AtencionPacienteResponseDto(BaseModel):
+    atencion_id: str
+    paciente_id: str
+
+    class Config:
+        orm_mode = True

@@ -1,5 +1,5 @@
-import RolesPanel from '../components/RolesPanel';
+import RoleTable from "../components/RoleTable";
 
 export default function RolesPage() {
-	return <RolesPanel />;
+  return <RoleTable />;
 }
