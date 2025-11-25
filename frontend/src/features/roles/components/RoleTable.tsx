@@ -69,27 +69,43 @@ export default function RolesTable() {
       {!loading && roles.length > 0 && (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm divide-y table-auto">
-            <thead className="bg-blue-100 text-blue-900">
+            <thead className="bg-blue-100 text-blue-900 select-none">
               <tr>
                 <th
                   onClick={() => toggleSort("id")}
                   className="p-3 font-semibold text-center cursor-pointer"
                 >
-                  ID
+                  <div className="flex items-center justify-center gap-1">
+                    <span>ID</span>
+                    <span className="inline-flex flex-col ml-1 text-[10px] leading-none">
+                      <span className={sortKey === 'id' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
+                      <span className={sortKey === 'id' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
+                    </span>
+                  </div>
                 </th>
-
                 <th
                   onClick={() => toggleSort("nombre")}
                   className="p-3 font-semibold text-center cursor-pointer"
                 >
-                  Nombre
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Nombre</span>
+                    <span className="inline-flex flex-col ml-1 text-[10px] leading-none">
+                      <span className={sortKey === 'nombre' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
+                      <span className={sortKey === 'nombre' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
+                    </span>
+                  </div>
                 </th>
-
                 <th
                   onClick={() => toggleSort("descripcion")}
                   className="p-3 font-semibold text-center cursor-pointer"
                 >
-                  Descripción
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Descripción</span>
+                    <span className="inline-flex flex-col ml-1 text-[10px] leading-none">
+                      <span className={sortKey === 'descripcion' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
+                      <span className={sortKey === 'descripcion' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
+                    </span>
+                  </div>
                 </th>
               </tr>
             </thead>

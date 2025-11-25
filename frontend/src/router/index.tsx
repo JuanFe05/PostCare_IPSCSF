@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/login/Login';
-import Register from '../pages/Register/Register';
+import Register from '../pages/register/Register';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import OverviewPanel from '../pages/dashboard/OverviewPanel';
 import AtencionesPage from '../features/atenciones/pages/AtencionesPage';

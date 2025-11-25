@@ -195,7 +195,7 @@ export default function UserTable() {
             value={searchTerm}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             placeholder="Buscar por usuario o correo"
-            className="w-full p-2 border rounded text-sm"
+            className="w-full p-2 border rounded text-sm border-[#1938bc] focus:outline-none focus:ring-1 focus:ring-[#1938bc] focus:border-[#1938bc] placeholder-gray-500"
             style={{ width: '360px' }}
           />
         </div>
