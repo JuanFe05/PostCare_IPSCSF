@@ -111,16 +111,29 @@ export default function RolesTable() {
             </thead>
 
             <tbody className="bg-white">
-              {displayed.map((r, idx) => (
-                <tr
-                  key={r.id}
-                  className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                >
-                  <td className="p-3 text-center">{r.id}</td>
-                  <td className="p-3 text-center">{r.nombre}</td>
-                  <td className="p-3 text-center">{r.descripcion}</td>
-                </tr>
-              ))}
+              {displayed.map((r, idx) => {
+                const role = String(r.nombre ?? '').trim().toUpperCase();
+                return (
+                  <tr
+                    key={r.id}
+                    className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                  >
+                    <td className="p-3 text-center">{r.id}</td>
+                    <td className="p-3 text-center">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        role === 'ADMINISTRADOR'
+                          ? 'bg-blue-100 text-blue-700'
+                          : role === 'FACTURADOR'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : role === 'ASESOR'
+                          ? 'bg-orange-100 text-orange-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}>{r.nombre || ''}</span>
+                    </td>
+                    <td className="p-3 text-center">{r.descripcion}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

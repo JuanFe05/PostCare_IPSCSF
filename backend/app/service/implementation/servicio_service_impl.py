@@ -10,7 +10,7 @@ class ServicioServiceImpl:
 
     def create_servicio(self, data: ServicioCreateDto):
         db = SessionLocal()
-        servicio = Servicio(nombre=data.nombre)
+        servicio = Servicio(nombre=data.nombre, descripcion=getattr(data, 'descripcion', None))
         result = self.repo.create(db, servicio)
         db.close()
         return result
@@ -36,6 +36,7 @@ class ServicioServiceImpl:
             db.close()
             raise Exception("Servicio no encontrado")
         update_data = data.dict(exclude_unset=True)
+        # allow updating descripcion as well
         result = self.repo.update(db, servicio, update_data)
         db.close()
         return result

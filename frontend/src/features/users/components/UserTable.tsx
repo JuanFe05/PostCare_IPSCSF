@@ -172,7 +172,7 @@ export default function UserTable() {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <span>Gestion de Usuarios</span>
+        <span>Gestión de Usuarios</span>
       </h2>
 
       <div className="mb-6 flex items-center justify-between">
@@ -306,7 +306,17 @@ export default function UserTable() {
                     <td className="p-3 text-center">{u.username}</td>
                     <td className="p-3 text-center">{u.email}</td>
                     <td className="p-3 text-center"><span className={`px-2 py-1 rounded text-xs font-bold ${u.estado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{u.estado ? 'Activo' : 'Inactivo'}</span></td>
-                    <td className="p-3 text-center"><span className={`px-2 py-1 rounded text-xs font-bold ${u.role_name === 'ADMINISTRADOR' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>{u.role_name || ''}</span></td>
+                    <td className="p-3 text-center">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        u.role_name === 'ADMINISTRADOR'
+                          ? 'bg-blue-100 text-blue-700'
+                          : u.role_name === 'FACTURADOR'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : u.role_name === 'ASESOR'
+                          ? 'bg-orange-100 text-orange-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}>{u.role_name || ''}</span>
+                    </td>
                     <td className="p-3 text-center">
                       <div className="flex gap-2 justify-center">
                         {(() => {
