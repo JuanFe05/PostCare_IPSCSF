@@ -16,8 +16,8 @@ const Sidebar = () => {
   const colors = {
     primary: "#1938bc",
     secondary: "#5a8bea",
-    backgroundDark: "#0c0d25ff",
-    backgroundMid: "#0c0d25ff",
+    backgroundDark: "#15163fff",
+    backgroundMid: "#15163fff",
     textBase: "#ffffff",
     error: "#e63946",
   };

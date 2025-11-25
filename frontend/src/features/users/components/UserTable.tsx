@@ -69,10 +69,10 @@ export default function UserTable() {
       // no bloqueado; intentar adquirir el bloqueo
       const res = await acquireUserLock(u.id);
       console.debug('acquireUserLock response', res);
-      // If backend reports lockedBy someone else, block
+      // Si el backend informa que está bloqueado por otra persona, bloquear.
       if (res.lockedBy) {
         const who = res.lockedBy?.username || res.lockedBy?.name || 'otro usuario';
-        // if it's locked by current user, allow editing
+        // si está bloqueado por el usuario actual, permitir la edición
         const meId = auth?.user?.id ?? auth?.user?.username;
         if (res.lockedBy?.id && meId && String(res.lockedBy.id) !== String(meId)) {
           await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
@@ -175,7 +175,7 @@ export default function UserTable() {
         <span>Gestion de Usuarios</span>
       </h2>
 
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex-shrink-0">
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
