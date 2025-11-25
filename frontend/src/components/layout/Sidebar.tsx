@@ -1,7 +1,7 @@
 import { RiFileCopyLine, RiLogoutBoxRLine, RiUserSettingsLine } from 'react-icons/ri';
 import { CiMedicalClipboard } from 'react-icons/ci';
 import { IoPersonOutline } from 'react-icons/io5';
-import { MdMedicalServices } from 'react-icons/md';
+import { MdMedicalServices, MdContentPasteSearch } from 'react-icons/md';
 import { BsBuildingAdd } from 'react-icons/bs';
 import logoIPS from "../../assets/IPS.png";
 import { Link, useLocation, useNavigate } from "react-router-dom"; // incluye useNavigate
@@ -36,7 +36,8 @@ const Sidebar = () => {
           { label: "Atenciones", icon: <CiMedicalClipboard />, path: "/dashboard/atenciones" },
           { label: "Pacientes", icon: <IoPersonOutline />, path: "/dashboard/pacientes" },
           { label: "Empresas", icon: <BsBuildingAdd />, path: "/dashboard/empresas" },
-          { label: "Servicios", icon: <MdMedicalServices />, path: "/dashboard/servicios" },
+          { label: "Tipos de Servicios", icon: <MdMedicalServices />, path: "/dashboard/tipos-servicios" },
+          { label: "Tipos de Seguimiento", icon: <MdContentPasteSearch />, path: "/dashboard/tipos-seguimiento" },
           { label: "Usuarios", icon: <RiUserSettingsLine />, path: "/dashboard/usuarios" },
           { label: "Roles", icon: <RiFileCopyLine />, path: "/dashboard/roles" },
         ];
