@@ -204,10 +204,6 @@ export default function UserTable() {
       {showAddUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <UserForm onCancel={() => setShowAddUser(false)} onSave={async ({ username, email, role_id, password, estado }) => {
-            if (!username || !email || (!password && !role_id)) {
-              await Swal.fire({ icon: 'warning', title: 'Datos incompletos', text: 'Completa usuario, email, contraseña y rol.' });
-              return;
-            }
             setLoading(true);
             try {
               const nuevo = await createUsuario({ username, email, password, estado, role_id });
@@ -359,7 +355,7 @@ export default function UserTable() {
               console.error("Error actualizando usuario:", err);
               await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el usuario.' });
             } finally { setLoading(false); }
-          }} initial={{ username: editUser.username, email: editUser.email, role_id: editUser.role_id, rol: editUser.role_name, estado: editUser.estado }} isEdit={true} />
+          }} initial={editUser} isEdit={true} />
         </div>
       )}
     </div>

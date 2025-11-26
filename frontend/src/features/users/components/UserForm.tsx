@@ -9,8 +9,8 @@ interface UsuarioFormProps {
   isEdit?: boolean;
 }
 
-export default function UserForm({ onCancel, onSave, initial = {}, isEdit = false }: UsuarioFormProps) {
-  const { register, handleSubmit, watch, reset, trigger, setFocus, formState: { errors } } = useForm();
+export default function UserForm({ onCancel, onSave, initial, isEdit = false }: UsuarioFormProps) {
+  const { register, handleSubmit, watch, reset, setFocus, formState: { errors } } = useForm();
   const [roles, setRoles] = useState<{ id: number; nombre: string }[]>([]);
 
   useEffect(() => {
@@ -20,19 +20,20 @@ export default function UserForm({ onCancel, onSave, initial = {}, isEdit = fals
   }, []);
 
   useEffect(() => {
+    const init = initial ?? {};
     let resolvedRoleId: string = "";
-    if (initial.role_id !== undefined && initial.role_id !== null) {
-      resolvedRoleId = String(initial.role_id);
-    } else if (initial.rol) {
-      const found = roles.find((x) => String(x.nombre ?? '').trim().toLowerCase() === String(initial.rol).trim().toLowerCase());
+    if (init.role_id !== undefined && init.role_id !== null) {
+      resolvedRoleId = String(init.role_id);
+    } else if (init.rol) {
+      const found = roles.find((x) => String(x.nombre ?? '').trim().toLowerCase() === String(init.rol).trim().toLowerCase());
       if (found) resolvedRoleId = String(found.id);
     }
 
     reset({
-      username: initial.username ? String(initial.username).toLowerCase() : "",
-      email: initial.email ? String(initial.email).toLowerCase() : "",
+      username: init.username ? String(init.username).toLowerCase() : "",
+      email: init.email ? String(init.email).toLowerCase() : "",
       role_id: resolvedRoleId,
-      estado: initial.estado !== undefined ? (initial.estado ? 'activo' : 'inactivo') : 'activo',
+      estado: init.estado !== undefined ? (init.estado ? 'activo' : 'inactivo') : 'activo',
       password: undefined,
       passwordConfirm: undefined,
     });
@@ -40,14 +41,7 @@ export default function UserForm({ onCancel, onSave, initial = {}, isEdit = fals
 
   const passwordValue = watch('password');
 
-  const onSubmit = async (data: any) => {
-    const ok = await trigger();
-    if (!ok) {
-      const firstError = Object.keys(errors)[0];
-      if (firstError) setFocus(firstError as any);
-      return;
-    }
-
+  const onSubmit = (data: any) => {
     const payload = {
       username: String(data.username ?? '').toLowerCase(),
       email: String(data.email ?? '').toLowerCase(),
@@ -58,10 +52,16 @@ export default function UserForm({ onCancel, onSave, initial = {}, isEdit = fals
     onSave(payload);
   };
 
+  const onError = (errs: any) => {
+    console.debug('UserForm validation errors:', errs);
+    const firstError = Object.keys(errs || {})[0];
+    if (firstError) setFocus(firstError as any);
+  };
+
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onSubmit, onError)}
       className="bg-white p-8 rounded-xl shadow-xl w-full max-w-[720px] border border-gray-200"
     >
       <h3 className="text-2xl font-semibold mb-6 text-gray-800">
