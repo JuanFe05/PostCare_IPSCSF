@@ -69,10 +69,10 @@ export default function UserTable() {
       // no bloqueado; intentar adquirir el bloqueo
       const res = await acquireUserLock(u.id);
       console.debug('acquireUserLock response', res);
-      // If backend reports lockedBy someone else, block
+      // Si el backend informa que está bloqueado por otra persona, bloquear.
       if (res.lockedBy) {
         const who = res.lockedBy?.username || res.lockedBy?.name || 'otro usuario';
-        // if it's locked by current user, allow editing
+        // si está bloqueado por el usuario actual, permitir la edición
         const meId = auth?.user?.id ?? auth?.user?.username;
         if (res.lockedBy?.id && meId && String(res.lockedBy.id) !== String(meId)) {
           await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
@@ -172,10 +172,10 @@ export default function UserTable() {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <span>Gestion de Usuarios</span>
+        <span>Gestión de Usuarios</span>
       </h2>
 
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex-shrink-0">
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
@@ -204,10 +204,6 @@ export default function UserTable() {
       {showAddUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <UserForm onCancel={() => setShowAddUser(false)} onSave={async ({ username, email, role_id, password, estado }) => {
-            if (!username || !email || (!password && !role_id)) {
-              await Swal.fire({ icon: 'warning', title: 'Datos incompletos', text: 'Completa usuario, email, contraseña y rol.' });
-              return;
-            }
             setLoading(true);
             try {
               const nuevo = await createUsuario({ username, email, password, estado, role_id });
@@ -306,7 +302,17 @@ export default function UserTable() {
                     <td className="p-3 text-center">{u.username}</td>
                     <td className="p-3 text-center">{u.email}</td>
                     <td className="p-3 text-center"><span className={`px-2 py-1 rounded text-xs font-bold ${u.estado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{u.estado ? 'Activo' : 'Inactivo'}</span></td>
-                    <td className="p-3 text-center"><span className={`px-2 py-1 rounded text-xs font-bold ${u.role_name === 'ADMINISTRADOR' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>{u.role_name || ''}</span></td>
+                    <td className="p-3 text-center">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        u.role_name === 'ADMINISTRADOR'
+                          ? 'bg-blue-100 text-blue-700'
+                          : u.role_name === 'FACTURADOR'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : u.role_name === 'ASESOR'
+                          ? 'bg-orange-100 text-orange-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}>{u.role_name || ''}</span>
+                    </td>
                     <td className="p-3 text-center">
                       <div className="flex gap-2 justify-center">
                         {(() => {
@@ -349,7 +355,7 @@ export default function UserTable() {
               console.error("Error actualizando usuario:", err);
               await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el usuario.' });
             } finally { setLoading(false); }
-          }} initial={{ username: editUser.username, email: editUser.email, role_id: editUser.role_id, rol: editUser.role_name, estado: editUser.estado }} isEdit={true} />
+          }} initial={editUser} isEdit={true} />
         </div>
       )}
     </div>

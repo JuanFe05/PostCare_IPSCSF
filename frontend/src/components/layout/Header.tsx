@@ -20,7 +20,7 @@ const Header = () => {
   return (
     <header
       className="h-14 lg:h-16 flex items-center px-6 shadow-md text-white pr-8 fixed top-0 z-40"
-      style={{ left: '15rem', width: 'calc(100% - 15rem)', background: '#0c0d25ff' }}
+      style={{ left: '15rem', width: 'calc(100% - 15rem)', background: '#15163fff' }}
     >
       {/* Logo a la izquierda y saludo a la derecha, ambos alineados con el main */}
       <div className="w-full flex items-center justify-end">
