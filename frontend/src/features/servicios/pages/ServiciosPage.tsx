@@ -1,5 +1,5 @@
-import ServiciosPanel from '../components/ServiciosPanel';
+import ServiceTable from '../components/ServiceTable';
 
 export default function ServiciosPage() {
-	return <ServiciosPanel />;
+  return <ServiceTable />;
 }
