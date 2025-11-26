@@ -3,7 +3,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import type { Usuario } from "../types";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import UserForm from "./UserForm";
-import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, acquireUserLock, releaseUserLock, checkUserLock } from "../api";
+import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, acquireUserLock, releaseUserLock, checkUserLock } from "../Users.api";
 import Swal from "sweetalert2";
 
 export default function UserTable() {

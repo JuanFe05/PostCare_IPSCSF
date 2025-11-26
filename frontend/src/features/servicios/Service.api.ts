@@ -1,5 +1,5 @@
 // src/features/services/Service.api.ts
-import client from "../../../api/Users.api"; // usa el cliente que ya usas en el proyecto
+import client from "../../api/Users.api"; // usa el cliente que ya usas en el proyecto
 import type { Service, NewService } from "./types";
 
 
@@ -9,6 +9,7 @@ export const getServices = async (): Promise<Service[]> => {
   return data.map((s: any) => ({
     id: s.id,
     nombre: s.nombre,
+    descripcion: s.descripcion,
   }));
 };
 
@@ -17,6 +18,7 @@ export const getService = async (id: number): Promise<Service> => {
   return {
     id: resp.data.id,
     nombre: resp.data.nombre,
+    descripcion: resp.data.descripcion,
   };
 };
 
