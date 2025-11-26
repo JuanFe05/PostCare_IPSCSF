@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { getRoles } from "../Role.api";
+import { FiEdit } from 'react-icons/fi';
+import { useAuth } from '../../../hooks/useAuth';
+import { getRoles, updateRol } from "../Role.api";
+import RoleForm from "./RoleForm";
+import Swal from 'sweetalert2';
 
 // TIPO ROLE
 export interface Role {
@@ -11,6 +15,9 @@ export interface Role {
 export default function RolesTable() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editRole, setEditRole] = useState<Role | null>(null);
+  const { auth } = useAuth();
 
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
@@ -23,7 +30,7 @@ export default function RolesTable() {
       .finally(() => setLoading(false));
   }, []);
 
-  // FILTRO + ORDENAMIENTO
+  // ORDENAMIENTO
   const displayed = useMemo(() => {
     const filtered = roles;
 
@@ -107,16 +114,17 @@ export default function RolesTable() {
                     </span>
                   </div>
                 </th>
+                <th className="p-3 font-semibold w-32 text-center">Acciones</th>
               </tr>
             </thead>
 
             <tbody className="bg-white">
-              {displayed.map((r, idx) => {
+              {displayed.map((r: Role, idx: number) => {
                 const role = String(r.nombre ?? '').trim().toUpperCase();
                 return (
                   <tr
                     key={r.id}
-                    className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}
                   >
                     <td className="p-3 text-center">{r.id}</td>
                     <td className="p-3 text-center">
@@ -131,11 +139,46 @@ export default function RolesTable() {
                       }`}>{r.nombre || ''}</span>
                     </td>
                     <td className="p-3 text-center">{r.descripcion}</td>
+                    <td className="p-3 text-center">
+                      {(() => {
+                        const roleName = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+                        if (roleName === 'ADMINISTRADOR') {
+                          return (
+                            <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => { setEditRole(r); setShowEdit(true); }} title="Editar">
+                              <FiEdit className="text-xl" />
+                            </button>
+                          );
+                        }
+                        return <span className="text-sm text-gray-500">Sin acciones</span>;
+                      })()}
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {showEdit && editRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <RoleForm
+            initial={editRole}
+            isEdit={true}
+            onCancel={() => { setShowEdit(false); setEditRole(null); }}
+            onSave={async (payload) => {
+              try {
+                const updated = await updateRol({ id: editRole.id, nombre: payload.nombre ?? '', descripcion: payload.descripcion ?? '' });
+                setRoles((prev: Role[]) => prev.map((rr: Role) => (rr.id === updated.id ? updated : rr)));
+                setShowEdit(false);
+                setEditRole(null);
+                await Swal.fire({ icon: 'success', title: 'Rol actualizado', text: `Rol ${updated.nombre} actualizado.` });
+              } catch (err) {
+                console.error('Error actualizando rol:', err);
+                await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el rol.' });
+              }
+            }}
+          />
         </div>
       )}
     </div>
