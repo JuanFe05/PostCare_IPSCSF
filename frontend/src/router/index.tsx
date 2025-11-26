@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/login/Login';
-import Register from '../pages/register/Register';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import OverviewPanel from '../pages/dashboard/OverviewPanel';
 import AtencionesPage from '../features/atenciones/pages/AtencionesPage';
 import PacientesPage from '../features/pacientes/pages/PacientesPage';
 import EmpresasPage from '../features/empresas/pages/EmpresasPage';
 import ServiciosPage from '../features/servicios/pages/ServiciosPage';
+import TiposSeguimientoPage from '../features/seguimiento/pages/TiposSeguimientoPage';
 import UsersPage from '../features/users/pages/UsersPage';
 import RolesPage from '../features/roles/pages/RolesPage';
 import NotFoundPage from '../pages/not-found/NotFoundPage';
@@ -21,7 +21,6 @@ export default function AppRouter() {
         {/* Redirigir raíz directamente al login para ejecutar la app y mostrar formulario */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
         {/* Rutas protegidas del dashboard */}
         <Route
           path="/dashboard"
@@ -40,9 +39,14 @@ export default function AppRouter() {
               <EmpresasPage />
             </ProtectedRoute>
           } />
-          <Route path="servicios" element={
+          <Route path="tipos-servicios" element={
             <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
               <ServiciosPage />
+            </ProtectedRoute>
+          } />
+          <Route path="tipos-seguimiento" element={
+            <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+              <TiposSeguimientoPage />
             </ProtectedRoute>
           } />
           <Route path="usuarios" element={

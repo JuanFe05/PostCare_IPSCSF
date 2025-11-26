@@ -36,8 +36,8 @@ const Sidebar = () => {
           { label: "Atenciones", icon: <CiMedicalClipboard />, path: "/dashboard/atenciones" },
           { label: "Pacientes", icon: <IoPersonOutline />, path: "/dashboard/pacientes" },
           { label: "Empresas", icon: <BsBuildingAdd />, path: "/dashboard/empresas" },
-          { label: "Tipos de Servicios", icon: <MdMedicalServices />, path: "/dashboard/tipos-servicios" },
-          { label: "Tipos de Seguimiento", icon: <MdContentPasteSearch />, path: "/dashboard/tipos-seguimiento" },
+          { label: "Servicios", icon: <MdMedicalServices />, path: "/dashboard/tipos-servicios" },
+          { label: "Seguimientos", icon: <MdContentPasteSearch />, path: "/dashboard/tipos-seguimiento" },
           { label: "Usuarios", icon: <RiUserSettingsLine />, path: "/dashboard/usuarios" },
           { label: "Roles", icon: <RiFileCopyLine />, path: "/dashboard/roles" },
         ];
