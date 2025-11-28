@@ -244,7 +244,7 @@ export default function ServicesTable() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <ServiceForm
             isEdit
-            initial={{ nombre: editService.nombre }}
+            initial={{ nombre: editService.nombre, descripcion: editService.descripcion }}
             onCancel={closeEditor}
             onSave={async ({ nombre }) => {
               if (!editService) return;
