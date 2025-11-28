@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { FiEdit } from 'react-icons/fi';
 import { useAuth } from '../../../hooks/useAuth';
-import { getRoles, updateRol } from "../Role.api";
+import { getRoles, updateRol, acquireRoleLock, releaseRoleLock, checkRoleLock } from "../Role.api";
 import RoleForm from "./RoleForm";
 import Swal from 'sweetalert2';
 
@@ -21,6 +21,7 @@ export default function RolesTable() {
 
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
+  const [heldLockId, setHeldLockId] = useState<number | null>(null);
 
   // CARGAR ROLES
   useEffect(() => {
@@ -29,6 +30,17 @@ export default function RolesTable() {
       .catch((err) => console.error("Error cargando roles:", err))
       .finally(() => setLoading(false));
   }, []);
+
+  // release lock on unload
+  useEffect(() => {
+    const handler = () => {
+      if (heldLockId) {
+        try { releaseRoleLock(heldLockId); } catch (_) { /* best-effort */ }
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [heldLockId]);
 
   // ORDENAMIENTO
   const displayed = useMemo(() => {
@@ -144,7 +156,37 @@ export default function RolesTable() {
                         const roleName = String(auth?.user?.role_name ?? '').trim().toUpperCase();
                         if (roleName === 'ADMINISTRADOR') {
                           return (
-                            <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => { setEditRole(r); setShowEdit(true); }} title="Editar">
+                            <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={async () => {
+                              // attempt to acquire lock before editing
+                              try {
+                                const status = await checkRoleLock(r.id!);
+                                if (status.locked) {
+                                  const by = status.lockedBy;
+                                  const who = by?.username || by?.name || 'otro usuario';
+                                  await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
+                                  return;
+                                }
+                              } catch (e) {
+                                // ignore status check failure and continue to acquire attempt
+                              }
+
+                              try {
+                                const res = await acquireRoleLock(r.id!);
+                                if (res && res.lockedBy && res.lockedBy.id && res.lockedBy.id !== auth?.user?.id) {
+                                  const who = res.lockedBy?.username || res.lockedBy?.name || 'otro usuario';
+                                  await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
+                                  return;
+                                }
+                                // acquired
+                                setHeldLockId(r.id!);
+                                setEditRole(r);
+                                setShowEdit(true);
+                              } catch (err) {
+                                console.warn('Lock acquire failed, allowing edit', err);
+                                setEditRole(r);
+                                setShowEdit(true);
+                              }
+                            }} title="Editar">
                               <FiEdit className="text-xl" />
                             </button>
                           );
@@ -165,11 +207,16 @@ export default function RolesTable() {
           <RoleForm
             initial={editRole}
             isEdit={true}
-            onCancel={() => { setShowEdit(false); setEditRole(null); }}
+            onCancel={async () => { if (heldLockId) { try { await releaseRoleLock(heldLockId); } catch (_) {} setHeldLockId(null); } setShowEdit(false); setEditRole(null); }}
             onSave={async (payload) => {
               try {
                 const updated = await updateRol({ id: editRole.id, nombre: payload.nombre ?? '', descripcion: payload.descripcion ?? '' });
                 setRoles((prev: Role[]) => prev.map((rr: Role) => (rr.id === updated.id ? updated : rr)));
+                // release lock if held
+                if (heldLockId) {
+                  try { await releaseRoleLock(heldLockId); } catch (e) { /* best-effort */ }
+                  setHeldLockId(null);
+                }
                 setShowEdit(false);
                 setEditRole(null);
                 await Swal.fire({ icon: 'success', title: 'Rol actualizado', text: `Rol ${updated.nombre} actualizado.` });

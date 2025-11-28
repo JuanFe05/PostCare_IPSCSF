@@ -45,3 +45,30 @@ export const updateRol = async (rol: Rol): Promise<Rol> => {
 export const deleteRol = async (id: number): Promise<void> => {
   await client.delete(`/roles/${id}`);
 };
+
+export const acquireRoleLock = async (id: number): Promise<any> => {
+  try {
+    const resp = await client.post(`/roles/${id}/lock`);
+    return resp.data;
+  } catch (err: any) {
+    return { ok: false, error: err, unsupported: true };
+  }
+};
+
+export const releaseRoleLock = async (id: number): Promise<any> => {
+  try {
+    const resp = await client.delete(`/roles/${id}/lock`);
+    return resp.data;
+  } catch (err: any) {
+    return { ok: false, error: err, unsupported: true };
+  }
+};
+
+export const checkRoleLock = async (id: number): Promise<any> => {
+  try {
+    const resp = await client.get(`/roles/${id}/lock`);
+    return resp.data;
+  } catch (err: any) {
+    return { locked: false };
+  }
+};
