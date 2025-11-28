@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
-import { FiEdit, FiTrash2 } from "react-icons/fi";
 import Swal from "sweetalert2";
+import SeguimientoSearch from "./SeguimientoSearch";
+import SeguimientoRow from "./SeguimientoRow";
 import { useAuth } from "../../../hooks/useAuth";
 import SeguimientoForm from "./SeguimientoForm";
 import { getTiposSeguimiento, createTipoSeguimiento, updateTipoSeguimiento, deleteTipoSeguimiento } from "../Seguimiento.api";
@@ -27,9 +28,10 @@ export default function SeguimientoTable() {
     const q = String(search ?? '').trim().toLowerCase();
     const filtered = tipos.filter((t: TipoSeguimiento) => {
       if (!q) return true;
+      const id = String(t.id ?? '').toLowerCase();
       const nombre = String(t.nombre ?? '').toLowerCase();
       const desc = String(t.descripcion ?? '').toLowerCase();
-      return nombre.includes(q) || desc.includes(q);
+      return id.includes(q) || nombre.includes(q) || desc.includes(q);
     });
 
     if (!sortKey || !sortDir) return filtered;
@@ -114,18 +116,7 @@ export default function SeguimientoTable() {
           })()}
         </div>
 
-        <div className="flex items-center gap-2 w-full max-w-md justify-end">
-          <input
-            type="text"
-            value={search}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre o descripción"
-            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition border-gray-300"
-          />
-          {search && (
-            <button onClick={() => setSearch('')} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200">Limpiar</button>
-          )}
-        </div>
+        <SeguimientoSearch value={search} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} onClear={() => setSearch('')} placeholder="Buscar por ID, Nombre o Descripción" />
       </div>
 
       {loading && <p>Cargando tipos...</p>}
@@ -173,27 +164,7 @@ export default function SeguimientoTable() {
             </thead>
             <tbody className="bg-white">
               {displayedTipos.map((t: TipoSeguimiento, idx: number) => (
-                <tr key={t.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
-                  <td className="p-3 text-center">{t.id}</td>
-                  <td className="p-3 text-center">{t.nombre}</td>
-                  <td className="p-3 text-center">{t.descripcion ?? ''}</td>
-                  <td className="p-3 text-center">
-                    <div className="flex gap-2 justify-center">
-                      {(() => {
-                        const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
-                        if (role === 'ADMINISTRADOR') {
-                          return (
-                            <>
-                              <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => { setEditTipo(t); setShowEdit(true); }} title="Editar"><FiEdit className="text-xl" /></button>
-                              <button className="text-red-600 hover:text-red-800 cursor-pointer" onClick={() => handleDelete(t.id, t.nombre)} title="Eliminar"><FiTrash2 className="text-xl" /></button>
-                            </>
-                          );
-                        }
-                        return <span className="text-sm text-gray-500">Sin acciones</span>;
-                      })()}
-                    </div>
-                  </td>
-                </tr>
+                <SeguimientoRow key={t.id} t={t} idx={idx} auth={auth} setEditTipo={setEditTipo} setShowEdit={setShowEdit} handleDelete={handleDelete} />
               ))}
             </tbody>
           </table>
