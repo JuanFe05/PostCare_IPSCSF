@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent } from "react";
 import { useAuth } from "../../../hooks/useAuth";
-import type { Service } from "../pages/types";
+import type { Service } from "../types";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import ServiceForm from "./ServiceForm";
 import Swal from "sweetalert2";
@@ -12,7 +13,7 @@ import {
   acquireServiceLock,
   releaseServiceLock,
   checkServiceLock,
-} from "../pages/Service.api";
+} from "../Service.api";
 
 export default function ServicesTable() {
   const [showAdd, setShowAdd] = useState(false);
@@ -173,10 +174,12 @@ export default function ServicesTable() {
   };
 
   return (
-    <div className="p-8 w-full">
-      <h2 className="text-2xl font-bold mb-6">Gestión de Servicios</h2>
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+        <span>Gestión de Servicios</span>
+      </h2>
 
-      <div className="mb-4 flex items-start gap-4">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex-shrink-0">
           {(() => {
             const role = String(auth?.user?.role_name ?? "").trim().toUpperCase();
@@ -184,7 +187,7 @@ export default function ServicesTable() {
               return (
                 <button
                   onClick={() => setShowAdd(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow cursor-pointer"
                 >
                   Agregar nuevo servicio
                 </button>
@@ -198,15 +201,17 @@ export default function ServicesTable() {
           })()}
         </div>
 
-        <div className="ml-4 flex-shrink-0">
+        <div className="flex items-center gap-2 w-full max-w-md justify-end">
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por nombre o ID"
-            className="w-full p-2 border rounded text-sm border-[#1938bc] focus:outline-none focus:ring-1 focus:ring-[#1938bc] focus:border-[#1938bc] placeholder-gray-500"
-            style={{ width: "360px" }}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+            placeholder="Buscar por ID o Nombre..."
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition border-gray-300"
           />
+          {searchTerm && (
+            <button onClick={() => setSearchTerm("")} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200">Limpiar</button>
+          )}
         </div>
       </div>
 
@@ -242,7 +247,7 @@ export default function ServicesTable() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <ServiceForm
             isEdit
-            initial={{ nombre: editService.nombre }}
+            initial={{ nombre: editService.nombre, descripcion: editService.descripcion }}
             onCancel={closeEditor}
             onSave={async ({ nombre }) => {
               if (!editService) return;
@@ -277,8 +282,8 @@ export default function ServicesTable() {
           <table className="min-w-full text-sm divide-y table-auto">
             <thead className="bg-blue-100 text-blue-900">
               <tr>
-                <th onClick={() => toggleSort("id")} className="p-3 font-semibold w-16 text-left cursor-pointer select-none">
-                  <div className="flex items-center gap-1">
+                <th onClick={() => toggleSort("id")} className="p-3 font-semibold w-16 text-center cursor-pointer select-none">
+                  <div className="flex items-center justify-center gap-1">
                     <span>ID</span>
                     <span className="inline-flex flex-col ml-2 text-xs leading-none">
                       <span className={sortKey === "id" && sortDir === "asc" ? "text-blue-700" : "text-gray-300"}>▲</span>
@@ -287,8 +292,8 @@ export default function ServicesTable() {
                   </div>
                 </th>
 
-                <th onClick={() => toggleSort("nombre")} className="p-3 font-semibold text-left cursor-pointer select-none">
-                  <div className="flex items-center gap-1">
+                <th onClick={() => toggleSort("nombre")} className="p-3 font-semibold text-center cursor-pointer select-none">
+                  <div className="flex items-center justify-center gap-1">
                     <span>Nombre</span>
                     <span className="inline-flex flex-col ml-2 text-xs leading-none">
                       <span className={sortKey === "nombre" && sortDir === "asc" ? "text-blue-700" : "text-gray-300"}>▲</span>
@@ -297,21 +302,33 @@ export default function ServicesTable() {
                   </div>
                 </th>
 
-                <th className="p-3 font-semibold text-left">Descripción</th>
-                <th className="p-3 font-semibold w-32 text-left">Acciones</th>
+                <th onClick={() => toggleSort("descripcion")} className="p-3 font-semibold text-center cursor-pointer select-none">
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Descripción</span>
+                    <span className="inline-flex flex-col ml-2 text-xs leading-none">
+                      <span className={sortKey === "descripcion" && sortDir === "asc" ? "text-blue-700" : "text-gray-300"}>▲</span>
+                      <span className={sortKey === "descripcion" && sortDir === "desc" ? "text-blue-700" : "text-gray-300"}>▼</span>
+                    </span>
+                  </div>
+                </th>
+                <th className="p-3 font-semibold w-32 text-center">
+                  <div className="w-full text-center">Acciones</div>
+                </th>
               </tr>
             </thead>
 
             <tbody className="bg-white">
               {displayed.map((s, idx) => (
                 <tr key={s.id} className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50`}>
-                  <td className="p-3 text-left">{s.id}</td>
-                  <td className="p-3 text-left">{s.nombre}</td>
-                  <td className="p-3 text-left text-gray-600 italic">
-                    {`Servicio relacionado con ${s.nombre.toLowerCase()}`}
+                  <td className="p-3 text-center">{s.id}</td>
+                  <td className="p-3 text-center">{s.nombre}</td>
+                  <td className="p-3 text-center">
+                    {s.descripcion && String(s.descripcion).trim().length > 0
+                      ? s.descripcion
+                      : `Servicio relacionado con ${String(s.nombre ?? '').toLowerCase()}`}
                   </td>
-                  <td className="p-3 text-left">
-                    <div className="flex gap-2">
+                  <td className="p-3 text-center">
+                    <div className="flex gap-2 justify-center">
                       {(() => {
                         const role = String(auth?.user?.role_name ?? "").trim().toUpperCase();
                         if (role === "ADMINISTRADOR") {
@@ -343,6 +360,11 @@ export default function ServicesTable() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* No hay coincidencias */}
+      {!loading && services.length > 0 && displayed.length === 0 && (
+        <p className="mt-4">No se encontraron servicios que coincidan con "{searchTerm}".</p>
       )}
     </div>
   );

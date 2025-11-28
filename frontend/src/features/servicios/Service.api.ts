@@ -1,5 +1,5 @@
 // src/features/services/Service.api.ts
-import client from "../../../api/Users.api"; // usa el cliente que ya usas en el proyecto
+import client from "../../api/Users.api"; // usa el cliente que ya usas en el proyecto
 import type { Service, NewService } from "./types";
 
 
@@ -9,6 +9,7 @@ export const getServices = async (): Promise<Service[]> => {
   return data.map((s: any) => ({
     id: s.id,
     nombre: s.nombre,
+    descripcion: s.descripcion,
   }));
 };
 
@@ -17,6 +18,7 @@ export const getService = async (id: number): Promise<Service> => {
   return {
     id: resp.data.id,
     nombre: resp.data.nombre,
+    descripcion: resp.data.descripcion,
   };
 };
 
@@ -26,7 +28,7 @@ export const createService = async (payload: NewService): Promise<Service> => {
 };
 
 export const updateService = async (service: Service): Promise<Service> => {
-  if (!service.id) throw new Error("Service must have id to update");
+  if (!service.id) throw new Error("El servicio debe tener un identificador para actualizarse.");
   const resp = await client.put(`/servicios/${service.id}`, { nombre: service.nombre });
   return resp.data;
 };

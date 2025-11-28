@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import type { ChangeEvent } from "react";
 import { useAuth } from '../../../hooks/useAuth';
 import type { Usuario } from "../types";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import UserForm from "./UserForm";
-import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, acquireUserLock, releaseUserLock, checkUserLock } from "../api";
+import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, acquireUserLock, releaseUserLock, checkUserLock } from "../Users.api";
 import Swal from "sweetalert2";
 
 export default function UserTable() {
@@ -189,15 +190,17 @@ export default function UserTable() {
             return <p className="text-sm text-gray-600">Solo administradores pueden gestionar usuarios.</p>;
           })()}
         </div>
-        <div className="ml-4 flex-shrink-0">
+        <div className="flex items-center gap-2 w-full max-w-md justify-end">
           <input
             type="text"
             value={searchTerm}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             placeholder="Buscar por usuario o correo"
-            className="w-full p-2 border rounded text-sm border-[#1938bc] focus:outline-none focus:ring-1 focus:ring-[#1938bc] focus:border-[#1938bc] placeholder-gray-500"
-            style={{ width: '360px' }}
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition border-gray-300"
           />
+          {searchTerm && (
+            <button onClick={() => setSearchTerm('')} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200">Limpiar</button>
+          )}
         </div>
       </div>
 
@@ -332,6 +335,11 @@ export default function UserTable() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* No hay coincidencias */}
+      {!loading && usuarios.length > 0 && displayed.length === 0 && (
+        <p className="mt-4">No se encontraron usuarios que coincidan con "{searchTerm}".</p>
       )}
       {showEditUser && editUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">

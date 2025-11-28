@@ -1,5 +1,5 @@
-import SeguimientoPanel from "../components/SeguimientoPanel";
+import SeguimientoTable from "../components/SeguimientoTable";
 
 export default function TiposSeguimientoPage() {
-  return <SeguimientoPanel />;
+  return <SeguimientoTable />;
 }

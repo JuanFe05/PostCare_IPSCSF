@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { getRoles } from "../../features/users/api";
+import { getRoles } from "../../features/users/Users.api";
 
 interface UsuarioFormProps {
   onCancel: () => void;
