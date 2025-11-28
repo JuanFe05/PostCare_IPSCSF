@@ -50,9 +50,9 @@ export const acquireUserLock = async (id: number): Promise<{ ok: boolean; locked
     if (err?.response?.status === 409) {
       return { ok: false, lockedBy: err.response.data?.lockedBy };
     }
-    // If backend doesn't expose lock endpoints, treat as unsupported
+    // Si el backend no expone los puntos finales de bloqueo, considérelo como no compatible.
     if (err?.response?.status === 404) return { ok: true, unsupported: true };
-    // other errors -> propagate as unsupported to avoid blocking
+    // otros errores -> propagarse como no compatibles para evitar bloqueos
     return { ok: true, unsupported: true };
   }
 };
@@ -61,7 +61,7 @@ export const releaseUserLock = async (id: number): Promise<void> => {
   try {
     await client.delete(`/users/${id}/lock`);
   } catch (err) {
-    // ignore errors — best-effort
+    // ignorar errores — mejor esfuerzo
     console.warn('releaseUserLock failed', err);
   }
 };

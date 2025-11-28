@@ -28,7 +28,7 @@ export const createService = async (payload: NewService): Promise<Service> => {
 };
 
 export const updateService = async (service: Service): Promise<Service> => {
-  if (!service.id) throw new Error("Service must have id to update");
+  if (!service.id) throw new Error("El servicio debe tener un identificador para actualizarse.");
   const resp = await client.put(`/servicios/${service.id}`, { nombre: service.nombre });
   return resp.data;
 };

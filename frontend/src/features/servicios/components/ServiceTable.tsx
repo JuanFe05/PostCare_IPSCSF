@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent } from "react";
 import { useAuth } from "../../../hooks/useAuth";
 import type { Service } from "../types";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
@@ -200,15 +201,17 @@ export default function ServicesTable() {
           })()}
         </div>
 
-        <div className="ml-4 flex-shrink-0">
+        <div className="flex items-center gap-2 w-full max-w-md justify-end">
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             placeholder="Buscar por ID o Nombre..."
-            className="w-full p-2 border rounded text-sm border-[#1938bc] focus:outline-none focus:ring-1 focus:ring-[#1938bc] focus:border-[#1938bc] placeholder-gray-500"
-            style={{ width: "360px" }}
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition border-gray-300"
           />
+          {searchTerm && (
+            <button onClick={() => setSearchTerm("")} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200">Limpiar</button>
+          )}
         </div>
       </div>
 
@@ -357,6 +360,11 @@ export default function ServicesTable() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* No hay coincidencias */}
+      {!loading && services.length > 0 && displayed.length === 0 && (
+        <p className="mt-4">No se encontraron servicios que coincidan con "{searchTerm}".</p>
       )}
     </div>
   );
