@@ -4,30 +4,38 @@ import { useForm } from "react-hook-form";
 interface ServiceFormProps {
   onCancel: () => void;
   onSave: (data: { nombre: string; descripcion?: string }) => void;
-  initial?: { nombre?: string; descripcion?: string };
+  initial?: { nombre?: string; descripcion?: string } | null;
   isEdit?: boolean;
 }
 
-export default function ServiceForm({ onCancel, onSave, initial = {}, isEdit = false }: ServiceFormProps) {
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm();
+export default function ServiceForm({ onCancel, onSave, initial = null, isEdit = false }: ServiceFormProps) {
+  const { register, handleSubmit, reset, setFocus, formState: { errors } } = useForm<any>();
 
   useEffect(() => {
-    if (initial.nombre) setValue("nombre", initial.nombre);
-    if (initial.descripcion) setValue("descripcion", initial.descripcion);
-  }, []);
+    const init = initial ?? {};
+    reset({
+      nombre: init.nombre ?? '',
+      descripcion: init.descripcion ?? '',
+    });
+  }, [initial, reset]);
 
   const onSubmit = (data: any) => {
     onSave({
-      nombre: data.nombre.trim(),
-      descripcion: data.descripcion?.trim() || "",
+      nombre: String(data.nombre ?? '').trim(),
+      descripcion: data.descripcion ? String(data.descripcion).trim() : '',
     });
   };
 
+  const onError = (errs: any) => {
+    const first = Object.keys(errs || {})[0];
+    if (first) setFocus(first as any);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-8 rounded-xl shadow-xl w-[420px] border border-gray-200">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="bg-white p-8 rounded-xl shadow-xl w-full max-w-[720px] border border-gray-200">
       <h3 className="text-2xl font-semibold mb-6 text-gray-800">{isEdit ? "Editar servicio" : "Nuevo servicio"}</h3>
 
-      <div className="grid gap-5">
+      <div className="grid grid-cols-1 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del servicio</label>
           <input
@@ -37,27 +45,28 @@ export default function ServiceForm({ onCancel, onSave, initial = {}, isEdit = f
             })}
             type="text"
             placeholder="Ej: Consulta médica"
-            className={`w-full p-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition ${errors.nombre ? 'border-red-500' : 'border-gray-300'}`}
+            className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition ${errors.nombre ? 'border-red-500' : 'border-gray-300'}`}
           />
-          {errors.nombre && <p className="text-xs text-red-600 mt-1">{String(errors.nombre.message)}</p>}
+          {errors.nombre && <p className="text-xs text-red-600 mt-1">{String((errors.nombre as any).message)}</p>}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Descripción (opcional)</label>
           <textarea
-            {...register("descripcion")}
+            {...register("descripcion", { maxLength: { value: 255, message: 'Máximo 255 caracteres' } })}
             placeholder="Ej: Servicio orientado a atención personalizada del cliente"
             rows={3}
-            className="w-full p-2.5 border rounded-lg shadow-sm border-gray-300 focus:ring-2 focus:ring-blue-500 transition resize-none"
+            className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition ${errors.descripcion ? 'border-red-500' : 'border-gray-300'} resize-none`}
           />
+          {errors.descripcion && <p className="text-xs text-red-600 mt-1">{String((errors.descripcion as any).message)}</p>}
         </div>
       </div>
 
       <div className="flex justify-end gap-3 mt-8">
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg bg-gray-300 text-gray-800 hover:bg-gray-400 transition shadow">
+        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-white transition shadow cursor-pointer" style={{ backgroundColor: '#e63946' }}>
           Cancelar
         </button>
-        <button type="submit" className="px-5 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition shadow">
+        <button type="submit" className="px-5 py-2 rounded-lg text-white font-medium transition shadow cursor-pointer" style={{ backgroundColor: '#1938bc' }}>
           {isEdit ? "Guardar cambios" : "Guardar"}
         </button>
       </div>
