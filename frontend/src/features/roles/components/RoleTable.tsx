@@ -4,6 +4,8 @@ import { useAuth } from '../../../hooks/useAuth';
 import { getRoles, updateRol } from "../Role.api";
 import RoleForm from "./RoleForm";
 import Swal from 'sweetalert2';
+import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
+
 
 // TIPO ROLE
 export interface Role {
@@ -69,6 +71,11 @@ export default function RolesTable() {
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6">Gestión de Roles</h2>
 
+      {/* BOTÓN EXPORTAR */}
+      <div className="mb-4 ml-2">
+        <ExportExcel data={roles} fileName="roles.xlsx" />
+      </div>
+
       {/* TABLA */}
       {loading && <p>Cargando roles...</p>}
       {!loading && roles.length === 0 && <p>No hay roles registrados.</p>}
@@ -128,15 +135,14 @@ export default function RolesTable() {
                   >
                     <td className="p-3 text-center">{r.id}</td>
                     <td className="p-3 text-center">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        role === 'ADMINISTRADOR'
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${role === 'ADMINISTRADOR'
                           ? 'bg-blue-100 text-blue-700'
                           : role === 'FACTURADOR'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : role === 'ASESOR'
-                          ? 'bg-orange-100 text-orange-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}>{r.nombre || ''}</span>
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : role === 'ASESOR'
+                              ? 'bg-orange-100 text-orange-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                        }`}>{r.nombre || ''}</span>
                     </td>
                     <td className="p-3 text-center">{r.descripcion}</td>
                     <td className="p-3 text-center">

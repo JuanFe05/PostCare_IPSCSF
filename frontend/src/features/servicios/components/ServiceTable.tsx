@@ -5,6 +5,7 @@ import type { Service } from "../types";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import ServiceForm from "./ServiceForm";
 import Swal from "sweetalert2";
+import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import {
   getServices,
   createService,
@@ -180,26 +181,34 @@ export default function ServicesTable() {
       </h2>
 
       <div className="mb-6 flex items-center justify-between">
-        <div className="flex-shrink-0">
-          {(() => {
-            const role = String(auth?.user?.role_name ?? "").trim().toUpperCase();
-            if (role === "ADMINISTRADOR") {
-              return (
-                <button
-                  onClick={() => setShowAdd(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow cursor-pointer"
-                >
-                  Agregar nuevo servicio
-                </button>
-              );
-            }
-            return (
-              <p className="text-sm text-gray-600">
-                Solo administradores pueden gestionar servicios.
-              </p>
-            );
-          })()}
-        </div>
+        <div className="flex-shrink-0 flex items-center gap-3">
+  {(() => {
+    const role = String(auth?.user?.role_name ?? "").trim().toUpperCase();
+    if (role === "ADMINISTRADOR") {
+      return (
+        <>
+          {/* Botón agregar */}
+          <button
+            onClick={() => setShowAdd(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow cursor-pointer"
+          >
+            Agregar nuevo servicio
+          </button>
+
+          {/* Botón Exportar Excel */}
+          <ExportExcel data={services} fileName="services.xlsx" />
+        </>
+      );
+    }
+
+    return (
+      <p className="text-sm text-gray-600">
+        Solo administradores pueden gestionar servicios.
+      </p>
+    );
+  })()}
+</div>
+
 
         <div className="flex items-center gap-2 w-full max-w-md justify-end">
           <input
