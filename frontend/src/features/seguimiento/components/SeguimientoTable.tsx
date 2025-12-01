@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 import { useAuth } from "../../../hooks/useAuth";
 import SeguimientoForm from "./SeguimientoForm";
 import { getTiposSeguimiento, createTipoSeguimiento, updateTipoSeguimiento, deleteTipoSeguimiento } from "../Seguimiento.api";
+import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 
 export interface TipoSeguimiento {
   id: number;
@@ -102,12 +103,15 @@ export default function SeguimientoTable() {
       <h2 className="text-2xl font-bold mb-6">Gestión de Tipos de Seguimiento</h2>
 
       <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
+        <div className="flex-shrink-0 flex items-center gap-3">
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
             if (role === 'ADMINISTRADOR') {
               return (
-                <button onClick={() => setShowAdd(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow cursor-pointer">Agregar nuevo tipo seguimiento</button>
+                <>
+                  <button onClick={() => setShowAdd(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer">Agregar nuevo tipo seguimiento</button>
+                  <ExportExcel data={displayedTipos} fileName="seguimientos.xlsx" />
+                </>
               );
             }
             return <p className="text-sm text-gray-600">Solo administradores pueden gestionar tipos.</p>;
@@ -119,7 +123,7 @@ export default function SeguimientoTable() {
             type="text"
             value={search}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre o descripción"
+            placeholder="Buscar por Nombre o Descripción"
             className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition border-gray-300"
           />
           {search && (
