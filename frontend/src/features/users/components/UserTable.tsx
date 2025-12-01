@@ -4,9 +4,13 @@ import { useAuth } from '../../../hooks/useAuth';
 import type { Usuario } from "../types";
 import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, acquireUserLock, releaseUserLock, checkUserLock } from "../Users.api";
 import Swal from "sweetalert2";
+<<<<<<< HEAD
 import UserForm from "./UserForm";
 import UserSearch from "./UserSearch";
 import UserRow from "./UserRow";
+=======
+import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
+>>>>>>> 3579f068cfca9ba2ea2824a8e1ea4a6806f48f89
 
 export default function UserTable() {
   const [showAddUser, setShowAddUser] = useState(false);
@@ -179,26 +183,65 @@ export default function UserTable() {
       </h2>
 
       <div className="mb-6 flex items-center justify-between">
-        <div className="flex-shrink-0">
+        {/* CONTENEDOR IZQUIERDO (Agregar + Exportar Excel) */}
+        <div className="flex-shrink-0 flex items-center gap-3">
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
             if (role === 'ADMINISTRADOR') {
               return (
-                <button onClick={() => setShowAddUser(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer">
-                  Agregar nuevo usuario
-                </button>
+                <>
+                  {/* Botón AGREGAR USUARIO */}
+                  <button
+                    onClick={() => setShowAddUser(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer"
+                  >
+                    Agregar nuevo usuario
+                  </button>
+
+                  {/* Botón EXPORTAR EXCEL */}
+                  <ExportExcel data={usuarios} fileName="usuarios.xlsx" />
+                </>
               );
             }
-            return <p className="text-sm text-gray-600">Solo administradores pueden gestionar usuarios.</p>;
+
+            return (
+              <p className="text-sm text-gray-600">
+                Solo administradores pueden gestionar usuarios.
+              </p>
+            );
           })()}
         </div>
+<<<<<<< HEAD
         <UserSearch
           value={searchTerm}
           onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
           onClear={() => setSearchTerm("")}
           placeholder="Buscar por ID, Usuario o Correo"
         />
+=======
+
+        {/* CONTENEDOR DERECHO (Search + limpiar) */}
+        <div className="flex items-center gap-2 w-full max-w-md justify-end">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+            placeholder="Buscar por usuario o correo"
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition border-gray-300"
+          />
+
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+>>>>>>> 3579f068cfca9ba2ea2824a8e1ea4a6806f48f89
       </div>
+
 
       {showAddUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -296,7 +339,40 @@ export default function UserTable() {
             </thead>
             <tbody className="bg-white">
               {displayed.map((u, idx) => (
+<<<<<<< HEAD
                 <UserRow key={u.id} u={u} idx={idx} auth={auth} attemptEdit={attemptEdit} handleEliminar={handleEliminar} />
+=======
+                <tr key={u.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
+                  <td className="p-3 text-center">{u.id}</td>
+                  <td className="p-3 text-center">{u.username}</td>
+                  <td className="p-3 text-center">{u.email}</td>
+                  <td className="p-3 text-center"><span className={`px-2 py-1 rounded text-xs font-bold ${u.estado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{u.estado ? 'Activo' : 'Inactivo'}</span></td>
+                  <td className="p-3 text-center">
+                    <span className={`px-2 py-1 rounded text-xs font-bold ${u.role_name === 'ADMINISTRADOR'
+                        ? 'bg-blue-100 text-blue-700'
+                        : u.role_name === 'FACTURADOR'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : u.role_name === 'ASESOR'
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                      }`}>{u.role_name || ''}</span>
+                  </td>
+                  <td className="p-3 text-center">
+                    <div className="flex gap-2 justify-center">
+                      {(() => {
+                        const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+                        if (role === 'ADMINISTRADOR') {
+                          return (<>
+                            <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => attemptEdit(u)} title="Editar"><FiEdit className="text-xl" /></button>
+                            <button className="text-red-600 hover:text-red-800 cursor-pointer" onClick={() => handleEliminar(u.id!, u.username)} title="Eliminar"><FiTrash2 className="text-xl" /></button>
+                          </>);
+                        }
+                        return <span className="text-sm text-gray-500">Sin acciones</span>;
+                      })()}
+                    </div>
+                  </td>
+                </tr>
+>>>>>>> 3579f068cfca9ba2ea2824a8e1ea4a6806f48f89
               ))}
             </tbody>
           </table>
