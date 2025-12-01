@@ -72,7 +72,7 @@ export default function RolesTable() {
       <h2 className="text-2xl font-bold mb-6">Gestión de Roles</h2>
 
       {/* BOTÓN EXPORTAR */}
-      <div className="mb-4 ml-2">
+      <div className="mb-6">
         <ExportExcel data={roles} fileName="roles.xlsx" />
       </div>
 
