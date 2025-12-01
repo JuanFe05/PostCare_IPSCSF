@@ -11,28 +11,9 @@ const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) =>
   const usuario = rawUser ? JSON.parse(rawUser) : null;
   const token = localStorage.getItem("access_token");
 
-  // Helper: check token expiry (JWT 'exp' claim)
-  const isTokenExpired = (t?: string | null) => {
-    if (!t) return true;
-    try {
-      const parts = t.split('.');
-      if (parts.length < 2) return true;
-      const payload = parts[1];
-      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const json = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      const obj = JSON.parse(json);
-      const exp = obj.exp;
-      if (!exp) return true;
-      return Date.now() > exp * 1000;
-    } catch (e) {
-      return true;
-    }
-  };
-
-  // Si no hay token o usuario, o el token expiró, redirige
-  if (!token || !usuario || isTokenExpired(token)) {
+  // Validación simple: solo verificar existencia de token y usuario
+  // La lógica de expiración por inactividad se maneja en useAuth
+  if (!token || !usuario) {
     try { localStorage.removeItem('access_token'); localStorage.removeItem('user'); } catch(e) {}
     return <Navigate to="/login" replace />;
   }
