@@ -1,4 +1,5 @@
 import { useState, createContext, useContext, useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 import type { User } from '../types/Auth.types';
 
 
@@ -11,25 +12,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 // CONFIGURACIÓN: tiempo de inactividad en milisegundos (30 minutos)
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
 
-function decodeJwt(token: string | null | undefined): { exp?: number } | null {
-    if (!token) return null;
-    try {
-        const parts = token.split('.');
-        if (parts.length < 2) return null;
-        const payload = parts[1];
-        // decode base64url
-        const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-        const json = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(json);
-    } catch (e) {
-        console.error('decodeJwt error', e);
-        return null;
-    }
-}
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [auth, setAuth] = useState<AuthState>(() => {
         const token = typeof globalThis.window !== 'undefined' ? localStorage.getItem('access_token') : null;
         const user = typeof globalThis.window !== 'undefined' ? localStorage.getItem('user') : null;
