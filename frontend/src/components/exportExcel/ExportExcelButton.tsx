@@ -13,11 +13,13 @@ const ExportExcelButton = ({ data, fileName }: Props) => {
 
   return (
     <button
+      type="button"
       onClick={handleExport}
-      className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow transition flex items-center justify-center"
+      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 shadow flex items-center gap-2 cursor-pointer"
       title="Exportar Excel"
     >
-      <PiMicrosoftExcelLogoFill size={22} />
+      <PiMicrosoftExcelLogoFill size={24} />
+      <span>Exportar</span>
     </button>
   );
 };
