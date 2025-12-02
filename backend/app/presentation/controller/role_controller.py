@@ -37,7 +37,11 @@ def delete_role(role_id: int):
         raise HTTPException(status_code=404, detail=str(e))
 
 
+<<<<<<< HEAD
 # --- Lock endpoints for edit concurrency control (admin only) ---
+=======
+# --- Lock endpoints for edit-concurrency control (admin only) ---
+>>>>>>> develop
 @router.post("/{role_id}/lock", dependencies=[Depends(get_current_admin)])
 def acquire_lock(role_id: int, current_user: dict = Depends(get_current_admin)):
     try:

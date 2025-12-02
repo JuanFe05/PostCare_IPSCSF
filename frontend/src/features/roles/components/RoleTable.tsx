@@ -19,6 +19,7 @@ export default function RolesTable() {
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
   const [editRole, setEditRole] = useState<Role | null>(null);
+  const [heldLockId, setHeldLockId] = useState<number | null>(null);
   const { auth } = useAuth();
 
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -33,11 +34,74 @@ export default function RolesTable() {
       .finally(() => setLoading(false));
   }, []);
 
+<<<<<<< HEAD
   // release lock on unload
   useEffect(() => {
     const handler = () => {
       if (heldLockId) {
         try { releaseRoleLock(heldLockId); } catch (_) { /* best-effort */ }
+=======
+  // Attempt to edit with lock acquire/check
+  const attemptEdit = async (r: Role) => {
+    if (!r.id) {
+      setEditRole(r);
+      setShowEdit(true);
+      return;
+    }
+    try {
+      const status = await checkRoleLock(r.id);
+      if (status.locked) {
+        const by = status.lockedBy;
+        const who = by?.username || by?.name || 'otro usuario';
+        await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
+        return;
+      }
+
+      const res = await acquireRoleLock(r.id);
+      if (res.lockedBy) {
+        const who = res.lockedBy?.username || res.lockedBy?.name || 'otro usuario';
+        const meId = auth?.user?.id ?? auth?.user?.username;
+        if (res.lockedBy?.id && meId && String(res.lockedBy.id) !== String(meId)) {
+          await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
+          return;
+        }
+      }
+
+      if (res.ok && !res.unsupported) {
+        setHeldLockId(r.id);
+        setEditRole(r);
+        setShowEdit(true);
+        return;
+      }
+
+      if (res.ok && res.unsupported) {
+        // backend doesn't support locks — allow edit
+        setEditRole(r);
+        setShowEdit(true);
+        return;
+      }
+    } catch (err) {
+      console.warn('attemptEdit: lock check failed, allowing edit', err);
+      setEditRole(r);
+      setShowEdit(true);
+    }
+  };
+
+  const closeEditor = async () => {
+    if (heldLockId) {
+      await releaseRoleLock(heldLockId);
+      setHeldLockId(null);
+    }
+    setShowEdit(false);
+    setEditRole(null);
+  };
+
+  // try to release lock on unload (best-effort)
+  useEffect(() => {
+    const handler = () => {
+      if (heldLockId) {
+        try { releaseRoleLock(heldLockId); } catch (_) { /* ignore */ }
+>>>>>>> develop
       }
     };
     window.addEventListener('beforeunload', handler);
@@ -83,9 +147,15 @@ export default function RolesTable() {
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6">Gestión de Roles</h2>
 
-      {/* BOTÓN EXPORTAR */}
-      <div className="mb-4 ml-2">
-        <ExportExcel data={roles} fileName="roles.xlsx" />
+      {/* BOTÓN EXPORTAR (solo ADMINISTRADOR) */}
+      <div className="mb-6">
+        {(() => {
+          const roleName = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+          if (roleName === 'ADMINISTRADOR') {
+            return <ExportExcel data={roles} fileName="roles.xlsx" />;
+          }
+          return null;
+        })()}
       </div>
 
       {/* TABLA */}
@@ -162,6 +232,7 @@ export default function RolesTable() {
                         const roleName = String(auth?.user?.role_name ?? '').trim().toUpperCase();
                         if (roleName === 'ADMINISTRADOR') {
                           return (
+<<<<<<< HEAD
                             <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={async () => {
                               // attempt to acquire lock before editing
                               try {
@@ -193,6 +264,9 @@ export default function RolesTable() {
                                 setShowEdit(true);
                               }
                             }} title="Editar">
+=======
+                            <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => attemptEdit(r)} title="Editar">
+>>>>>>> develop
                               <FiEdit className="text-xl" />
                             </button>
                           );
@@ -213,14 +287,22 @@ export default function RolesTable() {
           <RoleForm
             initial={editRole}
             isEdit={true}
+<<<<<<< HEAD
             onCancel={async () => { if (heldLockId) { try { await releaseRoleLock(heldLockId); } catch (_) {} setHeldLockId(null); } setShowEdit(false); setEditRole(null); }}
+=======
+            onCancel={async () => { await closeEditor(); }}
+>>>>>>> develop
             onSave={async (payload) => {
               try {
                 const updated = await updateRol({ id: editRole.id, nombre: payload.nombre ?? '', descripcion: payload.descripcion ?? '' });
                 setRoles((prev: Role[]) => prev.map((rr: Role) => (rr.id === updated.id ? updated : rr)));
                 // release lock if held
                 if (heldLockId) {
+<<<<<<< HEAD
                   try { await releaseRoleLock(heldLockId); } catch (e) { /* best-effort */ }
+=======
+                  await releaseRoleLock(heldLockId);
+>>>>>>> develop
                   setHeldLockId(null);
                 }
                 setShowEdit(false);

@@ -1,4 +1,5 @@
 import { useState, createContext, useContext, useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 import type { User } from '../types/Auth.types';
 
 
@@ -8,33 +9,18 @@ type AuthContextValue = { auth: AuthState; setAuth: (s: AuthState) => void; logo
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+// CONFIGURACIÓN: tiempo de inactividad en milisegundos (30 minutos)
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
 
-function decodeJwt(token: string | null | undefined): { exp?: number } | null {
-    if (!token) return null;
-    try {
-        const parts = token.split('.');
-        if (parts.length < 2) return null;
-        const payload = parts[1];
-        // decode base64url
-        const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-        const json = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(json);
-    } catch (e) {
-        console.error('decodeJwt error', e);
-        return null;
-    }
-}
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [auth, setAuth] = useState<AuthState>(() => {
         const token = typeof globalThis.window !== 'undefined' ? localStorage.getItem('access_token') : null;
         const user = typeof globalThis.window !== 'undefined' ? localStorage.getItem('user') : null;
         return { token: token || null, user: user ? JSON.parse(user) : null };
     });
 
-    const timeoutRef = useRef<number | null>(null);
+    const inactivityTimeoutRef = useRef<number | null>(null);
+    const lastActivityRef = useRef<number>(Date.now());
 
     const logout = () => {
         try {
@@ -50,40 +36,61 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
-    // Watch token and schedule auto-logout when it expires
+    // Resetear el temporizador de inactividad
+    const resetInactivityTimer = () => {
+        lastActivityRef.current = Date.now();
+        
+        // Limpiar timeout anterior
+        if (inactivityTimeoutRef.current) {
+            window.clearTimeout(inactivityTimeoutRef.current);
+        }
+
+        // Solo configurar nuevo timeout si hay un token válido
+        if (!auth?.token) return;
+
+        // Establecer nuevo timeout
+        inactivityTimeoutRef.current = window.setTimeout(() => {
+            console.log('Sesión cerrada por inactividad');
+            logout();
+        }, INACTIVITY_TIMEOUT) as unknown as number;
+    };
+
+    // Configurar listeners de actividad del usuario
     useEffect(() => {
-        // clear previous timeout
-        if (timeoutRef.current) {
-            try { window.clearTimeout(timeoutRef.current); } catch (e) { /* ignore */ }
-            timeoutRef.current = null;
-        }
+        if (!auth?.token) return;
 
-        const token = auth?.token;
-        if (!token) return;
+        // Eventos que indican actividad del usuario
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        
+        // Debounce para evitar resetear el timer con cada pequeño movimiento
+        let debounceTimer: number | null = null;
+        const handleActivity = () => {
+            if (debounceTimer) {
+                window.clearTimeout(debounceTimer);
+            }
+            debounceTimer = window.setTimeout(() => {
+                resetInactivityTimer();
+            }, 1000) as unknown as number; // Actualizar cada segundo como máximo
+        };
 
-        const payload = decodeJwt(token as string);
-        const exp = payload?.exp; // exp is in seconds since epoch
-        if (!exp) return;
+        // Agregar listeners
+        events.forEach(event => {
+            window.addEventListener(event, handleActivity);
+        });
 
-        const expireAt = exp * 1000;
-        const now = Date.now();
-        const ms = expireAt - now;
-        if (ms <= 0) {
-            // already expired
-            logout();
-            return;
-        }
+        // Inicializar el timer
+        resetInactivityTimer();
 
-        // set timeout to logout exactly when token expires (+ small buffer)
-        const id = window.setTimeout(() => {
-            logout();
-        }, ms + 500);
-        timeoutRef.current = id as unknown as number;
-
+        // Cleanup
         return () => {
-            if (timeoutRef.current) {
-                try { window.clearTimeout(timeoutRef.current); } catch (e) { /* ignore */ }
-                timeoutRef.current = null;
+            events.forEach(event => {
+                window.removeEventListener(event, handleActivity);
+            });
+            if (debounceTimer) {
+                window.clearTimeout(debounceTimer);
+            }
+            if (inactivityTimeoutRef.current) {
+                window.clearTimeout(inactivityTimeoutRef.current);
             }
         };
     }, [auth?.token]);

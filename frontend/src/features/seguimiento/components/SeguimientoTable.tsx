@@ -6,6 +6,7 @@ import SeguimientoRow from "./SeguimientoRow";
 import { useAuth } from "../../../hooks/useAuth";
 import SeguimientoForm from "./SeguimientoForm";
 import { getTiposSeguimiento, createTipoSeguimiento, updateTipoSeguimiento, deleteTipoSeguimiento } from "../Seguimiento.api";
+import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 
 export interface TipoSeguimiento {
   id: number;
@@ -104,19 +105,37 @@ export default function SeguimientoTable() {
       <h2 className="text-2xl font-bold mb-6">Gestión de Tipos de Seguimiento</h2>
 
       <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
+        <div className="flex-shrink-0 flex items-center gap-3">
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
             if (role === 'ADMINISTRADOR') {
               return (
-                <button onClick={() => setShowAdd(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow cursor-pointer">Agregar nuevo tipo seguimiento</button>
+                <>
+                  <button onClick={() => setShowAdd(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer">Agregar nuevo tipo seguimiento</button>
+                  <ExportExcel data={displayedTipos} fileName="seguimientos.xlsx" />
+                </>
               );
             }
             return <p className="text-sm text-gray-600">Solo administradores pueden gestionar tipos.</p>;
           })()}
         </div>
 
+<<<<<<< HEAD
         <SeguimientoSearch value={search} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} onClear={() => setSearch('')} placeholder="Buscar por ID, Nombre o Descripción" />
+=======
+        <div className="flex items-center gap-2 w-full max-w-md justify-end">
+          <input
+            type="text"
+            value={search}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+            placeholder="Buscar por Nombre o Descripción"
+            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition border-gray-300"
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200">Limpiar</button>
+          )}
+        </div>
+>>>>>>> develop
       </div>
 
       {loading && <p>Cargando tipos...</p>}
