@@ -46,31 +46,6 @@ export const deleteRol = async (id: number): Promise<void> => {
   await client.delete(`/roles/${id}`);
 };
 
-<<<<<<< HEAD
-export const acquireRoleLock = async (id: number): Promise<any> => {
-  try {
-    const resp = await client.post(`/roles/${id}/lock`);
-    return resp.data;
-  } catch (err: any) {
-    return { ok: false, error: err, unsupported: true };
-  }
-};
-
-export const releaseRoleLock = async (id: number): Promise<any> => {
-  try {
-    const resp = await client.delete(`/roles/${id}/lock`);
-    return resp.data;
-  } catch (err: any) {
-    return { ok: false, error: err, unsupported: true };
-  }
-};
-
-export const checkRoleLock = async (id: number): Promise<any> => {
-  try {
-    const resp = await client.get(`/roles/${id}/lock`);
-    return resp.data;
-  } catch (err: any) {
-=======
 // Locking helpers (optional backend support)
 export const acquireRoleLock = async (id: number): Promise<{ ok: boolean; lockedBy?: any; unsupported?: boolean }> => {
   try {
@@ -98,7 +73,6 @@ export const checkRoleLock = async (id: number): Promise<{ locked: boolean; lock
     const res = await client.get(`/roles/${id}/lock`);
     return { locked: !!res.data?.locked, lockedBy: res.data?.lockedBy };
   } catch (err) {
->>>>>>> develop
     return { locked: false };
   }
 };

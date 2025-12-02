@@ -4,12 +4,9 @@ import { useAuth } from "../../../hooks/useAuth";
 import type { Service } from "../types";
 import ServiceForm from "./ServiceForm";
 import Swal from "sweetalert2";
-<<<<<<< HEAD
+import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import ServiceSearch from "./ServiceSearch";
 import ServiceRow from "./ServiceRow";
-=======
-import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
->>>>>>> 3579f068cfca9ba2ea2824a8e1ea4a6806f48f89
 import {
   getServices,
   createService,

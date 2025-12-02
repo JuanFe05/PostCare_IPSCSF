@@ -4,13 +4,9 @@ import { useAuth } from '../../../hooks/useAuth';
 import type { Usuario } from "../types";
 import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, acquireUserLock, releaseUserLock, checkUserLock } from "../Users.api";
 import Swal from "sweetalert2";
-<<<<<<< HEAD
 import UserForm from "./UserForm";
-import UserSearch from "./UserSearch";
-import UserRow from "./UserRow";
-=======
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
->>>>>>> 3579f068cfca9ba2ea2824a8e1ea4a6806f48f89
+import { FiEdit, FiTrash2 } from "react-icons/fi";
 
 export default function UserTable() {
   const [showAddUser, setShowAddUser] = useState(false);
@@ -211,14 +207,6 @@ export default function UserTable() {
             );
           })()}
         </div>
-<<<<<<< HEAD
-        <UserSearch
-          value={searchTerm}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-          onClear={() => setSearchTerm("")}
-          placeholder="Buscar por ID, Usuario o Correo"
-        />
-=======
 
         {/* CONTENEDOR DERECHO (Search + limpiar) */}
         <div className="flex items-center gap-2 w-full max-w-md justify-end">
@@ -239,7 +227,6 @@ export default function UserTable() {
             </button>
           )}
         </div>
->>>>>>> 3579f068cfca9ba2ea2824a8e1ea4a6806f48f89
       </div>
 
 
@@ -339,9 +326,6 @@ export default function UserTable() {
             </thead>
             <tbody className="bg-white">
               {displayed.map((u, idx) => (
-<<<<<<< HEAD
-                <UserRow key={u.id} u={u} idx={idx} auth={auth} attemptEdit={attemptEdit} handleEliminar={handleEliminar} />
-=======
                 <tr key={u.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
                   <td className="p-3 text-center">{u.id}</td>
                   <td className="p-3 text-center">{u.username}</td>
@@ -372,7 +356,6 @@ export default function UserTable() {
                     </div>
                   </td>
                 </tr>
->>>>>>> 3579f068cfca9ba2ea2824a8e1ea4a6806f48f89
               ))}
             </tbody>
           </table>
