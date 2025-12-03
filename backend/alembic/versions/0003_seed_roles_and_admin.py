@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = '0005_seed_roles_and_admin'
-down_revision = '0004_seed_tipos_empresas'
+revision = '0003_seed_roles_and_admin'
+down_revision = '0002_seed_tipos_empresas'
 branch_labels = None
 depends_on = None
 
@@ -39,7 +39,7 @@ def upgrade():
         )
     
     # Hash bcrypt de 'admin_2025*'
-    password_hash = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5XSO8YUvIyemW'
+    password_hash = '$2a$12$VYemNlvR2u4U2CrS9nTpXeNB3BhAl6xny9d2VG4z3A4.kc5/8X1bW'
     
     # Insertar usuario admin (idempotente)
     op.execute(
