@@ -23,8 +23,11 @@ RUN pip install --upgrade pip && \
 # Copiar el código de la app
 COPY . .
 
+# Dar permisos de ejecución al entrypoint
+RUN chmod +x /app/entrypoint.sh
+
 # Exponer puerto de la app
 EXPOSE 8000
 
-# Comando por defecto: uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Usar entrypoint que ejecuta migraciones antes de iniciar
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -6,7 +6,6 @@ import RoleForm from "./RoleForm";
 import Swal from 'sweetalert2';
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 
-
 // TIPO ROLE
 export interface Role {
   id: number;
@@ -81,7 +80,7 @@ export default function RolesTable() {
 
   const closeEditor = async () => {
     if (heldLockId) {
-      await releaseRoleLock(heldLockId);
+      try { await releaseRoleLock(heldLockId); } catch (_) { /* best-effort */ }
       setHeldLockId(null);
     }
     setShowEdit(false);
@@ -208,14 +207,12 @@ export default function RolesTable() {
                   >
                     <td className="p-3 text-center">{r.id}</td>
                     <td className="p-3 text-center">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${role === 'ADMINISTRADOR'
-                          ? 'bg-blue-100 text-blue-700'
-                          : role === 'FACTURADOR'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : role === 'ASESOR'
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                        }`}>{r.nombre || ''}</span>
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        role === 'ADMINISTRADOR' ? 'bg-blue-100 text-blue-700'
+                        : role === 'FACTURADOR' ? 'bg-yellow-100 text-yellow-700'
+                        : role === 'ASESOR' ? 'bg-orange-100 text-orange-700'
+                        : 'bg-yellow-100 text-yellow-700'}
+                      `}>{r.nombre || ''}</span>
                     </td>
                     <td className="p-3 text-center">{r.descripcion}</td>
                     <td className="p-3 text-center">
@@ -251,7 +248,7 @@ export default function RolesTable() {
                 setRoles((prev: Role[]) => prev.map((rr: Role) => (rr.id === updated.id ? updated : rr)));
                 // release lock if held
                 if (heldLockId) {
-                  await releaseRoleLock(heldLockId);
+                  try { await releaseRoleLock(heldLockId); } catch (e) { /* best-effort */ }
                   setHeldLockId(null);
                 }
                 setShowEdit(false);

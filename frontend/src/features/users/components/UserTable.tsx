@@ -2,11 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import type { ChangeEvent } from "react";
 import { useAuth } from '../../../hooks/useAuth';
 import type { Usuario } from "../types";
-import { FiEdit, FiTrash2 } from "react-icons/fi";
-import UserForm from "./UserForm";
 import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, acquireUserLock, releaseUserLock, checkUserLock } from "../Users.api";
 import Swal from "sweetalert2";
+import UserForm from "./UserForm";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
+import { FiEdit, FiTrash2 } from "react-icons/fi";
 
 export default function UserTable() {
   const [showAddUser, setShowAddUser] = useState(false);
@@ -131,9 +131,10 @@ export default function UserTable() {
     const filtered = usuarios.filter((u) => {
       if (!searchTerm) return true;
       const q = searchTerm.trim().toLowerCase();
+      const idMatch = String(u.id ?? '').toLowerCase().includes(q);
       const usernameMatch = String(u.username ?? '').toLowerCase().includes(q);
       const emailMatch = String(u.email ?? '').toLowerCase().includes(q);
-      return usernameMatch || emailMatch;
+      return idMatch || usernameMatch || emailMatch;
     });
 
     // sort

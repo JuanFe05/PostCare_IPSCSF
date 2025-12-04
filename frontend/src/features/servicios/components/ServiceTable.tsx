@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useAuth } from "../../../hooks/useAuth";
 import type { Service } from "../types";
-import { FiEdit, FiTrash2 } from "react-icons/fi";
 import ServiceForm from "./ServiceForm";
 import Swal from "sweetalert2";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
+import ServiceSearch from "./ServiceSearch";
+import ServiceRow from "./ServiceRow";
 import {
   getServices,
   createService,
@@ -144,7 +145,10 @@ export default function ServicesTable() {
     const filtered = services.filter((s) => {
       if (!searchTerm) return true;
       const q = searchTerm.trim().toLowerCase();
-      return String(s.nombre ?? "").toLowerCase().includes(q) || String(s.id ?? "").toLowerCase().includes(q);
+      const idMatch = String(s.id ?? "").toLowerCase().includes(q);
+      const nombreMatch = String(s.nombre ?? "").toLowerCase().includes(q);
+      const descMatch = String(s.descripcion ?? "").toLowerCase().includes(q);
+      return idMatch || nombreMatch || descMatch;
     });
 
     if (!sortKey || !sortDir) return filtered;
@@ -210,18 +214,7 @@ export default function ServicesTable() {
 </div>
 
 
-        <div className="flex items-center gap-2 w-full max-w-md justify-end">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por ID o Nombre..."
-            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition border-gray-300"
-          />
-          {searchTerm && (
-            <button onClick={() => setSearchTerm("")} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200">Limpiar</button>
-          )}
-        </div>
+        <ServiceSearch value={searchTerm} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} onClear={() => setSearchTerm("")} placeholder="Buscar por ID, Nombre o Descripción" />
       </div>
 
       {/* ADD MODAL */}
@@ -328,43 +321,7 @@ export default function ServicesTable() {
 
             <tbody className="bg-white">
               {displayed.map((s, idx) => (
-                <tr key={s.id} className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50`}>
-                  <td className="p-3 text-center">{s.id}</td>
-                  <td className="p-3 text-center">{s.nombre}</td>
-                  <td className="p-3 text-center">
-                    {s.descripcion && String(s.descripcion).trim().length > 0
-                      ? s.descripcion
-                      : `Servicio relacionado con ${String(s.nombre ?? '').toLowerCase()}`}
-                  </td>
-                  <td className="p-3 text-center">
-                    <div className="flex gap-2 justify-center">
-                      {(() => {
-                        const role = String(auth?.user?.role_name ?? "").trim().toUpperCase();
-                        if (role === "ADMINISTRADOR") {
-                          return (
-                            <>
-                              <button
-                                className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                                onClick={() => attemptEdit(s)}
-                                title="Editar"
-                              >
-                                <FiEdit className="text-xl" />
-                              </button>
-                              <button
-                                className="text-red-600 hover:text-red-800 cursor-pointer"
-                                onClick={() => handleEliminar(s.id!, s.nombre)}
-                                title="Eliminar"
-                              >
-                                <FiTrash2 className="text-xl" />
-                              </button>
-                            </>
-                          );
-                        }
-                        return <span className="text-sm text-gray-500">Sin acciones</span>;
-                      })()}
-                    </div>
-                  </td>
-                </tr>
+                <ServiceRow key={s.id} s={s} idx={idx} auth={auth} attemptEdit={attemptEdit} handleEliminar={handleEliminar} />
               ))}
             </tbody>
           </table>
