@@ -1,5 +1,6 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.persistence.entity.empresas_entity import Empresa
+from app.persistence.entity.tipos_empresas_entity import TipoEmpresa
 
 
 class EmpresaRepository:
@@ -11,7 +12,7 @@ class EmpresaRepository:
         return empresa
 
     def get_all(self, db: Session):
-        return db.query(Empresa).all()
+        return db.query(Empresa).options(joinedload(Empresa.tipo_empresa)).all()
 
     def get_by_id(self, db: Session, empresa_id: int):
         return db.query(Empresa).filter(Empresa.id == empresa_id).first()

@@ -22,6 +22,13 @@ class EmpresaServiceImpl:
     def get_all_empresas(self):
         db = SessionLocal()
         result = self.repo.get_all(db)
+        # Attach the tipo_empresa name to each Empresa instance so the DTO can expose it
+        for empresa in result:
+            try:
+                tipo_nombre = empresa.tipo_empresa.nombre if getattr(empresa, 'tipo_empresa', None) else None
+            except Exception:
+                tipo_nombre = None
+            setattr(empresa, 'nombre_tipo_empresa', tipo_nombre)
         db.close()
         return result
 

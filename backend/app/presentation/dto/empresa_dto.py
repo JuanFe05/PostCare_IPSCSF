@@ -17,6 +17,7 @@ class EmpresaResponseDto(BaseModel):
     id: int
     id_tipo_empresa: int
     nombre: str
+    nombre_tipo_empresa: Optional[str] = None
 
     class Config:
         orm_mode = True
