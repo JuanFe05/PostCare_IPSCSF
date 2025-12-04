@@ -5,9 +5,10 @@ from app.persistence.repository.paciente_repository import create_paciente, get_
 from app.persistence.repository.atencion_repository import create_atencion, get_atencion_by_id
 from app.persistence.entity.pacientes_entity import Paciente
 from app.persistence.entity.atenciones_entity import Atencion
+from app.service.interface.sync_service_interface import SyncServiceInterface
 
 
-class SyncService:
+class SyncService(SyncServiceInterface):
     """
     Servicio para sincronizar datos desde una base de datos externa.
     """

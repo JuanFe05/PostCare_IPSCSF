@@ -2,9 +2,10 @@ from app.persistence.repository.servicio_repository import ServicioRepository
 from app.persistence.entity.servicios_entity import Servicio
 from app.configuration.app.database import SessionLocal
 from app.presentation.dto.servicio_dto import ServicioCreateDto, ServicioUpdateDto
+from app.service.interface.servicio_service_interface import ServicioServiceInterface
 
 
-class ServicioServiceImpl:
+class ServicioServiceImpl(ServicioServiceInterface):
     def __init__(self):
         self.repo = ServicioRepository()
 

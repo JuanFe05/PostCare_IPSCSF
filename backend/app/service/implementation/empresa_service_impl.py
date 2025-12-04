@@ -2,15 +2,15 @@ from app.persistence.repository.empresa_repository import EmpresaRepository
 from app.persistence.entity.empresas_entity import Empresa
 from app.configuration.app.database import SessionLocal
 from app.presentation.dto.empresa_dto import EmpresaCreateDto, EmpresaUpdateDto
+from app.service.interface.empresa_service_interface import EmpresaServiceInterface
 
 
-class EmpresaServiceImpl:
+class EmpresaServiceImpl(EmpresaServiceInterface):
     def __init__(self):
         self.repo = EmpresaRepository()
 
     def create_empresa(self, data: EmpresaCreateDto):
         db = SessionLocal()
-        # If id provided, use it (autoincrement disabled for empresas)
         if getattr(data, 'id', None) is not None:
             empresa = Empresa(id=data.id, id_tipo_empresa=data.id_tipo_empresa, nombre=data.nombre)
         else:
@@ -22,7 +22,7 @@ class EmpresaServiceImpl:
     def get_all_empresas(self):
         db = SessionLocal()
         result = self.repo.get_all(db)
-        # Attach the tipo_empresa name to each Empresa instance so the DTO can expose it
+        # Adjuntar el nombre del tipo de empresa a cada instancia de Empresa para que el DTO pueda exponerlo
         for empresa in result:
             try:
                 tipo_nombre = empresa.tipo_empresa.nombre if getattr(empresa, 'tipo_empresa', None) else None

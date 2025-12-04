@@ -2,9 +2,10 @@ from app.persistence.repository.role_repository import RoleRepository
 from app.persistence.entity.role_entity import Role
 from app.configuration.app.database import SessionLocal
 from app.presentation.dto.role_dto import RoleCreateDto, RoleUpdateDto
+from app.service.interface.role_service_interface import RoleServiceInterface
 
 
-class RoleServiceImpl:
+class RoleServiceImpl(RoleServiceInterface):
     def __init__(self):
         self.repo = RoleRepository()
 
