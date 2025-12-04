@@ -5,9 +5,10 @@ from app.presentation.dto.seguimiento_atencion_dto import (
     SeguimientoAtencionCreateDto,
     SeguimientoAtencionUpdateDto,
 )
+from app.service.interface.seguimiento_atencion_service_interface import SeguimientoAtencionServiceInterface
 
 
-class SeguimientoAtencionServiceImpl:
+class SeguimientoAtencionServiceImpl(SeguimientoAtencionServiceInterface):
     def __init__(self):
         self.repo = SeguimientoAtencionRepository()
 

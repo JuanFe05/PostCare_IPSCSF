@@ -2,9 +2,10 @@ from app.persistence.repository.estado_atencion_repository import EstadoAtencion
 from app.persistence.entity.estados_atenciones_entity import EstadoAtencion
 from app.configuration.app.database import SessionLocal
 from app.presentation.dto.estado_atencion_dto import EstadoAtencionCreateDto, EstadoAtencionUpdateDto
+from app.service.interface.estado_atencion_service_interface import EstadoAtencionServiceInterface
 
 
-class EstadoAtencionServiceImpl:
+class EstadoAtencionServiceImpl(EstadoAtencionServiceInterface):
     def __init__(self):
         self.repo = EstadoAtencionRepository()
 

@@ -13,18 +13,19 @@ from app.persistence.repository.atencion_repository import (
 )
 from app.persistence.entity.pacientes_entity import Paciente
 from app.persistence.entity.atenciones_entity import Atencion
+from app.service.interface.atencion_service_interface import AtencionServiceInterface
 
 
-class AtencionService:
+class AtencionService(AtencionServiceInterface):
     @staticmethod
     def create_with_paciente(db: Session, atencion_data: dict, paciente_data: dict) -> tuple[Atencion, Paciente]:
-        # Transactional: create paciente, then atencion
+        # Transaccional: crear paciente, luego atención.
         try:
             with db.begin():
                 paciente = Paciente(**paciente_data)
                 create_paciente(db, paciente)
 
-                # Ensure the atencion references the paciente id
+                # Asegurar que la atención referencia el id del paciente
                 atencion_data["id_paciente"] = paciente.id
                 atencion = Atencion(**atencion_data)
                 create_atencion(db, atencion)
@@ -66,7 +67,7 @@ class AtencionService:
 
                 delete_atencion(db, atencion)
                 if borrar_paciente and paciente:
-                    # call the repository function to delete the paciente
+                    # llamar a la función del repositorio para eliminar el paciente
                     delete_paciente(db, paciente)
 
         except Exception:

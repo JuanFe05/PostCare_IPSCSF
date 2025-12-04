@@ -7,9 +7,10 @@ from app.presentation.dto.user_dto import UserCreateDto, UserResponseDto, UserUp
 from app.configuration.security.password_utils import hash_password
 from app.persistence.entity.user_entity import User
 from app.persistence.entity.user_role_entity import UserRole
+from app.service.interface.user_service_interface import UserServiceInterface
 
 
-class UserServiceImpl:
+class UserServiceImpl(UserServiceInterface):
 
     def __init__(self):
         self.user_repo = UserRepository()

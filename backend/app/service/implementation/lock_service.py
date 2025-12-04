@@ -24,7 +24,7 @@ class LockService:
             info = self._locks.get(resource_id)
             now = time.time()
             if info and info.get('expires_at', 0) > now:
-                # already locked
+                # ya está bloqueado
                 return {'ok': False, 'lockedBy': info.get('lockedBy')}
             expires_at = now + self._ttl
             self._locks[resource_id] = {
@@ -39,7 +39,7 @@ class LockService:
             info = self._locks.get(resource_id)
             if not info:
                 return True
-            # if locker_id provided, ensure only locker can release
+            # Si se proporciona locker_id, asegúrese de que solo el casillero pueda liberarse.
             if locker_id is not None and str(info.get('lockedBy', {}).get('id')) != str(locker_id):
                 return False
             del self._locks[resource_id]
