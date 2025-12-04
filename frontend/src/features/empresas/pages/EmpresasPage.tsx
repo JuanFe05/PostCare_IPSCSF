@@ -1,5 +1,5 @@
-import EmpresasPanel from '../components/EmpresasPanel';
+import EmpresaTable from '../components/EmpresaTable';
 
 export default function EmpresasPage() {
-	return <EmpresasPanel />;
+  return <EmpresaTable />;
 }

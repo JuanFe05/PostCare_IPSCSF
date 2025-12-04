@@ -16,6 +16,18 @@ class EmpresaServiceImpl(EmpresaServiceInterface):
         else:
             empresa = Empresa(id_tipo_empresa=data.id_tipo_empresa, nombre=data.nombre)
         result = self.repo.create(db, empresa)
+        # attach tipo_empresa_nombre so response contains the name
+        try:
+            tipo = None
+            if getattr(result, 'tipo_empresa', None):
+                tipo = result.tipo_empresa.nombre
+            else:
+                from app.persistence.entity.tipos_empresas_entity import TipoEmpresa
+                tipo_row = db.query(TipoEmpresa).filter(TipoEmpresa.id == result.id_tipo_empresa).first()
+                tipo = tipo_row.nombre if tipo_row else None
+            setattr(result, 'tipo_empresa_nombre', tipo)
+        except Exception:
+            pass
         db.close()
         return result
 
@@ -28,13 +40,20 @@ class EmpresaServiceImpl(EmpresaServiceInterface):
                 tipo_nombre = empresa.tipo_empresa.nombre if getattr(empresa, 'tipo_empresa', None) else None
             except Exception:
                 tipo_nombre = None
-            setattr(empresa, 'nombre_tipo_empresa', tipo_nombre)
+            setattr(empresa, 'tipo_empresa_nombre', tipo_nombre)
         db.close()
         return result
 
     def get_empresa(self, empresa_id: int):
         db = SessionLocal()
         empresa = self.repo.get_by_id(db, empresa_id)
+        # attach tipo_empresa_nombre for single fetch
+        if empresa:
+            try:
+                tipo_nombre = empresa.tipo_empresa.nombre if getattr(empresa, 'tipo_empresa', None) else None
+            except Exception:
+                tipo_nombre = None
+            setattr(empresa, 'tipo_empresa_nombre', tipo_nombre)
         db.close()
         if not empresa:
             raise Exception("Empresa no encontrada")
@@ -48,6 +67,12 @@ class EmpresaServiceImpl(EmpresaServiceInterface):
             raise Exception("Empresa no encontrada")
         update_data = data.dict(exclude_unset=True)
         result = self.repo.update(db, empresa, update_data)
+        # attach tipo_empresa_nombre
+        try:
+            tipo_nombre = result.tipo_empresa.nombre if getattr(result, 'tipo_empresa', None) else None
+        except Exception:
+            tipo_nombre = None
+        setattr(result, 'tipo_empresa_nombre', tipo_nombre)
         db.close()
         return result
 

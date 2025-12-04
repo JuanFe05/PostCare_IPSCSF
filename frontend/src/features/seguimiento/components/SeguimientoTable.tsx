@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import Swal from "sweetalert2";
 import SeguimientoRow from "./SeguimientoRow";
+import SeguimientoSearch from "./SeguimientoSearch";
 import { useAuth } from "../../../hooks/useAuth";
 import SeguimientoForm from "./SeguimientoForm";
 import { getTiposSeguimiento, createTipoSeguimiento, updateTipoSeguimiento, deleteTipoSeguimiento } from "../Seguimiento.api";
@@ -119,18 +120,7 @@ export default function SeguimientoTable() {
           })()}
         </div>
 
-        <div className="flex items-center gap-2 w-full max-w-md justify-end">
-          <input
-            type="text"
-            value={search}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-            placeholder="Buscar por Nombre o Descripción"
-            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition border-gray-300"
-          />
-          {search && (
-            <button onClick={() => setSearch('')} className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200">Limpiar</button>
-          )}
-        </div>
+        <SeguimientoSearch value={search} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} onClear={() => setSearch('')} placeholder="Buscar por Nombre o Descripción" />
       </div>
 
       {loading && <p>Cargando tipos...</p>}

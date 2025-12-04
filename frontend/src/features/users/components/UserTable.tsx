@@ -5,6 +5,7 @@ import type { Usuario } from "../types";
 import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, acquireUserLock, releaseUserLock, checkUserLock } from "../Users.api";
 import Swal from "sweetalert2";
 import UserForm from "./UserForm";
+import UserSearch from "./UserSearch";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 
@@ -208,25 +209,7 @@ export default function UserTable() {
           })()}
         </div>
 
-        {/* CONTENEDOR DERECHO (Search + limpiar) */}
-        <div className="flex items-center gap-2 w-full max-w-md justify-end">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por usuario o correo"
-            className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition border-gray-300"
-          />
-
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200"
-            >
-              Limpiar
-            </button>
-          )}
-        </div>
+        <UserSearch value={searchTerm} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} onClear={() => setSearchTerm('')} placeholder="Buscar por usuario o correo" />
       </div>
 
 
