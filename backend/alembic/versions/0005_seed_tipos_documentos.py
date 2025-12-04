@@ -1,13 +1,7 @@
-"""seed tipos_documentos
-
-Revision ID: 0005_seed_tipos_documentos
-Revises: 0004_seed_catalogos
-Create Date: 2025-12-03 00:00:00.000000
-"""
 from alembic import op
 import sqlalchemy as sa
 
-# revision identifiers, used by Alembic.
+# Identificadores de revisión, utilizados por Alembic.
 revision = '0005_seed_tipos_documentos'
 down_revision = '0004_seed_catalogos'
 branch_labels = None

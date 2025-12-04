@@ -1,7 +1,7 @@
 from alembic import op
 import sqlalchemy as sa
 
-# revision identifiers, used by Alembic.
+# Identificadores de revisión, utilizados por Alembic.
 revision = '0004_seed_catalogos'
 down_revision = '0003_seed_roles_and_admin'
 branch_labels = None
