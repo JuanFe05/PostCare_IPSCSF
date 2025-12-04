@@ -1,6 +1,7 @@
 from alembic import op
 import sqlalchemy as sa
 import os
+import bcrypt
 
 # Identificadores de revisión, utilizados por Alembic.
 revision = '0003_seed_roles_and_admin'
@@ -25,9 +26,12 @@ def upgrade():
             f"VALUES ({role_id}, '{safe_nombre}', '{safe_desc}');"
         )
     
-    # Leer username y password_hash desde variables de entorno (obligatorio)
+    # Leer username y password desde variables de entorno (obligatorio)
     admin_username = os.environ['ADMIN_USERNAME']
-    password_hash = os.environ['ADMIN_PASSWORD_HASH']
+    admin_password = os.environ['ADMIN_PASSWORD']
+
+    # Generar hash bcrypt de la contraseña
+    password_hash = bcrypt.hashpw(admin_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
     # Sanitizar antes de construir SQL literal
     safe_username = admin_username.replace("'", "''")
