@@ -8,6 +8,7 @@ import EmpresaForm from "./EmpresaForm";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import EmpresaRow from "./EmpresaRow";
 import EmpresaSearch from "./EmpresaSearch";
+import EmpresaPagination from "./EmpresaPagination";
 import { useTable, usePagination } from 'react-table';
 
 export default function EmpresaTable() {
@@ -115,7 +116,7 @@ export default function EmpresaTable() {
     previousPage,
   } = tableInstance;
 
-  // Set page size to 11
+  // Establecer el tamaño de página en 11
   useEffect(() => {
     if (tableInstance.setPageSize) {
       tableInstance.setPageSize(11);
@@ -261,54 +262,16 @@ export default function EmpresaTable() {
             </tbody>
           </table>
 
-          {/* Pagination controls */}
-          {data.length > 11 && (
-            <div className="flex items-center justify-between mt-6 px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-700">
-                  Mostrando <span className="font-semibold">{pageIndex * 11 + 1}</span> - <span className="font-semibold">{Math.min((pageIndex + 1) * 11, data.length)}</span> de <span className="font-semibold">{data.length}</span> empresas
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => gotoPage(0)} 
-                  disabled={!canPreviousPage} 
-                  className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors ${!canPreviousPage ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
-                  title="Primera página"
-                >
-                  ««
-                </button>
-                <button 
-                  onClick={() => previousPage()} 
-                  disabled={!canPreviousPage} 
-                  className={`px-4 py-2 rounded-md border text-sm font-medium transition-colors ${!canPreviousPage ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
-                >
-                  Anterior
-                </button>
-                
-                <span className="px-4 py-2 text-sm font-medium text-gray-700">
-                  Página <span className="font-bold">{pageIndex + 1}</span> de <span className="font-bold">{pageOptions.length}</span>
-                </span>
-                
-                <button 
-                  onClick={() => nextPage()} 
-                  disabled={!canNextPage} 
-                  className={`px-4 py-2 rounded-md border text-sm font-medium transition-colors ${!canNextPage ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
-                >
-                  Siguiente
-                </button>
-                <button 
-                  onClick={() => gotoPage(pageOptions.length - 1)} 
-                  disabled={!canNextPage} 
-                  className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors ${!canNextPage ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
-                  title="Última página"
-                >
-                  »»
-                </button>
-              </div>
-            </div>
-          )}
+          <EmpresaPagination
+            pageIndex={pageIndex}
+            pageOptions={pageOptions}
+            canPreviousPage={canPreviousPage}
+            canNextPage={canNextPage}
+            dataLength={data.length}
+            gotoPage={gotoPage}
+            nextPage={nextPage}
+            previousPage={previousPage}
+          />
         </div>
       )}
     </div>

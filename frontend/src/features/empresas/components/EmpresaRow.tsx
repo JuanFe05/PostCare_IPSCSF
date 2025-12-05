@@ -10,7 +10,7 @@ type Props = {
 };
 
 export default function EmpresaRow({ e, auth, attemptEdit, handleEliminar }: Props) {
-  // This component renders only the table cells; the parent `EmpresaTable` renders the <tr> wrapper.
+  // Este componente solo representa las celdas de la tabla; el elemento padre `EmpresaTable` representa el contenedor <tr>.
   return (
     <>
       <td className="p-3 text-center">{e.id}</td>
