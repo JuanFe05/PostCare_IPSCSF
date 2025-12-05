@@ -55,8 +55,8 @@ class AtencionService:
             # Datos del paciente
             id_paciente=atencion.paciente.id,
             nombre_paciente=nombre_paciente,
-            telefono_1=atencion.paciente.telefono_uno,
-            telefono_2=atencion.paciente.telefono_dos,
+            telefono_uno=atencion.paciente.telefono_uno,
+            telefono_dos=atencion.paciente.telefono_dos,
             email=atencion.paciente.email,
             
             # Datos de la empresa
@@ -92,7 +92,11 @@ class AtencionService:
         return AtencionListResponseDto(
             id_atencion=atencion.id,
             fecha_atencion=atencion.fecha_ingreso,
+            id_paciente=atencion.id_paciente,
             nombre_paciente=nombre_paciente,
+            telefono_uno=atencion.paciente.telefono_uno,
+            telefono_dos=atencion.paciente.telefono_dos,
+            email=atencion.paciente.email,
             id_empresa=atencion.empresa.id,
             nombre_empresa=atencion.empresa.nombre,
             id_estado_atencion=atencion.estado_atencion.id,
