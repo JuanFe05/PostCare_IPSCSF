@@ -1,8 +1,96 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
+class ServicioAtencionDto(BaseModel):
+    """Servicio asociado a una atención"""
+    id_servicio: int
+    nombre_servicio: str
+
+    class Config:
+        from_attributes = True
+
+
+class AtencionCreateDto(BaseModel):
+    """DTO para crear una nueva atención"""
+    id: Optional[str] = None  # Opcional, puede generarse automáticamente
+    id_paciente: str
+    id_empresa: int
+    id_estado_atencion: int
+    id_seguimiento_atencion: Optional[int] = None
+    fecha_ingreso: Optional[datetime] = None
+    observacion: Optional[str] = None
+    servicios: Optional[List[int]] = []  # Lista de IDs de servicios
+
+    class Config:
+        from_attributes = True
+
+
+class AtencionUpdateDto(BaseModel):
+    """DTO para actualizar una atención existente"""
+    id_empresa: Optional[int] = None
+    id_estado_atencion: Optional[int] = None
+    id_seguimiento_atencion: Optional[int] = None
+    fecha_ingreso: Optional[datetime] = None
+    observacion: Optional[str] = None
+    servicios: Optional[List[int]] = None  # Lista de IDs de servicios
+
+    class Config:
+        from_attributes = True
+
+
+class AtencionDetalleResponseDto(BaseModel):
+    """DTO completo con toda la información de la atención"""
+    # Datos de la atención
+    id_atencion: str
+    fecha_atencion: datetime
+    observacion: Optional[str] = None
+    
+    # Datos del paciente
+    id_paciente: str
+    nombre_paciente: str  # Concatenado: primer_nombre segundo_nombre primer_apellido segundo_apellido
+    telefono_1: Optional[str] = None
+    telefono_2: Optional[str] = None
+    email: Optional[str] = None
+    
+    # Datos de la empresa
+    id_empresa: int
+    nombre_empresa: str
+    
+    # Datos del estado
+    id_estado_atencion: int
+    nombre_estado_atencion: str
+    
+    # Datos del seguimiento
+    id_seguimiento_atencion: Optional[int] = None
+    nombre_seguimiento_atencion: Optional[str] = None
+    
+    # Servicios
+    servicios: List[ServicioAtencionDto] = []
+
+    class Config:
+        from_attributes = True
+
+
+class AtencionListResponseDto(BaseModel):
+    """DTO para lista de atenciones"""
+    id_atencion: str
+    fecha_atencion: datetime
+    nombre_paciente: str
+    id_empresa: int
+    nombre_empresa: str
+    id_estado_atencion: int
+    nombre_estado_atencion: str
+    id_seguimiento_atencion: Optional[int] = None
+    nombre_seguimiento_atencion: Optional[str] = None
+    servicios: List[ServicioAtencionDto] = []  # Agregado: servicios en lista
+
+    class Config:
+        from_attributes = True
+
+
+# Mantener compatibilidad con código existente
 class PacienteDto(BaseModel):
     id: str
     id_tipo_documento: int
