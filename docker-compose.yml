@@ -33,6 +33,12 @@ services:
       RUN_STARTUP_TABLES: "true"
       ADMIN_USERNAME: ${ADMIN_USERNAME}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      # External Database (SQL Server)
+      EXTERNAL_DB_HOST: ${EXTERNAL_DB_HOST}
+      EXTERNAL_DB_PORT: ${EXTERNAL_DB_PORT}
+      EXTERNAL_DB_NAME: ${EXTERNAL_DB_NAME}
+      EXTERNAL_DB_USER: ${EXTERNAL_DB_USER}
+      EXTERNAL_DB_PASSWORD: ${EXTERNAL_DB_PASSWORD}
     depends_on:
       - mysql
     networks:
