@@ -8,6 +8,7 @@ import EmpresaForm from "./EmpresaForm";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import EmpresaRow from "./EmpresaRow";
 import EmpresaSearch from "./EmpresaSearch";
+import { useTable, usePagination } from 'react-table';
 
 export default function EmpresaTable() {
   const [showAddEmpresa, setShowAddEmpresa] = useState(false);
@@ -65,7 +66,7 @@ export default function EmpresaTable() {
   // calcular lista filtrada + ordenada
   const displayed = useMemo(() => {
     // filter
-    const filtered = empresas.filter((e) => {
+    const filtered = empresas.filter((e: Empresa) => {
       if (!searchTerm) return true;
       const q = searchTerm.trim().toLowerCase();
       const idMatch = String(e.id ?? '').toLowerCase().includes(q);
@@ -89,6 +90,37 @@ export default function EmpresaTable() {
     });
     return sorted;
   }, [empresas, searchTerm, sortKey, sortDir]);
+
+  // react-table columns (used for headers and pagination only)
+  const columns = useMemo(() => [
+    { Header: 'ID', accessor: 'id' as const },
+    { Header: 'Nombre', accessor: 'nombre' as const },
+    { Header: 'Tipo', accessor: 'tipo_empresa_nombre' as const },
+    { Header: 'Acciones', accessor: 'id' as const },
+  ], []);
+
+  const data = useMemo(() => displayed, [displayed]);
+
+  const tableInstance: any = useTable({ columns, data, initialState: { pageIndex: 0 } as any }, usePagination);
+  const {
+    getTableProps,
+    getTableBodyProps,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    state: { pageIndex },
+    gotoPage,
+    nextPage,
+    previousPage,
+  } = tableInstance;
+
+  // Set page size to 11
+  useEffect(() => {
+    if (tableInstance.setPageSize) {
+      tableInstance.setPageSize(11);
+    }
+  }, [tableInstance]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) {
@@ -185,63 +217,98 @@ export default function EmpresaTable() {
         <div className="text-center py-8">Cargando empresas...</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm divide-y table-auto">
+          <table {...getTableProps()} className="min-w-full text-sm divide-y table-auto">
             <thead className="bg-blue-100 text-blue-900">
               <tr>
-                <th onClick={() => toggleSort('id')} className="p-3 font-semibold w-16 text-center cursor-pointer select-none">
-                  <div className="flex items-center justify-center gap-1">
-                    <span>ID</span>
-                    <span className="inline-flex flex-col ml-2 text-xs leading-none">
-                      <span className={sortKey === 'id' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                      <span className={sortKey === 'id' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                    </span>
-                  </div>
-                </th>
-
-                <th onClick={() => toggleSort('nombre')} className="p-3 font-semibold w-1/3 text-center cursor-pointer select-none">
-                  <div className="flex items-center justify-center gap-1">
-                    <span>Nombre</span>
-                    <span className="inline-flex flex-col ml-2 text-xs leading-none">
-                      <span className={sortKey === 'nombre' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                      <span className={sortKey === 'nombre' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                    </span>
-                  </div>
-                </th>
-
-                <th onClick={() => toggleSort('tipo_empresa_nombre')} className="p-3 font-semibold w-1/4 text-center cursor-pointer select-none">
-                  <div className="flex items-center justify-center gap-1">
-                    <span>Tipo</span>
-                    <span className="inline-flex flex-col ml-2 text-xs leading-none">
-                      <span className={sortKey === 'tipo_empresa_nombre' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                      <span className={sortKey === 'tipo_empresa_nombre' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                    </span>
-                  </div>
-                </th>
-
-                <th className="p-3 font-semibold w-32 text-center">Acciones</th>
+                {columns.map((col: any) => (
+                  <th key={col.accessor} className={`p-3 font-semibold ${col.accessor === 'id' ? 'w-16' : col.accessor === 'acciones' ? 'w-32' : 'text-center'} text-center select-none`} onClick={() => col.accessor !== 'acciones' && toggleSort(col.accessor)}>
+                    <div className="flex items-center justify-center gap-1">
+                      <span>{col.Header}</span>
+                      {col.accessor !== 'acciones' && (
+                        <span className="inline-flex flex-col ml-2 text-xs leading-none">
+                          <span className={sortKey === col.accessor && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
+                          <span className={sortKey === col.accessor && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                ))}
               </tr>
             </thead>
 
-            <tbody className="bg-white">
-              {displayed.length === 0 ? (
+            <tbody {...getTableBodyProps()} className="bg-white">
+              {data.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-6 text-center text-gray-500">No se encontraron empresas.</td>
                 </tr>
               ) : (
-                displayed.map((e, idx) => (
-                  <tr key={e.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
-                    <EmpresaRow
-                      e={e}
-                      idx={idx}
-                      auth={auth}
-                      attemptEdit={attemptEdit}
-                      handleEliminar={handleEliminar}
-                    />
-                  </tr>
-                ))
+                page.map((row: any, ridx: number) => {
+                  const e: Empresa = row.original;
+                  const globalIdx = pageIndex * 11 + ridx;
+                  return (
+                    <tr key={e.id} className={`${globalIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
+                      <EmpresaRow
+                        e={e}
+                        idx={globalIdx}
+                        auth={auth}
+                        attemptEdit={attemptEdit}
+                        handleEliminar={handleEliminar}
+                      />
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
+
+          {/* Pagination controls */}
+          {data.length > 11 && (
+            <div className="flex items-center justify-between mt-6 px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">
+                  Mostrando <span className="font-semibold">{pageIndex * 11 + 1}</span> - <span className="font-semibold">{Math.min((pageIndex + 1) * 11, data.length)}</span> de <span className="font-semibold">{data.length}</span> empresas
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => gotoPage(0)} 
+                  disabled={!canPreviousPage} 
+                  className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors ${!canPreviousPage ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                  title="Primera página"
+                >
+                  ««
+                </button>
+                <button 
+                  onClick={() => previousPage()} 
+                  disabled={!canPreviousPage} 
+                  className={`px-4 py-2 rounded-md border text-sm font-medium transition-colors ${!canPreviousPage ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                >
+                  Anterior
+                </button>
+                
+                <span className="px-4 py-2 text-sm font-medium text-gray-700">
+                  Página <span className="font-bold">{pageIndex + 1}</span> de <span className="font-bold">{pageOptions.length}</span>
+                </span>
+                
+                <button 
+                  onClick={() => nextPage()} 
+                  disabled={!canNextPage} 
+                  className={`px-4 py-2 rounded-md border text-sm font-medium transition-colors ${!canNextPage ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                >
+                  Siguiente
+                </button>
+                <button 
+                  onClick={() => gotoPage(pageOptions.length - 1)} 
+                  disabled={!canNextPage} 
+                  className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors ${!canNextPage ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                  title="Última página"
+                >
+                  »»
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -209,7 +209,7 @@ export default function UserTable() {
           })()}
         </div>
 
-        <UserSearch value={searchTerm} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} onClear={() => setSearchTerm('')} placeholder="Buscar por usuario o correo" />
+        <UserSearch value={searchTerm} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} onClear={() => setSearchTerm('')} placeholder="Buscar por Usuario o Correo" />
       </div>
 
 
