@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 
 class SyncRequestDto(BaseModel):
@@ -16,5 +16,18 @@ class SyncResponseDto(BaseModel):
     atenciones: dict
     mensaje: Optional[str] = None
 
+    class Config:
+        from_attributes = True
+
+
+class SyncClinicaResponseDto(BaseModel):
+    """DTO para respuesta de sincronización desde Clínica Florida"""
+    success: bool
+    fecha_sincronizacion: str
+    registros_procesados: int
+    pacientes: dict
+    atenciones: dict
+    errores: List[str] = []
+    
     class Config:
         from_attributes = True

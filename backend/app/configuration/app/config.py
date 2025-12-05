@@ -35,6 +35,13 @@ class Settings(BaseSettings):
 
     # App environment
     APP_ENV: str = Field("development", env="APP_ENV")
+    
+    # External Database Configuration (SQL Server)
+    EXTERNAL_DB_HOST: Optional[str] = Field(None, env="EXTERNAL_DB_HOST")
+    EXTERNAL_DB_PORT: Optional[int] = Field(None, env="EXTERNAL_DB_PORT")
+    EXTERNAL_DB_NAME: Optional[str] = Field(None, env="EXTERNAL_DB_NAME")
+    EXTERNAL_DB_USER: Optional[str] = Field(None, env="EXTERNAL_DB_USER")
+    EXTERNAL_DB_PASSWORD: Optional[str] = Field(None, env="EXTERNAL_DB_PASSWORD")
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
@@ -45,6 +52,12 @@ class Settings(BaseSettings):
             self.DATABASE_URL = (
                 f"mysql+mysqldb://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DATABASE}"
             )
+    
+    def get_external_db_url(self) -> str:
+        """Construye la URL de conexión a SQL Server externo"""
+        if self.EXTERNAL_DB_USER and self.EXTERNAL_DB_PASSWORD:
+            return f"mssql+pymssql://{self.EXTERNAL_DB_USER}:{self.EXTERNAL_DB_PASSWORD}@{self.EXTERNAL_DB_HOST}:{self.EXTERNAL_DB_PORT}/{self.EXTERNAL_DB_NAME}"
+        return None
 
 
 settings = Settings()

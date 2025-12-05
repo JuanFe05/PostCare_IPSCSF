@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.presentation.dto.tipo_empresa_dto import TipoEmpresaResponseDto
 from app.service.implementation.tipo_empresa_service_impl import TipoEmpresaServiceImpl
 
-router = APIRouter(prefix="/tipos-empresas", tags=["Tipos de Empresas"])
+router = APIRouter(prefix="/tipos-empresas")
 service = TipoEmpresaServiceImpl()
 
 
