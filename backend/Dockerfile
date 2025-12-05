@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     freetds-dev \
     freetds-bin \
+    dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar y instalar dependencias de Python
@@ -23,8 +24,8 @@ RUN pip install --upgrade pip && \
 # Copiar el código de la app
 COPY . .
 
-# Dar permisos de ejecución al entrypoint
-RUN chmod +x /app/entrypoint.sh
+# Convertir formato de líneas Windows a Unix y dar permisos de ejecución
+RUN dos2unix /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Exponer puerto de la app
 EXPOSE 8000
