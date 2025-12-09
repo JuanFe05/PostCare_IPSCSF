@@ -26,23 +26,20 @@ class SchedulerService:
     @classmethod
     def start(cls):
         """Inicia el scheduler y registra todas las tareas programadas."""
+        print("[SCHEDULER] Iniciando scheduler...")
         scheduler = cls.get_scheduler()
         
-        # Registrar tarea de sincronización diaria a las 6:00 AM
+        # Registrar tarea de sincronización diaria a las 6:00 AM (hora del servidor)
         scheduler.add_job(
             func=cls.sync_clinica_florida_job,
-            trigger=CronTrigger(hour=6, minute=0),  # Todos los días a las 6:00 AM
+            trigger=CronTrigger(hour=11, minute=00),
             id='sync_clinica_florida',
             name='Sincronización Clínica Florida',
             replace_existing=True
         )
         
-        logger.info("Tareas programadas registradas:")
-        logger.info("Sincronización Clínica Florida: Diaria a las 6:00 AM")
-        
-        # Iniciar el scheduler
         scheduler.start()
-        logger.info("Scheduler iniciado correctamente")
+        logger.info("Scheduler iniciado - Sincronización diaria a las 6:00 AM")
     
     @classmethod
     def shutdown(cls):
@@ -57,6 +54,9 @@ class SchedulerService:
         Tarea programada: Sincronización de admisiones desde Clínica Florida.
         Se ejecuta todos los días a las 6:00 AM.
         """
+        print("="*60)
+        print(f"[SYNC JOB] Iniciando sincronización automática - {datetime.now()}")
+        print("="*60)
         logger.info("="*60)
         logger.info(f"Iniciando sincronización automática - {datetime.now()}")
         logger.info("="*60)
@@ -100,6 +100,9 @@ class SchedulerService:
         
         finally:
             db.close()
+            print("="*60)
+            print(f"[SYNC JOB] Sincronización automática finalizada - {datetime.now()}")
+            print("="*60)
             logger.info("="*60)
             logger.info("Sincronización automática finalizada")
             logger.info("="*60)
