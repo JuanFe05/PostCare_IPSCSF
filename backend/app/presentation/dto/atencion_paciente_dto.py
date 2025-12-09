@@ -50,8 +50,8 @@ class AtencionDetalleResponseDto(BaseModel):
     # Datos del paciente
     id_paciente: str
     nombre_paciente: str  # Concatenado: primer_nombre segundo_nombre primer_apellido segundo_apellido
-    telefono_1: Optional[str] = None
-    telefono_2: Optional[str] = None
+    telefono_uno: Optional[str] = None
+    telefono_dos: Optional[str] = None
     email: Optional[str] = None
     
     # Datos de la empresa
@@ -77,13 +77,27 @@ class AtencionListResponseDto(BaseModel):
     """DTO para lista de atenciones"""
     id_atencion: str
     fecha_atencion: datetime
+    
+    # Datos del paciente
+    id_paciente: str
     nombre_paciente: str
+    telefono_uno: Optional[str] = None
+    telefono_dos: Optional[str] = None
+    email: Optional[str] = None
+    
+    # Datos de la empresa
     id_empresa: int
     nombre_empresa: str
+    
+    # Datos del estado
     id_estado_atencion: int
     nombre_estado_atencion: str
+    
+    # Datos del seguimiento
     id_seguimiento_atencion: Optional[int] = None
     nombre_seguimiento_atencion: Optional[str] = None
+    
+    # Servicios
     servicios: List[ServicioAtencionDto] = []  # Agregado: servicios en lista
 
     class Config:

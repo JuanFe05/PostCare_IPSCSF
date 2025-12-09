@@ -5,9 +5,9 @@ import type { Usuario } from "../types";
 import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, acquireUserLock, releaseUserLock, checkUserLock } from "../Users.api";
 import Swal from "sweetalert2";
 import UserForm from "./UserForm";
-import UserSearch from "./UserSearch";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
+import Search from "../../../components/search/Search";
 
 export default function UserTable() {
   const [showAddUser, setShowAddUser] = useState(false);
@@ -209,7 +209,12 @@ export default function UserTable() {
           })()}
         </div>
 
-        <UserSearch value={searchTerm} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} onClear={() => setSearchTerm('')} placeholder="Buscar por Usuario o Correo" />
+        <Search 
+          value={searchTerm} 
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
+          onClear={() => setSearchTerm('')} 
+          placeholder="Buscar por ID, Usuario o Correo"
+        />
       </div>
 
 

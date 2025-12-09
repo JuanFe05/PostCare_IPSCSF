@@ -1,5 +1,5 @@
-import AtencionesPanel from '../components/AtencionesPanel';
+import AtencionTable from '../components/AtencionTable';
 
 export default function AtencionesPage() {
-	return <AtencionesPanel />;
+  return <AtencionTable />;
 }

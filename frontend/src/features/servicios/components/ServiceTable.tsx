@@ -5,7 +5,7 @@ import type { Service } from "../types";
 import ServiceForm from "./ServiceForm";
 import Swal from "sweetalert2";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
-import ServiceSearch from "./ServiceSearch";
+import Search from "../../../components/search/Search";
 import ServiceRow from "./ServiceRow";
 import {
   getServices,
@@ -186,35 +186,39 @@ export default function ServicesTable() {
 
       <div className="mb-6 flex items-center justify-between">
         <div className="flex-shrink-0 flex items-center gap-3">
-  {(() => {
-    const role = String(auth?.user?.role_name ?? "").trim().toUpperCase();
-    if (role === "ADMINISTRADOR") {
-      return (
-        <>
-          {/* Botón agregar */}
-          <button
-            onClick={() => setShowAdd(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow cursor-pointer"
-          >
-            Agregar nuevo servicio
-          </button>
+          {(() => {
+            const role = String(auth?.user?.role_name ?? "").trim().toUpperCase();
+            if (role === "ADMINISTRADOR") {
+              return (
+                <>
+                  {/* Botón agregar */}
+                  <button
+                    onClick={() => setShowAdd(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow cursor-pointer"
+                  >
+                    Agregar nuevo servicio
+                  </button>
 
-          {/* Botón Exportar Excel */}
-          <ExportExcel data={services} fileName="services.xlsx" />
-        </>
-      );
-    }
+                  {/* Botón Exportar Excel */}
+                  <ExportExcel data={services} fileName="services.xlsx" />
+                </>
+              );
+            }
 
-    return (
-      <p className="text-sm text-gray-600">
-        Solo administradores pueden gestionar servicios.
-      </p>
-    );
-  })()}
-</div>
+            return (
+              <p className="text-sm text-gray-600">
+                Solo administradores pueden gestionar servicios.
+              </p>
+            );
+          })()}
+        </div>
 
-
-        <ServiceSearch value={searchTerm} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} onClear={() => setSearchTerm("")} placeholder="Buscar por ID, Nombre o Descripción" />
+        <Search 
+          value={searchTerm} 
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
+          onClear={() => setSearchTerm('')} 
+          placeholder="Buscar por ID, Nombre o Descripción"
+        />
       </div>
 
       {/* ADD MODAL */}
