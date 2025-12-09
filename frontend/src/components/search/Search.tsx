@@ -1,13 +1,13 @@
 import type { ChangeEvent } from 'react';
 
-type AtencionSearchProps = {
+type Props = {
   value: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onClear: () => void;
   placeholder?: string;
 };
 
-export default function AtencionSearch({ value, onChange, onClear, placeholder = "Buscar atención" }: AtencionSearchProps) {
+export default function Search({ value, onChange, onClear, placeholder = "Buscar atención" }: Props) {
   return (
     <div className="relative flex-1 max-w-md">
       <input

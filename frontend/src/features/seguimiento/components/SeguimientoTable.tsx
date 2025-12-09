@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import Swal from "sweetalert2";
 import SeguimientoRow from "./SeguimientoRow";
-import SeguimientoSearch from "./SeguimientoSearch";
 import { useAuth } from "../../../hooks/useAuth";
 import SeguimientoForm from "./SeguimientoForm";
 import { getTiposSeguimiento, createTipoSeguimiento, updateTipoSeguimiento, deleteTipoSeguimiento } from "../Seguimiento.api";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
+import Search from "../../../components/search/Search";
 
 export interface TipoSeguimiento {
   id: number;
@@ -21,12 +21,12 @@ export default function SeguimientoTable() {
   const [showEdit, setShowEdit] = useState(false);
   const [editTipo, setEditTipo] = useState<TipoSeguimiento | null>(null);
   const { auth } = useAuth();
-  const [search, setSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
 
   const displayedTipos = useMemo(() => {
-    const q = String(search ?? '').trim().toLowerCase();
+    const q = String(searchTerm ?? '').trim().toLowerCase();
     const filtered = tipos.filter((t: TipoSeguimiento) => {
       if (!q) return true;
       const id = String(t.id ?? '').toLowerCase();
@@ -48,7 +48,7 @@ export default function SeguimientoTable() {
       }
       return sortDir === 'asc' ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
-  }, [tipos, search, sortKey, sortDir]);
+  }, [tipos, searchTerm, sortKey, sortDir]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) {
@@ -120,7 +120,12 @@ export default function SeguimientoTable() {
           })()}
         </div>
 
-        <SeguimientoSearch value={search} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} onClear={() => setSearch('')} placeholder="Buscar por Nombre o Descripción" />
+        <Search 
+          value={searchTerm} 
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
+          onClear={() => setSearchTerm('')} 
+          placeholder="Buscar por Nombre o Descripción"
+        />
       </div>
 
       {loading && <p>Cargando tipos...</p>}
@@ -177,7 +182,7 @@ export default function SeguimientoTable() {
 
       {/* No hay coincidencias */}
       {!loading && tipos.length > 0 && displayedTipos.length === 0 && (
-        <p className="mt-4">No se encontraron tipos que coincidan con "{search}".</p>
+        <p className="mt-4">No se encontraron tipos que coincidan con "{searchTerm}".</p>
       )}
 
       {showAdd && (

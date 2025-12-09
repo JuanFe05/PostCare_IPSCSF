@@ -7,9 +7,9 @@ import Swal from "sweetalert2";
 import EmpresaForm from "./EmpresaForm";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import EmpresaRow from "./EmpresaRow";
-import EmpresaSearch from "./EmpresaSearch";
 import EmpresaPagination from "./EmpresaPagination";
 import { useTable, usePagination } from 'react-table';
+import Search from "../../../components/search/Search";
 
 export default function EmpresaTable() {
   const [showAddEmpresa, setShowAddEmpresa] = useState(false);
@@ -172,7 +172,12 @@ export default function EmpresaTable() {
           })()}
         </div>
 
-        <EmpresaSearch value={searchTerm} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} onClear={() => setSearchTerm('')} placeholder="Buscar por nombre o tipo" />
+        <Search 
+          value={searchTerm} 
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
+          onClear={() => setSearchTerm('')} 
+          placeholder="Buscar por ID, Nombre o Tipo"
+        />
       </div>
 
       {showAddEmpresa && (

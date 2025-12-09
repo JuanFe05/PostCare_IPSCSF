@@ -7,9 +7,9 @@ import Swal from "sweetalert2";
 import AtencionForm from "./AtencionForm";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import AtencionRow from "./AtencionRow";
-import AtencionSearch from "./AtencionSearch";
 import AtencionPagination from "./AtencionPagination";
 import { useTable, usePagination } from 'react-table';
+import Search from "../../../components/search/Search";
 
 export default function AtencionTable() {
   const [showAddAtencion, setShowAddAtencion] = useState(false);
@@ -188,11 +188,11 @@ export default function AtencionTable() {
           })()}
         </div>
 
-        <AtencionSearch 
+        <Search 
           value={searchTerm} 
           onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
           onClear={() => setSearchTerm('')} 
-          placeholder="Buscar por ID, paciente, empresa o estado" 
+          placeholder="Buscar por ID, Paciente, Empresa o Estado" 
         />
       </div>
 
