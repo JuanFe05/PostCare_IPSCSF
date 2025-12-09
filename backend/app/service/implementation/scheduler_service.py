@@ -26,23 +26,21 @@ class SchedulerService:
     @classmethod
     def start(cls):
         """Inicia el scheduler y registra todas las tareas programadas."""
+        print("[SCHEDULER] Iniciando scheduler...")
         scheduler = cls.get_scheduler()
         
         # Registrar tarea de sincronización diaria a las 6:00 AM
         scheduler.add_job(
             func=cls.sync_clinica_florida_job,
-            trigger=CronTrigger(hour=6, minute=0),  # Todos los días a las 6:00 AM
+            trigger=CronTrigger(hour=11, minute=30),
             id='sync_clinica_florida',
             name='Sincronización Clínica Florida',
             replace_existing=True
         )
         
-        logger.info("Tareas programadas registradas:")
-        logger.info("Sincronización Clínica Florida: Diaria a las 6:00 AM")
-        
-        # Iniciar el scheduler
         scheduler.start()
-        logger.info("Scheduler iniciado correctamente")
+        print("[SCHEDULER] Scheduler iniciado - Sincronización diaria a las 11:30 AM")
+        logger.info("Scheduler iniciado - Sincronización diaria a las 11:30 AM")
     
     @classmethod
     def shutdown(cls):

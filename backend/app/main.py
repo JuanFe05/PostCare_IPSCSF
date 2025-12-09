@@ -11,11 +11,10 @@ from app.service.implementation.scheduler_service import SchedulerService
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Gestión del ciclo de vida de la aplicación."""
-    # Startup
+    print("[APP] Iniciando aplicación...")
     SchedulerService.start()
     yield
-    # Shutdown
+    print("[APP] Cerrando aplicación...")
     SchedulerService.shutdown()
 
 

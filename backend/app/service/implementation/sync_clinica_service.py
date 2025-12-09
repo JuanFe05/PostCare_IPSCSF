@@ -43,7 +43,7 @@ class SyncClinicaService:
         INNER JOIN tbTipoEmpresa          AS te  ON emp.unco_tpo_emprsa = te.unco
     WHERE 
         emp.unco_tpo_emprsa IN (4, 5) 
-        AND CAST(adm.fcha_admsn AS DATE) = CAST(DATEADD(day, -1, GETDATE()) AS DATE)
+        AND CAST(adm.fcha_admsn AS DATE) = '2025-12-01'
         AND adm.cnsctvo_admsns IS NOT NULL
     """
 
