@@ -9,12 +9,8 @@ from app.presentation.dto.atencion_paciente_dto import (
     AtencionUpdateDto,
     AtencionDetalleResponseDto,
     AtencionListResponseDto,
-    # Mantener compatibilidad con código anterior
-    AtencionPacienteCreateDto,
-    AtencionPacienteResponseDto,
 )
 from app.service.implementation.atencion_service import AtencionService
-from app.service.implementation.atencion_service_impl import AtencionService as AtencionServiceOld
 
 
 router = APIRouter(prefix="/atenciones", dependencies=[Depends(get_current_user)])
@@ -159,59 +155,3 @@ def delete_atencion(
     if not success:
         raise HTTPException(status_code=404, detail="Atención no encontrada")
     return None
-
-
-# ==================== ENDPOINTS ANTERIORES (COMPATIBILIDAD) ====================
-
-@router.post("/con-paciente", response_model=AtencionPacienteResponseDto, tags=["Atenciones - Legacy"])
-def create_atencion_with_paciente(
-    data: AtencionPacienteCreateDto,
-    db: Session = Depends(get_db)
-):
-    """Crea atención con paciente (endpoint legacy)"""
-    try:
-        atencion, paciente = AtencionServiceOld.create_with_paciente(
-            db,
-            data.atencion.model_dump(),
-            data.paciente.model_dump()
-        )
-        return {"atencion_id": atencion.id, "paciente_id": paciente.id}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.put("/{atencion_id}/con-paciente", response_model=AtencionPacienteResponseDto, tags=["Atenciones - Legacy"])
-def update_atencion_with_paciente(
-    atencion_id: str,
-    data: AtencionPacienteCreateDto,
-    db: Session = Depends(get_db)
-):
-    """Actualiza atención con paciente (endpoint legacy)"""
-    try:
-        atencion, paciente = AtencionServiceOld.update_with_paciente(
-            db,
-            atencion_id,
-            data.atencion.model_dump(),
-            data.paciente.model_dump()
-        )
-        return {"atencion_id": atencion.id, "paciente_id": paciente.id}
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.delete("/{atencion_id}/con-paciente", tags=["Atenciones - Legacy"])
-def delete_atencion_with_paciente(
-    atencion_id: str,
-    delete_paciente: bool = Query(False),
-    db: Session = Depends(get_db)
-):
-    """Elimina atención con paciente (endpoint legacy)"""
-    try:
-        AtencionServiceOld.delete_with_paciente(db, atencion_id, delete_paciente)
-        return {"deleted": True}
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
