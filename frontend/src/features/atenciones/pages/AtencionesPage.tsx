@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import type { ChangeEvent } from "react";
+import { FaSyncAlt } from 'react-icons/fa';
 import { useAuth } from "../../../hooks/useAuth";
 import type { Atencion, NewAtencion, UpdateAtencion } from "../types";
 import { getAtenciones, createAtencion, updateAtencion, deleteAtencion } from "../Atencion.api";
+import { syncPacientesRangoFechas } from "../../../api/Sync.api";
 import Swal from "sweetalert2";
 import AtencionForm from "../components/AtencionForm";
+import SyncModal from "../components/SyncModal";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import AtencionTable from '../components/AtencionTable';
 import Search from "../../../components/search/Search";
@@ -12,6 +15,7 @@ import Search from "../../../components/search/Search";
 export default function AtencionesPage() {
   const [showAddAtencion, setShowAddAtencion] = useState(false);
   const [showEditAtencion, setShowEditAtencion] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
   const [editAtencion, setEditAtencion] = useState<Atencion | null>(null);
   const [atenciones, setAtenciones] = useState<Atencion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,19 +23,58 @@ export default function AtencionesPage() {
 
   const { auth } = useAuth();
 
+  const loadAtenciones = async () => {
+    setLoading(true);
+    try {
+      const data = await getAtenciones(0, 500);
+      console.log("Atenciones recibidas:", data);
+      console.log("Total de atenciones:", data.length);
+      setAtenciones(data);
+    } catch (err) {
+      console.error("Error al cargar atenciones:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    getAtenciones(0, 500)
-      .then((data) => {
-        console.log("Atenciones recibidas:", data);
-        console.log("Total de atenciones:", data.length);
-        setAtenciones(data);
-      })
-      .catch((err) => {
-        console.error("Error al cargar atenciones:", err);
-        console.error("Error detail:", err.response?.data);
-      })
-      .finally(() => setLoading(false));
+    loadAtenciones();
   }, []);
+
+  const handleSync = async (fechaInicio: string, fechaFin: string) => {
+    try {
+      const result = await syncPacientesRangoFechas({
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+      });
+      
+      await loadAtenciones();
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Sincronización exitosa',
+        html: `
+          <div class="text-left space-y-2">
+            <p class="font-bold text-lg mb-2">Pacientes:</p>
+            <p><strong>Creados:</strong> ${result.pacientes.creados}</p>
+            <p><strong>Actualizados:</strong> ${result.pacientes.actualizados}</p>
+            <p><strong>Omitidos:</strong> ${result.pacientes.omitidos}</p>
+            
+            <p class="font-bold text-lg mt-4 mb-2">Atenciones:</p>
+            <p><strong>Creadas:</strong> ${result.atenciones.creadas}</p>
+            <p><strong>Actualizadas:</strong> ${result.atenciones.actualizadas}</p>
+            <p><strong>Omitidas:</strong> ${result.atenciones.omitidas}</p>
+            
+            <p class="font-bold text-lg mt-4 mb-2">Resumen:</p>
+            <p><strong>Registros procesados:</strong> ${result.registros_procesados}</p>
+          </div>
+        `,
+      });
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.detail || 'Error al sincronizar datos';
+      Swal.fire('Error', errorMsg, 'error');
+    }
+  };
 
   const handleEliminar = async (id: string, nombrePaciente: string) => {
     const result = await Swal.fire({
@@ -86,6 +129,16 @@ export default function AtencionesPage() {
                   >
                     Agregar nueva atención
                   </button>
+
+                  <button
+                    onClick={() => setShowSyncModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 shadow cursor-pointer"
+                    title="Sincronizar desde Clínica Florida"
+                  >
+                    <FaSyncAlt />
+                    Sincronizar
+                  </button>
+
                   <ExportExcel data={atenciones} fileName="atenciones.xlsx" />
                 </>
               );
@@ -105,6 +158,16 @@ export default function AtencionesPage() {
           placeholder="Buscar por ID, Paciente, Empresa o Estado" 
         />
       </div>
+
+      {showSyncModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <SyncModal
+            isOpen={showSyncModal}
+            onClose={() => setShowSyncModal(false)}
+            onSync={handleSync}
+          />
+        </div>
+      )}
 
       {showAddAtencion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">

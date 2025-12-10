@@ -28,6 +28,12 @@ export default function SeguimientoTable({
 }: SeguimientoTableProps) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
+  const columns = [
+    { Header: 'ID', accessor: 'id' },
+    { Header: 'Nombre', accessor: 'nombre' },
+    { Header: 'Descripción', accessor: 'descripcion' },
+    { Header: 'Acciones', accessor: 'acciones' },
+  ];
 
   const displayedTipos = useMemo(() => {
     const q = String(searchTerm ?? '').trim().toLowerCase();
@@ -76,36 +82,23 @@ export default function SeguimientoTable({
       <table className="min-w-full text-sm divide-y table-auto">
         <thead className="bg-blue-100 text-blue-900">
           <tr>
-            <th onClick={() => toggleSort('id')} className="p-3 font-semibold w-16 text-center cursor-pointer select-none">
-              <div className="flex items-center justify-center gap-1">
-                <span>ID</span>
-                <span className="inline-flex flex-col ml-2 text-xs leading-none">
-                  <span className={sortKey === 'id' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                  <span className={sortKey === 'id' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                </span>
-              </div>
-            </th>
-
-            <th onClick={() => toggleSort('nombre')} className="p-3 font-semibold text-center cursor-pointer select-none">
-              <div className="flex items-center justify-center gap-1">
-                <span>Nombre</span>
-                <span className="inline-flex flex-col ml-2 text-xs leading-none">
-                  <span className={sortKey === 'nombre' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                  <span className={sortKey === 'nombre' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                </span>
-              </div>
-            </th>
-
-            <th onClick={() => toggleSort('descripcion')} className="p-3 font-semibold text-center cursor-pointer select-none">
-              <div className="flex items-center justify-center gap-1">
-                <span>Descripción</span>
-                <span className="inline-flex flex-col ml-2 text-xs leading-none">
-                  <span className={sortKey === 'descripcion' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                  <span className={sortKey === 'descripcion' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                </span>
-              </div>
-            </th>
-            <th className="p-3 font-semibold w-32 text-center">Acciones</th>
+            {columns.map((col: any) => (
+              <th
+                key={col.accessor}
+                className={`p-3 font-semibold text-center select-none ${col.Header !== 'Acciones' ? 'cursor-pointer' : ''}`}
+                onClick={() => col.Header !== 'Acciones' && toggleSort(col.accessor)}
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <span>{col.Header}</span>
+                  {col.Header !== 'Acciones' && (
+                    <span className="inline-flex flex-col ml-2 text-xs leading-none">
+                      <span className={sortKey === col.accessor && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
+                      <span className={sortKey === col.accessor && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
+                    </span>
+                  )}
+                </div>
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody className="bg-white">

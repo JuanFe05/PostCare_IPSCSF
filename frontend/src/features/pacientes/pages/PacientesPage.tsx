@@ -91,7 +91,7 @@ export default function PacientesPage() {
           </div>
         )}
 
-        <Search value={searchTerm} onChange={handleSearch} onClear={handleClearSearch} placeholder="Buscar pacientes..." />
+        <Search value={searchTerm} onChange={handleSearch} onClear={handleClearSearch} placeholder="Buscar por ID, Nombre, Teléfono o Email" />
       </div>
 
       <PacienteTable
