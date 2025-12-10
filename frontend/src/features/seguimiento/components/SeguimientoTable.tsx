@@ -1,12 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import type { ChangeEvent } from "react";
-import Swal from "sweetalert2";
+import { useMemo, useState } from "react";
 import SeguimientoRow from "./SeguimientoRow";
-import { useAuth } from "../../../hooks/useAuth";
-import SeguimientoForm from "./SeguimientoForm";
-import { getTiposSeguimiento, createTipoSeguimiento, updateTipoSeguimiento, deleteTipoSeguimiento } from "../Seguimiento.api";
-import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
-import Search from "../../../components/search/Search";
 
 export interface TipoSeguimiento {
   id: number;
@@ -14,14 +7,25 @@ export interface TipoSeguimiento {
   descripcion?: string;
 }
 
-export default function SeguimientoTable() {
-  const [tipos, setTipos] = useState<TipoSeguimiento[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
-  const [editTipo, setEditTipo] = useState<TipoSeguimiento | null>(null);
-  const { auth } = useAuth();
-  const [searchTerm, setSearchTerm] = useState<string>("");
+interface SeguimientoTableProps {
+  tipos: TipoSeguimiento[];
+  loading: boolean;
+  searchTerm: string;
+  auth: any;
+  setEditTipo: (tipo: TipoSeguimiento) => void;
+  setShowEdit: (show: boolean) => void;
+  handleDelete: (id: number, nombre: string) => Promise<void>;
+}
+
+export default function SeguimientoTable({ 
+  tipos, 
+  loading, 
+  searchTerm,
+  auth,
+  setEditTipo,
+  setShowEdit,
+  handleDelete 
+}: SeguimientoTableProps) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc" | null>(null);
 
@@ -63,163 +67,69 @@ export default function SeguimientoTable() {
     } else setSortDir('asc');
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  return loading ? (
+    <div className="text-center py-8">Cargando tipos...</div>
+  ) : tipos.length === 0 ? (
+    <p>No hay tipos registrados.</p>
+  ) : (
+    <>
+      <table className="min-w-full text-sm divide-y table-auto">
+        <thead className="bg-blue-100 text-blue-900">
+          <tr>
+            <th onClick={() => toggleSort('id')} className="p-3 font-semibold w-16 text-center cursor-pointer select-none">
+              <div className="flex items-center justify-center gap-1">
+                <span>ID</span>
+                <span className="inline-flex flex-col ml-2 text-xs leading-none">
+                  <span className={sortKey === 'id' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
+                  <span className={sortKey === 'id' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
+                </span>
+              </div>
+            </th>
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      const data = await getTiposSeguimiento();
-      setTipos(data);
-    } catch (err) {
-      console.error("Error cargando tipos de seguimiento:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+            <th onClick={() => toggleSort('nombre')} className="p-3 font-semibold text-center cursor-pointer select-none">
+              <div className="flex items-center justify-center gap-1">
+                <span>Nombre</span>
+                <span className="inline-flex flex-col ml-2 text-xs leading-none">
+                  <span className={sortKey === 'nombre' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
+                  <span className={sortKey === 'nombre' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
+                </span>
+              </div>
+            </th>
 
-  const handleDelete = async (id: number, nombre: string) => {
-    const res = await Swal.fire({
-      title: `¿Eliminar ${nombre}?`,
-      text: 'Esta acción no se puede deshacer.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#d33',
-    });
-    if (!res.isConfirmed) return;
-      try {
-      await deleteTipoSeguimiento(id);
-      setTipos((prev: TipoSeguimiento[]) => prev.filter((t: TipoSeguimiento) => t.id !== id));
-      await Swal.fire({ icon: 'success', title: 'Eliminado', text: `${nombre} eliminado.` });
-    } catch (err) {
-      console.error('Error eliminando tipo seguimiento:', err);
-      await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar.' });
-    }
-  };
-
-  return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Gestión de Tipos de Seguimiento</h2>
-
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div className="flex-shrink-0 flex items-center gap-3">
-          {(() => {
-            const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
-            if (role === 'ADMINISTRADOR') {
-              return (
-                <>
-                  <button onClick={() => setShowAdd(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer">Agregar nuevo tipo seguimiento</button>
-                  <ExportExcel data={displayedTipos} fileName="seguimientos.xlsx" />
-                </>
-              );
-            }
-            return <p className="text-sm text-gray-600">Solo administradores pueden gestionar tipos.</p>;
-          })()}
-        </div>
-
-        <Search 
-          value={searchTerm} 
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
-          onClear={() => setSearchTerm('')} 
-          placeholder="Buscar por Nombre o Descripción"
-        />
-      </div>
-
-      {loading && <p>Cargando tipos...</p>}
-      {!loading && tipos.length === 0 && <p>No hay tipos registrados.</p>}
-
-      {/** Filtrado local */}
-      {/** compute filtered list */}
-
-      {!loading && tipos.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm divide-y table-auto">
-            <thead className="bg-blue-100 text-blue-900">
-              <tr>
-                <th onClick={() => toggleSort('id')} className="p-3 font-semibold w-16 text-center cursor-pointer select-none">
-                  <div className="flex items-center justify-center gap-1">
-                    <span>ID</span>
-                    <span className="inline-flex flex-col ml-2 text-xs leading-none">
-                      <span className={sortKey === 'id' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                      <span className={sortKey === 'id' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                    </span>
-                  </div>
-                </th>
-
-                <th onClick={() => toggleSort('nombre')} className="p-3 font-semibold text-center cursor-pointer select-none">
-                  <div className="flex items-center justify-center gap-1">
-                    <span>Nombre</span>
-                    <span className="inline-flex flex-col ml-2 text-xs leading-none">
-                      <span className={sortKey === 'nombre' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                      <span className={sortKey === 'nombre' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                    </span>
-                  </div>
-                </th>
-
-                <th onClick={() => toggleSort('descripcion')} className="p-3 font-semibold text-center cursor-pointer select-none">
-                  <div className="flex items-center justify-center gap-1">
-                    <span>Descripción</span>
-                    <span className="inline-flex flex-col ml-2 text-xs leading-none">
-                      <span className={sortKey === 'descripcion' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                      <span className={sortKey === 'descripcion' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                    </span>
-                  </div>
-                </th>
-                <th className="p-3 font-semibold w-32 text-center">Acciones</th>
+            <th onClick={() => toggleSort('descripcion')} className="p-3 font-semibold text-center cursor-pointer select-none">
+              <div className="flex items-center justify-center gap-1">
+                <span>Descripción</span>
+                <span className="inline-flex flex-col ml-2 text-xs leading-none">
+                  <span className={sortKey === 'descripcion' && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
+                  <span className={sortKey === 'descripcion' && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
+                </span>
+              </div>
+            </th>
+            <th className="p-3 font-semibold w-32 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white">
+          {displayedTipos.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="p-6 text-center text-gray-500">
+                No se encontraron tipos que coincidan con "{searchTerm}".
+              </td>
+            </tr>
+          ) : (
+            displayedTipos.map((t: TipoSeguimiento, idx: number) => (
+              <tr key={t.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
+                <SeguimientoRow 
+                  tipo={t} 
+                  auth={auth} 
+                  setEditTipo={setEditTipo} 
+                  setShowEdit={setShowEdit} 
+                  handleDelete={handleDelete} 
+                />
               </tr>
-            </thead>
-            <tbody className="bg-white">
-              {displayedTipos.map((t: TipoSeguimiento, idx: number) => (
-                <SeguimientoRow key={t.id} t={t} idx={idx} auth={auth} setEditTipo={setEditTipo} setShowEdit={setShowEdit} handleDelete={handleDelete} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* No hay coincidencias */}
-      {!loading && tipos.length > 0 && displayedTipos.length === 0 && (
-        <p className="mt-4">No se encontraron tipos que coincidan con "{searchTerm}".</p>
-      )}
-
-      {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <SeguimientoForm isEdit={false} onCancel={() => setShowAdd(false)} onSave={async (payload) => {
-            setLoading(true);
-            try {
-              const created = await createTipoSeguimiento(payload);
-              setTipos((prev: TipoSeguimiento[]) => [created, ...prev]);
-              setShowAdd(false);
-              await Swal.fire({ icon: 'success', title: 'Creado', text: `Tipo ${created.nombre} creado.` });
-            } catch (err) {
-              console.error('Error creando tipo seguimiento:', err);
-              await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear.' });
-            } finally { setLoading(false); }
-          }} />
-        </div>
-      )}
-
-      {showEdit && editTipo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <SeguimientoForm isEdit initial={{ nombre: editTipo.nombre, descripcion: editTipo.descripcion }} onCancel={() => { setShowEdit(false); setEditTipo(null); }} onSave={async (payload) => {
-            if (!editTipo) return;
-            setLoading(true);
-            try {
-              const updated = await updateTipoSeguimiento(editTipo.id, payload);
-              setTipos((prev: TipoSeguimiento[]) => prev.map((p: TipoSeguimiento) => p.id === updated.id ? updated : p));
-              setShowEdit(false);
-              setEditTipo(null);
-              await Swal.fire({ icon: 'success', title: 'Actualizado', text: `Tipo ${updated.nombre} actualizado.` });
-            } catch (err) {
-              console.error('Error actualizando tipo seguimiento:', err);
-              await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar.' });
-            } finally { setLoading(false); }
-          }} />
-        </div>
-      )}
-    </div>
+            ))
+          )}
+        </tbody>
+      </table>
+    </>
   );
 }

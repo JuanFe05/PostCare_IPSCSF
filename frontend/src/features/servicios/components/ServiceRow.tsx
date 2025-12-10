@@ -2,19 +2,18 @@ import type { Service } from "../types";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 
 type Props = {
-  s: Service;
-  idx: number;
+  service: Service;
   auth: any;
-  attemptEdit: (s: Service) => Promise<void> | void;
+  attemptEdit: (service: Service) => Promise<void> | void;
   handleEliminar: (id: number, nombre: string) => Promise<void> | void;
 };
 
-export default function ServiceRow({ s, idx, auth, attemptEdit, handleEliminar }: Props) {
+export default function ServiceRow({ service, auth, attemptEdit, handleEliminar }: Props) {
   return (
-    <tr key={s.id} className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50`}>
-      <td className="p-3 text-center">{s.id}</td>
-      <td className="p-3 text-center">{s.nombre}</td>
-      <td className="p-3 text-center">{s.descripcion && String(s.descripcion).trim().length > 0 ? s.descripcion : `Servicio relacionado con ${String(s.nombre ?? '').toLowerCase()}`}</td>
+    <>
+      <td className="p-3 text-center">{service.id}</td>
+      <td className="p-3 text-center">{service.nombre}</td>
+      <td className="p-3 text-center">{service.descripcion && String(service.descripcion).trim().length > 0 ? service.descripcion : `Servicio relacionado con ${String(service.nombre ?? '').toLowerCase()}`}</td>
       <td className="p-3 text-center">
         <div className="flex gap-2 justify-center">
           {(() => {
@@ -22,10 +21,10 @@ export default function ServiceRow({ s, idx, auth, attemptEdit, handleEliminar }
             if (role === "ADMINISTRADOR") {
               return (
                 <>
-                  <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => attemptEdit(s)} title="Editar">
+                  <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => attemptEdit(service)} title="Editar">
                     <FiEdit className="text-xl" />
                   </button>
-                  <button className="text-red-600 hover:text-red-800 cursor-pointer" onClick={() => handleEliminar(s.id!, s.nombre)} title="Eliminar">
+                  <button className="text-red-600 hover:text-red-800 cursor-pointer" onClick={() => handleEliminar(service.id!, service.nombre)} title="Eliminar">
                     <FiTrash2 className="text-xl" />
                   </button>
                 </>
@@ -35,6 +34,6 @@ export default function ServiceRow({ s, idx, auth, attemptEdit, handleEliminar }
           })()}
         </div>
       </td>
-    </tr>
+    </>
   );
 }
