@@ -19,13 +19,13 @@ export default function EmpresaPagination({
   nextPage,
   previousPage,
 }: EmpresaPaginationProps) {
-  if (dataLength <= 11) return null;
+  if (dataLength <= 7) return null;
 
   return (
     <div className="flex items-center justify-between mt-6 px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-700">
-          Mostrando <span className="font-semibold">{pageIndex * 11 + 1}</span> - <span className="font-semibold">{Math.min((pageIndex + 1) * 11, dataLength)}</span> de <span className="font-semibold">{dataLength}</span> empresas
+          Mostrando <span className="font-semibold">{pageIndex * 7 + 1}</span> - <span className="font-semibold">{Math.min((pageIndex + 1) * 7, dataLength)}</span> de <span className="font-semibold">{dataLength}</span> empresas
         </span>
       </div>
 
