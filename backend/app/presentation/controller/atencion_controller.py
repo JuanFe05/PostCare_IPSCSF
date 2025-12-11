@@ -9,6 +9,7 @@ from app.presentation.dto.atencion_paciente_dto import (
     AtencionUpdateDto,
     AtencionDetalleResponseDto,
     AtencionListResponseDto,
+    AtencionConPacienteCreateDto,
 )
 from app.service.implementation.atencion_service import AtencionService
 
@@ -107,6 +108,25 @@ def search_atenciones(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error buscando atenciones: {str(e)}")
+
+
+@router.post("/con-paciente", response_model=AtencionDetalleResponseDto, tags=["Atenciones"], status_code=201)
+def create_atencion_con_paciente(
+    data: AtencionConPacienteCreateDto,
+    db: Session = Depends(get_db)
+):
+    """
+    Crea una nueva atención junto con el paciente.
+    
+    Si el paciente ya existe, solo se crea la atención.
+    Si el paciente no existe, se crea primero y luego la atención.
+    """
+    try:
+        return AtencionService.create_atencion_con_paciente(db, data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creando atención con paciente: {str(e)}")
 
 
 @router.post("", response_model=AtencionDetalleResponseDto, tags=["Atenciones"], status_code=201)

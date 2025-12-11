@@ -41,7 +41,7 @@ export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
         <h2 className="text-xl font-bold text-gray-900">Sincronizar Atenciones y Pacientes</h2>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600"
+          className="text-gray-400 hover:text-gray-600 cursor-pointer"
           disabled={loading}
         >
           <FaTimes className="text-xl" />

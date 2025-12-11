@@ -17,6 +17,7 @@ export default function AtencionRow({
 }: AtencionRowProps) {
   const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
   const isAdmin = role === 'ADMINISTRADOR';
+  const canEdit = isAdmin || role === 'ASESOR' || role === 'FACTURADOR';
 
   // Formatear fecha
   const formatFecha = (fecha: string) => {
@@ -56,7 +57,7 @@ export default function AtencionRow({
       
       <td className="p-3 text-center">
         <div className="flex gap-2 justify-center">
-          {isAdmin ? (
+          {canEdit ? (
             <>
               <button 
                 className="text-blue-600 hover:text-blue-800 cursor-pointer" 
@@ -65,13 +66,15 @@ export default function AtencionRow({
               >
                 <FiEdit className="text-xl" />
               </button>
-              <button 
-                className="text-red-600 hover:text-red-800 cursor-pointer" 
-                onClick={() => handleEliminar(atencion.id_atencion, atencion.nombre_paciente)} 
-                title="Eliminar"
-              >
-                <FiTrash2 className="text-xl" />
-              </button>
+              {isAdmin && (
+                <button 
+                  className="text-red-600 hover:text-red-800 cursor-pointer" 
+                  onClick={() => handleEliminar(atencion.id_atencion, atencion.nombre_paciente)} 
+                  title="Eliminar"
+                >
+                  <FiTrash2 className="text-xl" />
+                </button>
+              )}
             </>
           ) : (
             <span className="text-sm text-gray-500">Sin acciones</span>

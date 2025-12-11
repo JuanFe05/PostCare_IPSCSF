@@ -15,7 +15,7 @@ const ExportExcelButton = ({ data, fileName }: Props) => {
     <button
       type="button"
       onClick={handleExport}
-      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 shadow flex items-center gap-2 cursor-pointer"
+      className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 shadow flex items-center gap-2 cursor-pointer"
       title="Exportar Excel"
     >
       <PiMicrosoftExcelLogoFill size={24} />

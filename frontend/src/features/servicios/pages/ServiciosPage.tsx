@@ -16,6 +16,7 @@ import {
   releaseServiceLock,
   checkServiceLock,
 } from "../Service.api";
+import { IoMdAddCircleOutline } from "react-icons/io";
 
 export default function ServiciosPage() {
   const [showAdd, setShowAdd] = useState(false);
@@ -154,8 +155,9 @@ export default function ServiciosPage() {
                   {/* Botón agregar */}
                   <button
                     onClick={() => setShowAdd(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow cursor-pointer"
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer"
                   >
+                    <IoMdAddCircleOutline className="text-lg" />
                     Agregar nuevo servicio
                   </button>
 

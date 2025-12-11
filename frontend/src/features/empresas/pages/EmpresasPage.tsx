@@ -8,6 +8,7 @@ import EmpresaForm from "../components/EmpresaForm";
 import EmpresaTable from "../components/EmpresaTable";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import Search from "../../../components/search/Search";
+import { IoMdAddCircleOutline } from "react-icons/io";
 
 export default function EmpresasPage() {
   const [showAddEmpresa, setShowAddEmpresa] = useState(false);
@@ -79,6 +80,7 @@ export default function EmpresasPage() {
                     onClick={() => setShowAddEmpresa(true)}
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer"
                   >
+                    <IoMdAddCircleOutline />
                     Agregar nueva empresa
                   </button>
 

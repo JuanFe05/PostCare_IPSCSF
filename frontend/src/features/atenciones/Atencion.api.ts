@@ -4,6 +4,8 @@ import type {
   Atencion, 
   NewAtencion, 
   UpdateAtencion,
+  NewAtencionConPaciente,
+  TipoDocumento,
   Empresa,
   EstadoAtencion,
   SeguimientoAtencion,
@@ -60,6 +62,11 @@ export const createAtencion = async (payload: NewAtencion): Promise<Atencion> =>
   return resp.data;
 };
 
+export const createAtencionConPaciente = async (payload: NewAtencionConPaciente): Promise<Atencion> => {
+  const resp = await client.post("/atenciones/con-paciente", payload);
+  return resp.data;
+};
+
 export const updateAtencion = async (id: string, payload: UpdateAtencion): Promise<Atencion> => {
   const resp = await client.put(`/atenciones/${id}`, payload);
   return resp.data;
@@ -86,7 +93,7 @@ export const getEmpresas = async (): Promise<Empresa[]> => {
 
 export const getEstadosAtencion = async (): Promise<EstadoAtencion[]> => {
   try {
-    const resp = await client.get("/estados-atenciones");
+    const resp = await client.get("/estados_atenciones");
     return Array.isArray(resp.data) ? resp.data : [];
   } catch (err) {
     console.error("Error cargando estados de atención:", err);
@@ -96,10 +103,20 @@ export const getEstadosAtencion = async (): Promise<EstadoAtencion[]> => {
 
 export const getSeguimientosAtencion = async (): Promise<SeguimientoAtencion[]> => {
   try {
-    const resp = await client.get("/seguimientos-atenciones");
+    const resp = await client.get("/seguimientos_atenciones");
     return Array.isArray(resp.data) ? resp.data : [];
   } catch (err) {
     console.error("Error cargando seguimientos de atención:", err);
+    return [];
+  }
+};
+
+export const getTiposDocumento = async (): Promise<TipoDocumento[]> => {
+  try {
+    const resp = await client.get("/tipos-documentos");
+    return Array.isArray(resp.data) ? resp.data : [];
+  } catch (err) {
+    console.error("Error cargando tipos de documento:", err);
     return [];
   }
 };

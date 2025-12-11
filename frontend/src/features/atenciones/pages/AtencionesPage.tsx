@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import type { ChangeEvent } from "react";
 import { FaSyncAlt } from 'react-icons/fa';
 import { useAuth } from "../../../hooks/useAuth";
-import type { Atencion, NewAtencion, UpdateAtencion } from "../types";
-import { getAtenciones, createAtencion, updateAtencion, deleteAtencion } from "../Atencion.api";
+import type { Atencion, NewAtencionConPaciente, UpdateAtencion } from "../types";
+import { getAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion } from "../Atencion.api";
 import { syncPacientesRangoFechas } from "../../../api/Sync.api";
 import Swal from "sweetalert2";
 import AtencionForm from "../components/AtencionForm";
@@ -11,12 +11,13 @@ import SyncModal from "../components/SyncModal";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import AtencionTable from '../components/AtencionTable';
 import Search from "../../../components/search/Search";
+import { IoMdAddCircleOutline } from "react-icons/io";
 
 export default function AtencionesPage() {
   const [showAddAtencion, setShowAddAtencion] = useState(false);
   const [showEditAtencion, setShowEditAtencion] = useState(false);
-  const [showSyncModal, setShowSyncModal] = useState(false);
   const [editAtencion, setEditAtencion] = useState<Atencion | null>(null);
+  const [showSyncModal, setShowSyncModal] = useState(false);
   const [atenciones, setAtenciones] = useState<Atencion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -110,6 +111,8 @@ export default function AtencionesPage() {
     setEditAtencion(null);
   };
 
+
+
   return (
     <div className="py-6">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -127,12 +130,13 @@ export default function AtencionesPage() {
                     onClick={() => setShowAddAtencion(true)}
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer"
                   >
+                    <IoMdAddCircleOutline />
                     Agregar nueva atención
                   </button>
 
                   <button
                     onClick={() => setShowSyncModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 shadow cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700 shadow cursor-pointer"
                     title="Sincronizar desde Clínica Florida"
                   >
                     <FaSyncAlt />
@@ -143,11 +147,7 @@ export default function AtencionesPage() {
                 </>
               );
             }
-            return (
-              <p className="text-sm text-gray-600">
-                Solo administradores pueden gestionar atenciones.
-              </p>
-            );
+            return null;
           })()}
         </div>
 
@@ -173,10 +173,10 @@ export default function AtencionesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <AtencionForm 
             onCancel={() => setShowAddAtencion(false)} 
-            onSave={async (data: NewAtencion) => {
+            onSave={async (data: NewAtencionConPaciente) => {
               setLoading(true);
               try {
-                const nueva = await createAtencion(data);
+                const nueva = await createAtencionConPaciente(data);
                 setAtenciones((prev: Atencion[]) => [nueva, ...prev]);
                 setShowAddAtencion(false);
                 await Swal.fire({ icon: 'success', title: 'Atención creada', text: `Atención creada correctamente.` });
@@ -185,36 +185,26 @@ export default function AtencionesPage() {
                 const errorMsg = err.response?.data?.detail || 'No se pudo crear la atención.';
                 await Swal.fire({ icon: 'error', title: 'Error', text: errorMsg });
               } finally { setLoading(false); }
-            }} 
+            }}
+            userId={auth?.user?.id}
           />
         </div>
       )}
 
+
+
       {showEditAtencion && editAtencion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <AtencionForm
-            isEdit
-            initial={{
-              id_paciente: editAtencion.id_paciente,
-              id_empresa: editAtencion.id_empresa,
-              id_estado_atencion: editAtencion.id_estado_atencion,
-              id_seguimiento_atencion: editAtencion.id_seguimiento_atencion,
-              observacion: editAtencion.observacion,
-              servicios: editAtencion.servicios.map(s => s.id_servicio)
-            }}
             onCancel={closeEditor}
-            onSave={async (data: NewAtencion) => {
+            onSave={async () => {}} // No se usa en modo edición
+            onUpdate={async (id: string, data: UpdateAtencion) => {
               setLoading(true);
               try {
-                const updateData: UpdateAtencion = {
-                  id_empresa: data.id_empresa,
-                  id_estado_atencion: data.id_estado_atencion,
-                  id_seguimiento_atencion: data.id_seguimiento_atencion,
-                  observacion: data.observacion,
-                  servicios: data.servicios
-                };
-                const updated = await updateAtencion(editAtencion.id_atencion, updateData);
-                setAtenciones((prev: Atencion[]) => prev.map((a: Atencion) => (a.id_atencion === updated.id_atencion ? updated : a)));
+                const actualizada = await updateAtencion(id, data);
+                setAtenciones((prev: Atencion[]) => 
+                  prev.map((a: Atencion) => a.id_atencion === id ? actualizada : a)
+                );
                 closeEditor();
                 await Swal.fire({ icon: 'success', title: 'Atención actualizada', text: `Atención actualizada correctamente.` });
               } catch (err: any) {
@@ -223,6 +213,9 @@ export default function AtencionesPage() {
                 await Swal.fire({ icon: 'error', title: 'Error', text: errorMsg });
               } finally { setLoading(false); }
             }}
+            initialData={editAtencion}
+            isEditMode={true}
+            userId={auth?.user?.id}
           />
         </div>
       )}

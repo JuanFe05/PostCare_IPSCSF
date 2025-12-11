@@ -41,6 +41,7 @@ export type NewAtencion = {
   id_estado_atencion: number;
   id_seguimiento_atencion?: number;
   fecha_ingreso?: string;
+  id_usuario?: number;
   observacion?: string;
   servicios?: number[];
 };
@@ -51,11 +52,53 @@ export type UpdateAtencion = {
   id_estado_atencion?: number;
   id_seguimiento_atencion?: number;
   fecha_ingreso?: string;
+  id_usuario?: number;
+  observacion?: string;
+  servicios?: number[];
+  // Campos del paciente que se pueden actualizar
+  // Identificación y contacto
+  id_paciente?: string;
+  id_tipo_documento?: number;
+  telefono_uno?: string;
+  telefono_dos?: string;
+  email?: string;
+  primer_nombre?: string;
+  segundo_nombre?: string;
+  primer_apellido?: string;
+  segundo_apellido?: string;
+};
+
+// Tipo para crear atención con paciente
+export type NewAtencionConPaciente = {
+  // Datos del paciente
+  id_paciente: string;
+  id_tipo_documento: number;
+  primer_nombre: string;
+  segundo_nombre?: string;
+  primer_apellido: string;
+  segundo_apellido?: string;
+  telefono_uno?: string;
+  telefono_dos?: string;
+  email?: string;
+  
+  // Datos de la atención
+  id_atencion: string;
+  id_empresa: number;
+  id_estado_atencion: number;
+  id_seguimiento_atencion?: number;
+  fecha_ingreso?: string;
+  id_usuario?: number;
   observacion?: string;
   servicios?: number[];
 };
 
 // Tipos para dropdowns
+export type TipoDocumento = {
+  id: number;
+  siglas: string;
+  descripcion: string;
+};
+
 export type Empresa = {
   id: number;
   nombre: string;
