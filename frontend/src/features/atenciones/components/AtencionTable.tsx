@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import type { Atencion } from "../types";
 import AtencionRow from "./AtencionRow";
 import AtencionPagination from "./AtencionPagination";
-import { useTable, usePagination } from 'react-table';
 
 interface AtencionTableProps {
   atenciones: Atencion[];
@@ -23,6 +22,8 @@ export default function AtencionTable({
 }: AtencionTableProps) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageSize = 7;
 
   // Calcular lista filtrada + ordenada
   const displayed = useMemo(() => {
@@ -53,44 +54,17 @@ export default function AtencionTable({
     return sorted;
   }, [atenciones, searchTerm, sortKey, sortDir]);
 
-  // Columnas de react-table
-  const columns = useMemo(() => [
-    { Header: 'ID Atención', accessor: 'id_atencion' as const },
-    { Header: 'ID Paciente', accessor: 'id_paciente' as const },
-    { Header: 'Fecha Atención', accessor: 'fecha_atencion' as const },
-    { Header: 'Paciente', accessor: 'nombre_paciente' as const },
-    { Header: 'Teléfono 1', accessor: 'telefono_uno' as const },
-    { Header: 'Teléfono 2', accessor: 'telefono_dos' as const },
-    { Header: 'Email', accessor: 'email' as const },
-    { Header: 'Empresa', accessor: 'nombre_empresa' as const },
-    { Header: 'Estado', accessor: 'nombre_estado_atencion' as const },
-    { Header: 'Seguimiento', accessor: 'nombre_seguimiento_atencion' as const },
-    { Header: 'Servicios', accessor: 'servicios' as const },
-    { Header: 'Acciones', accessor: 'id_atencion' as const },
-  ], []);
+  // Paginación
+  const pageCount = Math.ceil(displayed.length / pageSize);
+  const paginatedData = useMemo(() => {
+    const start = pageIndex * pageSize;
+    return displayed.slice(start, start + pageSize);
+  }, [displayed, pageIndex, pageSize]);
 
-  const data = useMemo(() => displayed, [displayed]);
-
-  const tableInstance: any = useTable({ columns, data, initialState: { pageIndex: 0 } as any }, usePagination);
-  const {
-    getTableProps,
-    getTableBodyProps,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    state: { pageIndex },
-    gotoPage,
-    nextPage,
-    previousPage,
-  } = tableInstance;
-
-  // Establecer el tamaño de página en 7
+  // Reset page cuando cambia el filtro
   useEffect(() => {
-    if (tableInstance.setPageSize) {
-      tableInstance.setPageSize(7);
-    }
-  }, [tableInstance]);
+    setPageIndex(0);
+  }, [searchTerm]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) {
@@ -105,47 +79,63 @@ export default function AtencionTable({
     } else setSortDir('asc');
   };
 
+  const columns = [
+    { Header: 'ID Atención', accessor: 'id_atencion' },
+    { Header: 'ID Paciente', accessor: 'id_paciente' },
+    { Header: 'F. Atención', accessor: 'fecha_atencion' },
+    { Header: 'Paciente', accessor: 'nombre_paciente' },
+    { Header: 'Tel 1', accessor: 'telefono_uno' },
+    { Header: 'Tel 2', accessor: 'telefono_dos' },
+    { Header: 'Email', accessor: 'email' },
+    { Header: 'Empresa', accessor: 'nombre_empresa' },
+    { Header: 'Estado', accessor: 'nombre_estado_atencion' },
+    { Header: 'Seguimiento', accessor: 'nombre_seguimiento_atencion' },
+    { Header: 'Servicios', accessor: 'servicios' },
+  ];
+
   return loading ? (
     <div className="text-center py-8">Cargando atenciones...</div>
   ) : (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="overflow-x-auto">
-        <table {...getTableProps()} className="min-w-full text-sm divide-y table-auto">
+        <table className="min-w-full text-sm divide-y table-auto">
         {/* Header */}
-        <thead className="bg-blue-100 text-blue-900">
+        <thead className="bg-blue-100 text-blue-900 select-none">
           <tr>
-            {columns.map((col: any) => (
-              <th 
-                key={col.accessor} 
-                className={`p-3 font-semibold text-center select-none ${
-                  col.accessor === 'servicios' || col.accessor === 'id_atencion' ? '' : 'cursor-pointer'
-                }`} 
-                onClick={() => col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && toggleSort(col.accessor)}
-              >
-                <div className="flex items-center justify-center gap-1">
-                  <span>{col.Header}</span>
-                  {col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && (
-                    <span className="inline-flex flex-col ml-2 text-xs leading-none">
-                      <span className={sortKey === col.accessor && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                      <span className={sortKey === col.accessor && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                    </span>
-                  )}
-                </div>
-              </th>
-            ))}
+            {columns.map((col: any) => {
+              return (
+                <th 
+                  key={col.accessor} 
+                  className={`p-3 font-semibold text-center ${
+                    col.accessor === 'servicios' || col.accessor === 'id_atencion' ? '' : 'cursor-pointer'
+                  }`} 
+                  onClick={() => col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && toggleSort(col.accessor)}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span>{col.Header}</span>
+                    {col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && (
+                      <span className="inline-flex flex-col ml-1 text-[10px] leading-none">
+                        <span className={sortKey === col.accessor && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
+                        <span className={sortKey === col.accessor && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
+                      </span>
+                    )}
+                  </div>
+                </th>
+              );
+            })}
+            <th className="p-3 font-semibold w-32 text-center">Acciones</th>
           </tr>
         </thead>
 
         {/* Body */}
-        <tbody {...getTableBodyProps()} className="bg-white">
-          {data.length === 0 ? (
+        <tbody className="bg-white">
+          {paginatedData.length === 0 ? (
             <tr>
               <td colSpan={12} className="p-6 text-center text-gray-500">No se encontraron atenciones.</td>
             </tr>
           ) : (
-            page.map((row: any, ridx: number) => {
-              const atencion: Atencion = row.original;
-              const globalIdx = pageIndex * 7 + ridx;
+            paginatedData.map((atencion: Atencion, ridx: number) => {
+              const globalIdx = pageIndex * pageSize + ridx;
               return (
                 <tr key={atencion.id_atencion} className={`${globalIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
                   <AtencionRow
@@ -165,13 +155,14 @@ export default function AtencionTable({
 
       <AtencionPagination
         pageIndex={pageIndex}
-        pageOptions={pageOptions}
-        canPreviousPage={canPreviousPage}
-        canNextPage={canNextPage}
-        dataLength={data.length}
-        gotoPage={gotoPage}
-        nextPage={nextPage}
-        previousPage={previousPage}
+        pageOptions={Array.from({ length: pageCount }, (_, i) => i)}
+        canPreviousPage={pageIndex > 0}
+        canNextPage={pageIndex < pageCount - 1}
+        dataLength={displayed.length}
+        pageSize={pageSize}
+        gotoPage={setPageIndex}
+        nextPage={() => setPageIndex(prev => Math.min(prev + 1, pageCount - 1))}
+        previousPage={() => setPageIndex(prev => Math.max(prev - 1, 0))}
       />
     </div>
   );

@@ -53,7 +53,7 @@ export default function AtencionRow({
       <td className="p-3 text-center">{atencion.nombre_seguimiento_atencion || '-'}</td>
       <td className="p-3 text-center">{formatServicios(atencion.servicios)}</td>
       
-      <td className="p-3 text-center">
+      <td className="p-3 text-center w-32">
         <div className="flex gap-2 justify-center">
           {canEdit ? (
             <>

@@ -4,6 +4,7 @@ type AtencionPaginationProps = {
   canPreviousPage: boolean;
   canNextPage: boolean;
   dataLength: number;
+  pageSize: number;
   gotoPage: (page: number) => void;
   nextPage: () => void;
   previousPage: () => void;
@@ -15,17 +16,21 @@ export default function AtencionPagination({
   canPreviousPage,
   canNextPage,
   dataLength,
+  pageSize,
   gotoPage,
   nextPage,
   previousPage,
 }: AtencionPaginationProps) {
-  if (dataLength <= 7) return null;
+  if (dataLength <= pageSize) return null;
+
+  const start = pageIndex * pageSize + 1;
+  const end = Math.min((pageIndex + 1) * pageSize, dataLength);
 
   return (
     <div className="flex items-center justify-between mt-6 px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-700">
-          Mostrando <span className="font-semibold">{pageIndex * 7 + 1}</span> - <span className="font-semibold">{Math.min((pageIndex + 1) * 7, dataLength)}</span> de <span className="font-semibold">{dataLength}</span> atenciones
+          Mostrando <span className="font-semibold">{start}</span> - <span className="font-semibold">{end}</span> de <span className="font-semibold">{dataLength}</span> atenciones
         </span>
       </div>
 

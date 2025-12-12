@@ -77,9 +77,9 @@ export default function PacientesPage() {
 
   return (
     <div className="py-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Gestión de Pacientes</h1>
-      </div>
+      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+        <span>Gestión de Pacientes</span>
+      </h2>
 
       <div className="mb-6 flex items-center justify-between">
         <div className="flex-shrink-0 flex items-center gap-3">
