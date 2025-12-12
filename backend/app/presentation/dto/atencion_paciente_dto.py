@@ -20,6 +20,7 @@ class AtencionCreateDto(BaseModel):
     id_estado_atencion: int
     id_seguimiento_atencion: Optional[int] = None
     fecha_ingreso: Optional[datetime] = None
+    id_usuario: Optional[int] = None  # Usuario que registra
     observacion: Optional[str] = None
     servicios: Optional[List[int]] = []  # Lista de IDs de servicios
 
@@ -33,8 +34,20 @@ class AtencionUpdateDto(BaseModel):
     id_estado_atencion: Optional[int] = None
     id_seguimiento_atencion: Optional[int] = None
     fecha_ingreso: Optional[datetime] = None
+    id_usuario: Optional[int] = None  # Usuario que modifica
     observacion: Optional[str] = None
     servicios: Optional[List[int]] = None  # Lista de IDs de servicios
+    # Campos del paciente que se pueden actualizar
+    # Campos del paciente que se pueden actualizar
+    id_paciente: Optional[str] = None
+    id_tipo_documento: Optional[int] = None
+    telefono_uno: Optional[str] = None
+    telefono_dos: Optional[str] = None
+    email: Optional[str] = None
+    primer_nombre: Optional[str] = None
+    segundo_nombre: Optional[str] = None
+    primer_apellido: Optional[str] = None
+    segundo_apellido: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -140,3 +153,30 @@ class AtencionPacienteResponseDto(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class AtencionConPacienteCreateDto(BaseModel):
+    """DTO para crear atención y paciente simultáneamente"""
+    # Datos del paciente
+    id_paciente: str
+    id_tipo_documento: int
+    primer_nombre: str
+    segundo_nombre: Optional[str] = None
+    primer_apellido: str
+    segundo_apellido: Optional[str] = None
+    telefono_uno: Optional[str] = None
+    telefono_dos: Optional[str] = None
+    email: Optional[str] = None
+    
+    # Datos de la atención
+    id_atencion: str  # ID de la atención (debe incluir la T al principio)
+    id_empresa: int
+    id_estado_atencion: int
+    id_seguimiento_atencion: Optional[int] = None
+    fecha_ingreso: Optional[datetime] = None
+    id_usuario: Optional[int] = None  # Usuario que registra
+    observacion: Optional[str] = None
+    servicios: Optional[List[int]] = []  # Lista de IDs de servicios
+
+    class Config:
+        from_attributes = True

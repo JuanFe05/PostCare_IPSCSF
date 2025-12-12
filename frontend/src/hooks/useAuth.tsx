@@ -9,8 +9,8 @@ type AuthContextValue = { auth: AuthState; setAuth: (s: AuthState) => void; logo
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-// CONFIGURACIÓN: tiempo de inactividad en milisegundos (30 minutos)
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+// CONFIGURACIÓN: tiempo de inactividad en milisegundos (5 horas)
+const INACTIVITY_TIMEOUT = 5 * 60 * 60 * 1000;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [auth, setAuth] = useState<AuthState>(() => {

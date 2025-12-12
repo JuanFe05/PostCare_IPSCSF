@@ -7,6 +7,7 @@ import SeguimientoTable from "../components/SeguimientoTable";
 import { getTiposSeguimiento, createTipoSeguimiento, updateTipoSeguimiento, deleteTipoSeguimiento } from "../Seguimiento.api";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import Search from "../../../components/search/Search";
+import { IoMdAddCircleOutline } from "react-icons/io";
 
 export interface TipoSeguimiento {
   id: number;
@@ -72,6 +73,7 @@ export default function TiposSeguimientoPage() {
               return (
                 <>
                   <button onClick={() => setShowAdd(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer">
+                    <IoMdAddCircleOutline />
                     Agregar nuevo tipo seguimiento
                   </button>
                   <ExportExcel data={tipos} fileName="seguimientos.xlsx" />

@@ -106,7 +106,7 @@ export default function EmpresaTable({
             {columns.map((col: any) => (
               <th 
                 key={col.accessor} 
-                className={`p-3 font-semibold ${col.accessor === 'id' ? 'w-16' : col.Header === 'Acciones' ? 'w-32' : 'text-center'} text-center select-none ${col.Header !== 'Acciones' ? 'cursor-pointer' : ''}`} 
+                className={`p-3 font-semibold text-center select-none ${col.Header !== 'Acciones' ? 'cursor-pointer' : ''}`} 
                 onClick={() => col.Header !== 'Acciones' && toggleSort(col.accessor)}
               >
                 <div className="flex items-center justify-center gap-1">

@@ -10,6 +10,7 @@ from app.presentation.controller.paciente_controller import router as paciente_r
 from app.presentation.controller.sync_controller import router as sync_router
 from app.presentation.controller.empresa_controller import router as empresa_router
 from app.presentation.controller.tipo_empresa_controller import router as tipo_empresa_router
+from app.presentation.controller.tipo_documento_controller import router as tipo_documento_router
 from app.configuration.app.database import engine
 
 router = APIRouter()
@@ -37,3 +38,4 @@ router.include_router(paciente_router, tags=["Pacientes"])
 router.include_router(sync_router, tags=["Sincronizacion"])
 router.include_router(empresa_router, tags=["Empresas"])
 router.include_router(tipo_empresa_router, tags=["TiposEmpresas"])
+router.include_router(tipo_documento_router, tags=["TiposDocumentos"])

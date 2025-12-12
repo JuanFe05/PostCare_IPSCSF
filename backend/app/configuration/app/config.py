@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     # JWT / Security
     JWT_SECRET: str = Field("SUPER_SECRET_KEY_IPSCF", env="JWT_SECRET")
     JWT_ALGORITHM: str = Field("HS256", env="JWT_ALGORITHM")
-    JWT_EXPIRE_MINUTES: int = Field(60, env="JWT_EXPIRE_MINUTES")
+    JWT_EXPIRE_MINUTES: int = Field(300, env="JWT_EXPIRE_MINUTES")  # 5 horas
 
     # CORS / Frontend origins (comma separated)
     CORS_ORIGINS: List[str] = Field(["http://localhost:41777"], env="CORS_ORIGINS")

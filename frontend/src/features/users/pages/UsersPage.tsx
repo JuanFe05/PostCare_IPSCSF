@@ -8,6 +8,7 @@ import UserForm from "../components/UserForm";
 import UserTable from "../components/UserTable";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import Search from "../../../components/search/Search";
+import { IoMdAddCircleOutline } from "react-icons/io";
 
 export default function UsersPage() {
   const [showAddUser, setShowAddUser] = useState(false);
@@ -143,6 +144,7 @@ export default function UsersPage() {
                     onClick={() => setShowAddUser(true)}
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer"
                   >
+                    <IoMdAddCircleOutline />
                     Agregar nuevo usuario
                   </button>
 
