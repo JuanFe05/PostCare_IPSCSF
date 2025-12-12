@@ -24,7 +24,7 @@ const Header = () => {
     >
       {/* Logo a la izquierda y saludo a la derecha, ambos alineados con el main */}
       <div className="w-full flex items-center justify-end">
-        <div className="leading-tight flex flex-col items-end pr-6">
+        <div className="leading-tight flex flex-col items-end">
           <p className="text-xs lg:text-sm opacity-80 text-right">
             {role ? `Bienvenido ${role}` : "Bienvenido"}
           </p>
