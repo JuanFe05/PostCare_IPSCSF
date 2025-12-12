@@ -2,7 +2,8 @@ import { useState, useEffect, type ChangeEvent } from 'react';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../../hooks/useAuth';
 import type { Paciente } from '../types';
-import { getPacientes, deletePaciente } from '../Paciente.api';
+import { getPacientes, deletePaciente, updatePaciente } from '../Paciente.api';
+import PacienteForm from '../components/PacienteForm';
 import PacienteTable from '../components/PacienteTable';
 import ExportExcel from '../../../components/exportExcel/ExportExcelButton';
 import Search from '../../../components/search/Search';
@@ -12,6 +13,8 @@ export default function PacientesPage() {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showEditPaciente, setShowEditPaciente] = useState(false);
+  const [editPaciente, setEditPaciente] = useState<Paciente | null>(null);
 
   useEffect(() => {
     loadPacientes();
@@ -57,8 +60,9 @@ export default function PacientesPage() {
     }
   };
 
-  const attemptEdit = async () => {
-    Swal.fire('En desarrollo', 'La edición de pacientes estará disponible próximamente', 'info');
+  const attemptEdit = async (paciente: Paciente) => {
+    setEditPaciente(paciente);
+    setShowEditPaciente(true);
   };
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
@@ -77,19 +81,15 @@ export default function PacientesPage() {
         <h1 className="text-3xl font-bold text-gray-900">Gestión de Pacientes</h1>
       </div>
 
-      <div className="mb-6 flex items-center justify-between gap-4">
-        {role === 'ADMINISTRADOR' ? (
-          <div className="flex gap-2">
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex-shrink-0 flex items-center gap-3">
+          {role === 'ADMINISTRADOR' && (
             <ExportExcel
               data={pacientes}
               fileName="pacientes"
             />
-          </div>
-        ) : (
-          <div className="text-gray-500 text-sm">
-            Solo los administradores pueden exportar datos
-          </div>
-        )}
+          )}
+        </div>
 
         <Search value={searchTerm} onChange={handleSearch} onClear={handleClearSearch} placeholder="Buscar por ID, Nombre, Teléfono o Email" />
       </div>
@@ -102,6 +102,31 @@ export default function PacientesPage() {
         attemptEdit={attemptEdit}
         handleEliminar={handleEliminar}
       />
+
+      {showEditPaciente && editPaciente && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <PacienteForm
+            isEditMode
+            initialData={editPaciente}
+            onCancel={() => { setShowEditPaciente(false); setEditPaciente(null); }}
+            onUpdate={async (id: string, data: any) => {
+              setLoading(true);
+              try {
+                await updatePaciente(id, data);
+                await loadPacientes();
+                setShowEditPaciente(false);
+                setEditPaciente(null);
+                await Swal.fire('Actualizado', 'Paciente actualizado correctamente', 'success');
+              } catch (err: any) {
+                const errorMsg = err.response?.data?.detail || 'No se pudo actualizar el paciente';
+                await Swal.fire('Error', errorMsg, 'error');
+              } finally {
+                setLoading(false);
+              }
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

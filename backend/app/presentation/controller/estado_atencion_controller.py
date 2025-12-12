@@ -5,7 +5,7 @@ from app.presentation.dto.estado_atencion_dto import (
     EstadoAtencionResponseDto,
 )
 from app.service.implementation.estado_atencion_service_impl import EstadoAtencionServiceImpl
-from app.configuration.security.security_dependencies import get_current_admin
+from app.configuration.security.security_dependencies import get_current_admin, get_current_user_with_roles
 
 router = APIRouter(prefix="/estados_atenciones", tags=["EstadosAtenciones"])
 service = EstadoAtencionServiceImpl()
@@ -16,12 +16,12 @@ def create_estado(data: EstadoAtencionCreateDto):
     return service.create_estado(data)
 
 
-@router.get("", response_model=list[EstadoAtencionResponseDto], dependencies=[Depends(get_current_admin)])
+@router.get("", response_model=list[EstadoAtencionResponseDto], dependencies=[Depends(get_current_user_with_roles)])
 def list_estados():
     return service.get_all_estados()
 
 
-@router.get("/{estado_id}", response_model=EstadoAtencionResponseDto, dependencies=[Depends(get_current_admin)])
+@router.get("/{estado_id}", response_model=EstadoAtencionResponseDto, dependencies=[Depends(get_current_user_with_roles)])
 def get_estado(estado_id: int):
     try:
         return service.get_estado(estado_id)

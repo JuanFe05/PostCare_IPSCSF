@@ -24,9 +24,12 @@ export default function PacienteRow({ paciente, auth, attemptEdit, handleElimina
         <div className="flex gap-2 justify-center">
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
-            if (role === 'ADMINISTRADOR') {
-              return (
-                <>
+            const isAdmin = role === 'ADMINISTRADOR';
+            const canEdit = isAdmin || role === 'ASESOR';
+
+            return (
+              <>
+                {canEdit ? (
                   <button
                     className="text-blue-600 hover:text-blue-800 cursor-pointer"
                     onClick={() => attemptEdit(paciente)}
@@ -34,6 +37,9 @@ export default function PacienteRow({ paciente, auth, attemptEdit, handleElimina
                   >
                     <FiEdit className="text-xl" />
                   </button>
+                ) : null}
+
+                {isAdmin ? (
                   <button
                     className="text-red-600 hover:text-red-800 cursor-pointer"
                     onClick={() => handleEliminar(paciente.id, paciente.nombre_completo || paciente.id)}
@@ -41,10 +47,11 @@ export default function PacienteRow({ paciente, auth, attemptEdit, handleElimina
                   >
                     <FiTrash2 className="text-xl" />
                   </button>
-                </>
-              );
-            }
-            return <span className="text-gray-400">Sin permisos</span>;
+                ) : null}
+
+                {!canEdit && !isAdmin ? <span className="text-gray-400">Sin permisos</span> : null}
+              </>
+            );
           })()}
         </div>
       </td>

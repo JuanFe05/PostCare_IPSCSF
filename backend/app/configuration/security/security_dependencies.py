@@ -27,3 +27,21 @@ def get_current_admin(current_user: dict = Depends(get_current_user)):
         )
 
     return current_user
+
+
+def get_current_user_with_roles(current_user: dict = Depends(get_current_user)):
+    """
+    Permite acceso a usuarios con roles: ADMINISTRADOR, ASESOR, FACTURADOR
+    Útil para endpoints de lectura de catálogos que necesitan estos roles.
+    """
+    rol = current_user.get("rol", "").upper()
+    
+    allowed_roles = ["ADMINISTRADOR", "ASESOR", "FACTURADOR"]
+    
+    if rol not in allowed_roles:
+        raise HTTPException(
+            status_code=403,
+            detail=f"No autorizado. Requiere uno de estos roles: {', '.join(allowed_roles)}"
+        )
+    
+    return current_user

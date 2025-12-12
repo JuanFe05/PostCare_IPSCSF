@@ -108,8 +108,9 @@ export default function AtencionTable({
   return loading ? (
     <div className="text-center py-8">Cargando atenciones...</div>
   ) : (
-    <>
-      <table {...getTableProps()} className="min-w-full text-sm divide-y table-auto">
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="overflow-x-auto">
+        <table {...getTableProps()} className="min-w-full text-sm divide-y table-auto">
         {/* Header */}
         <thead className="bg-blue-100 text-blue-900">
           <tr>
@@ -160,6 +161,7 @@ export default function AtencionTable({
           )}
         </tbody>
       </table>
+      </div>
 
       <AtencionPagination
         pageIndex={pageIndex}
@@ -171,6 +173,6 @@ export default function AtencionTable({
         nextPage={nextPage}
         previousPage={previousPage}
       />
-    </>
+    </div>
   );
 }

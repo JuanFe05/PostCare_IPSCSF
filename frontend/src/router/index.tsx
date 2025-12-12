@@ -9,6 +9,7 @@ import ServiciosPage from '../features/servicios/pages/ServiciosPage';
 import TiposSeguimientoPage from '../features/seguimiento/pages/TiposSeguimientoPage';
 import UsersPage from '../features/users/pages/UsersPage';
 import RolesPage from '../features/roles/pages/RolesPage';
+import EstadosPage from '../features/estados/pages/EstadosPage';
 import NotFoundPage from '../pages/not-found/NotFoundPage';
 import UnauthorizedPage from '../pages/unauthorized/UnauthorizedPage';
 import ProtectedRoute from '../router/ProtectedRouter';
@@ -49,6 +50,11 @@ export default function AppRouter() {
               <TiposSeguimientoPage />
             </ProtectedRoute>
           } />
+            <Route path="estados-atenciones" element={
+              <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
+                <EstadosPage />
+              </ProtectedRoute>
+            } />
           <Route path="usuarios" element={
             <ProtectedRoute allowedRoles={["ADMINISTRADOR"]}>
               <UsersPage />

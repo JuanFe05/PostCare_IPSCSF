@@ -3,7 +3,7 @@ from app.presentation.dto.empresa_dto import (
     EmpresaCreateDto, EmpresaUpdateDto, EmpresaResponseDto
 )
 from app.service.implementation.empresa_service_impl import EmpresaServiceImpl
-from app.configuration.security.security_dependencies import get_current_admin
+from app.configuration.security.security_dependencies import get_current_admin, get_current_user_with_roles
 
 router = APIRouter(prefix="/empresas", tags=["Empresas"])
 service = EmpresaServiceImpl()
@@ -14,12 +14,12 @@ def create_empresa(data: EmpresaCreateDto):
     return service.create_empresa(data)
 
 
-@router.get("", response_model=list[EmpresaResponseDto], dependencies=[Depends(get_current_admin)])
+@router.get("", response_model=list[EmpresaResponseDto], dependencies=[Depends(get_current_user_with_roles)])
 def list_empresas():
     return service.get_all_empresas()
 
 
-@router.get("/{empresa_id}", response_model=EmpresaResponseDto, dependencies=[Depends(get_current_admin)])
+@router.get("/{empresa_id}", response_model=EmpresaResponseDto, dependencies=[Depends(get_current_user_with_roles)])
 def get_empresa(empresa_id: int):
     try:
         return service.get_empresa(empresa_id)

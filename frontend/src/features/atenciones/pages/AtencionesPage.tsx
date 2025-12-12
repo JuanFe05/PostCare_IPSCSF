@@ -123,9 +123,12 @@ export default function AtencionesPage() {
         <div className="flex-shrink-0 flex items-center gap-3">
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
-            if (role === 'ADMINISTRADOR') {
-              return (
-                <>
+            const isAdmin = role.includes('ADMINISTRADOR');
+            const canAdd = isAdmin || role.includes('ASESOR') || role.includes('FACTURADOR');
+
+            return (
+              <>
+                {canAdd && (
                   <button
                     onClick={() => setShowAddAtencion(true)}
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer"
@@ -133,21 +136,24 @@ export default function AtencionesPage() {
                     <IoMdAddCircleOutline />
                     Agregar nueva atención
                   </button>
+                )}
 
-                  <button
-                    onClick={() => setShowSyncModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700 shadow cursor-pointer"
-                    title="Sincronizar desde Clínica Florida"
-                  >
-                    <FaSyncAlt />
-                    Sincronizar
-                  </button>
+                {isAdmin && (
+                  <>
+                    <button
+                      onClick={() => setShowSyncModal(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700 shadow cursor-pointer"
+                      title="Sincronizar desde Clínica Florida"
+                    >
+                      <FaSyncAlt />
+                      Sincronizar
+                    </button>
 
-                  <ExportExcel data={atenciones} fileName="atenciones.xlsx" />
-                </>
-              );
-            }
-            return null;
+                    <ExportExcel data={atenciones} fileName="atenciones.xlsx" />
+                  </>
+                )}
+              </>
+            );
           })()}
         </div>
 
