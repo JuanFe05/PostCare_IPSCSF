@@ -38,22 +38,43 @@ export default function AtencionRow({
     if (!servicios || servicios.length === 0) return 'Sin servicios';
     return servicios.map(s => s.nombre_servicio).join(', ');
   };
-
   return (
     <>
-      <td className="p-3 text-center break-words">{atencion.id_atencion}</td>
-      <td className="p-3 text-center break-words">{atencion.id_paciente}</td>
-      <td className="p-3 text-center break-words">{formatFecha(atencion.fecha_atencion)}</td>
-      <td className="p-3 text-center break-words">{atencion.nombre_paciente}</td>
-      <td className="p-3 text-center break-words">{atencion.telefono_uno || '-'}</td>
-      <td className="p-3 text-center break-words">{atencion.telefono_dos || '-'}</td>
-      <td className="p-3 text-center break-words">{atencion.email || '-'}</td>
-      <td className="p-3 text-center break-words">{atencion.nombre_empresa}</td>
-      <td className="p-3 text-center break-words">{atencion.nombre_estado_atencion}</td>
-      <td className="p-3 text-center break-words">{atencion.nombre_seguimiento_atencion || '-'}</td>
-      <td className="p-3 text-center break-words">{formatServicios(atencion.servicios)}</td>
-      
-      <td className="p-3 text-center w-32 break-words">
+      <td className="px-2 py-1 text-xs text-center max-w-[50px]">{atencion.id_atencion}</td>
+      <td className="px-2 py-1 text-xs text-center max-w-[50px]">{atencion.id_paciente}</td>
+      <td className="px-2 py-1 text-xs text-center max-w-[50px]">{formatFecha(atencion.fecha_atencion)}</td>
+      <td className="px-2 py-1 text-xs text-center max-w-[160px]">{atencion.nombre_paciente}</td>
+      <td className="px-2 py-1 text-xs text-center">{atencion.telefono_uno || '-'}</td>
+      <td className="px-2 py-1 text-xs text-center">{atencion.telefono_dos || '-'}</td>
+      <td className="px-2 py-1 text-xs text-center truncate max-w-[180px]">{atencion.email || '-'}</td>
+      <td className="px-2 py-1 text-xs text-center truncate max-w-[180px]">{atencion.nombre_empresa}</td>
+      {/** Estado: mostrar como badge con color según valor */}
+      <td className="px-2 py-1 text-center">
+        {(() => {
+          const estadoText = String(atencion.nombre_estado_atencion ?? '').trim();
+          const estadoClass = estadoText === 'Urgencias' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700';
+          return (
+            <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-medium ${estadoClass}`}>{estadoText || '-'}</span>
+          );
+        })()}
+      </td>
+
+      {/** Seguimiento: badge con varios colores */}
+      <td className="px-2 py-1 text-center">
+        {(() => {
+          const segText = String(atencion.nombre_seguimiento_atencion ?? '').trim();
+          let segClass = 'bg-blue-100 text-blue-700';
+          if (segText === 'No Contactado') segClass = 'bg-red-100 text-red-700';
+          else if (segText === 'Finalizado') segClass = 'bg-green-100 text-green-700';
+          return (
+            <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-medium ${segClass}`}>{segText || '-'}</span>
+          );
+        })()}
+      </td>
+
+      <td className="px-2 py-1 text-xs text-center truncate max-w-[220px]">{formatServicios(atencion.servicios)}</td>
+
+      <td className="px-2 py-1 text-center w-28">
         <div className="flex gap-2 justify-center">
           {canEdit ? (
             <>
@@ -75,7 +96,7 @@ export default function AtencionRow({
               )}
             </>
           ) : (
-            <span className="text-sm text-gray-500">Sin acciones</span>
+            <span className="text-xs text-gray-500">Sin acciones</span>
           )}
         </div>
       </td>
