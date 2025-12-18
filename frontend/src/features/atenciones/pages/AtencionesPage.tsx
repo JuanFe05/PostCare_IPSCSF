@@ -114,7 +114,7 @@ export default function AtencionesPage() {
 
 
   return (
-    <div className="py-6">
+    <div className="py-6 max-w-full overflow-x-hidden">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
         <span>Gestión de Atenciones</span>
       </h2>

@@ -41,19 +41,19 @@ export default function AtencionRow({
 
   return (
     <>
-      <td className="p-3 text-center">{atencion.id_atencion}</td>
-      <td className="p-3 text-center">{atencion.id_paciente}</td>
-      <td className="p-3 text-center">{formatFecha(atencion.fecha_atencion)}</td>
-      <td className="p-3 text-center">{atencion.nombre_paciente}</td>
-      <td className="p-3 text-center">{atencion.telefono_uno || '-'}</td>
-      <td className="p-3 text-center">{atencion.telefono_dos || '-'}</td>
-      <td className="p-3 text-center">{atencion.email || '-'}</td>
-      <td className="p-3 text-center">{atencion.nombre_empresa}</td>
-      <td className="p-3 text-center">{atencion.nombre_estado_atencion}</td>
-      <td className="p-3 text-center">{atencion.nombre_seguimiento_atencion || '-'}</td>
-      <td className="p-3 text-center">{formatServicios(atencion.servicios)}</td>
+      <td className="p-3 text-center break-words">{atencion.id_atencion}</td>
+      <td className="p-3 text-center break-words">{atencion.id_paciente}</td>
+      <td className="p-3 text-center break-words">{formatFecha(atencion.fecha_atencion)}</td>
+      <td className="p-3 text-center break-words">{atencion.nombre_paciente}</td>
+      <td className="p-3 text-center break-words">{atencion.telefono_uno || '-'}</td>
+      <td className="p-3 text-center break-words">{atencion.telefono_dos || '-'}</td>
+      <td className="p-3 text-center break-words">{atencion.email || '-'}</td>
+      <td className="p-3 text-center break-words">{atencion.nombre_empresa}</td>
+      <td className="p-3 text-center break-words">{atencion.nombre_estado_atencion}</td>
+      <td className="p-3 text-center break-words">{atencion.nombre_seguimiento_atencion || '-'}</td>
+      <td className="p-3 text-center break-words">{formatServicios(atencion.servicios)}</td>
       
-      <td className="p-3 text-center w-32">
+      <td className="p-3 text-center w-32 break-words">
         <div className="flex gap-2 justify-center">
           {canEdit ? (
             <>

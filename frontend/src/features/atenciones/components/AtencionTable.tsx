@@ -98,7 +98,7 @@ export default function AtencionTable({
   ) : (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full text-sm divide-y table-auto">
+        <table className="w-full table-fixed text-sm divide-y">
         {/* Header */}
         <thead className="bg-blue-100 text-blue-900 select-none">
           <tr>
@@ -106,7 +106,7 @@ export default function AtencionTable({
               return (
                 <th 
                   key={col.accessor} 
-                  className={`p-3 font-semibold text-center ${
+                  className={`p-3 font-semibold text-center break-words ${
                     col.accessor === 'servicios' || col.accessor === 'id_atencion' ? '' : 'cursor-pointer'
                   }`} 
                   onClick={() => col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && toggleSort(col.accessor)}
