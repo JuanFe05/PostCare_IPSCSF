@@ -38,6 +38,22 @@ export default function AtencionRow({
     if (!servicios || servicios.length === 0) return 'Sin servicios';
     return servicios.map(s => s.nombre_servicio).join(', ');
   };
+
+  // Formatear fecha de modificación
+  const formatFechaModificacion = (fecha: string | undefined) => {
+    if (!fecha) return '-';
+    try {
+      const date = new Date(fecha);
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    } catch {
+      return '-';
+    }
+  };
+
   return (
     <>
       <td className="p-3 text-center w-30 whitespace-nowrap">
@@ -112,6 +128,18 @@ export default function AtencionRow({
       <td className="p-3 text-center w-96">
         <div className="truncate">{formatServicios(atencion.servicios)}</div>
       </td>
+
+      {/** Columnas de auditoría solo para ADMINISTRADOR */}
+      {isAdmin && (
+        <>
+          <td className="p-3 text-center w-64">
+            <div className="truncate">{atencion.nombre_usuario_modificacion || '-'}</div>
+          </td>
+          <td className="p-3 text-center w-40 whitespace-nowrap">
+            {formatFechaModificacion(atencion.fecha_modificacion)}
+          </td>
+        </>
+      )}
     </>
   );
 }

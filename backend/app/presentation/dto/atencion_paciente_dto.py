@@ -112,6 +112,10 @@ class AtencionListResponseDto(BaseModel):
     
     # Servicios
     servicios: List[ServicioAtencionDto] = []  # Agregado: servicios en lista
+    
+    # Auditoría
+    fecha_modificacion: Optional[datetime] = None
+    nombre_usuario_modificacion: Optional[str] = None
 
     class Config:
         from_attributes = True

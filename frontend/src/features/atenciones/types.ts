@@ -31,6 +31,10 @@ export type Atencion = {
   
   // Servicios
   servicios: Servicio[];
+  
+  // Auditoría
+  fecha_modificacion?: string;
+  nombre_usuario_modificacion?: string;
 };
 
 // Tipo para crear nueva atención

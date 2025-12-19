@@ -93,6 +93,18 @@ export default function AtencionTable({
     { Header: 'Servicios', accessor: 'servicios' },
   ];
 
+  // Verificar si el usuario es ADMINISTRADOR
+  const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+  const isAdmin = role === 'ADMINISTRADOR';
+
+  // Columnas adicionales solo para ADMINISTRADOR
+  const adminColumns = isAdmin ? [
+    { Header: 'Usuario Modificación', accessor: 'nombre_usuario_modificacion' },
+    { Header: 'Fecha Modificación', accessor: 'fecha_modificacion' },
+  ] : [];
+
+  const allColumns = [...columns, ...adminColumns];
+
   return loading ? (
     <div className="text-center py-8">Cargando atenciones...</div>
   ) : (
@@ -103,12 +115,12 @@ export default function AtencionTable({
         <thead className="bg-blue-100 text-blue-900 select-none sticky top-0 z-10">
           <tr>
             <th className="p-3 font-semibold w-30 text-center whitespace-nowrap">Acciones</th>
-            {columns.map((col: any) => {
+            {allColumns.map((col: any) => {
               return (
                 <th 
                   key={col.accessor} 
                   className={`p-3 font-semibold text-center whitespace-nowrap ${
-                    (col.accessor === 'nombre_estado_atencion' || col.accessor === 'nombre_seguimiento_atencion') ? 'w-40' : (col.accessor === 'id_atencion' || col.accessor === 'id_paciente' || col.accessor === 'fecha_atencion') ? 'w-32' : (col.accessor === 'telefono_uno' || col.accessor === 'telefono_dos' ? 'w-32' : (col.accessor === 'nombre_paciente' || col.accessor === 'nombre_empresa' ? 'w-96' : (col.accessor === 'email' ? 'w-68' : (col.accessor === 'servicios' ? 'w-96' : ''))))
+                    (col.accessor === 'nombre_estado_atencion' || col.accessor === 'nombre_seguimiento_atencion') ? 'w-40' : (col.accessor === 'id_atencion' || col.accessor === 'id_paciente' || col.accessor === 'fecha_atencion') ? 'w-32' : (col.accessor === 'telefono_uno' || col.accessor === 'telefono_dos' ? 'w-32' : (col.accessor === 'nombre_paciente' || col.accessor === 'nombre_empresa' ? 'w-96' : (col.accessor === 'email' ? 'w-68' : (col.accessor === 'servicios' ? 'w-96' : (col.accessor === 'nombre_usuario_modificacion' ? 'w-64' : (col.accessor === 'fecha_modificacion' ? 'w-40' : ''))))))
                   } ${
                     col.accessor === 'servicios' || col.accessor === 'id_atencion' ? '' : 'cursor-pointer'
                   }`} 
@@ -133,7 +145,7 @@ export default function AtencionTable({
         <tbody className="bg-white">
           {paginatedData.length === 0 ? (
             <tr>
-              <td colSpan={12} className="p-6 text-center text-gray-500">No se encontraron atenciones.</td>
+              <td colSpan={isAdmin ? 14 : 12} className="p-6 text-center text-gray-500">No se encontraron atenciones.</td>
             </tr>
           ) : (
             paginatedData.map((atencion: Atencion, ridx: number) => {
