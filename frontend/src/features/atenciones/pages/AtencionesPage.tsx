@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import type { ChangeEvent } from "react";
 import { FaSyncAlt } from 'react-icons/fa';
 import { useAuth } from "../../../hooks/useAuth";
+import { useWebSocket } from "../../../hooks/useWebSocket";
 import type { Atencion, NewAtencionConPaciente, UpdateAtencion } from "../types";
 import { getAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock } from "../Atencion.api";
 import { syncPacientesRangoFechas } from "../../../api/Sync.api";
@@ -25,6 +26,7 @@ export default function AtencionesPage() {
   const [heldLockId, setHeldLockId] = useState<string | null>(null);
 
   const { auth } = useAuth();
+  const { subscribe } = useWebSocket();
 
   const loadAtenciones = async () => {
     setLoading(true);
@@ -43,6 +45,34 @@ export default function AtencionesPage() {
   useEffect(() => {
     loadAtenciones();
   }, []);
+
+  // Suscribirse a eventos WebSocket para atenciones
+  useEffect(() => {
+    const unsubscribe = subscribe('atenciones', (message) => {
+      console.log('[Atenciones] Evento WebSocket:', message);
+      
+      if (message.event === 'create') {
+        // Añadir nueva atención al inicio
+        setAtenciones((prev) => {
+          const exists = prev.some(a => a.id_atencion === message.data.id_atencion);
+          if (exists) return prev;
+          return [message.data, ...prev];
+        });
+      } else if (message.event === 'update') {
+        // Actualizar atención existente
+        setAtenciones((prev) =>
+          prev.map((a) => (a.id_atencion === message.data.id_atencion ? message.data : a))
+        );
+      } else if (message.event === 'delete') {
+        // Eliminar atención
+        setAtenciones((prev) =>
+          prev.filter((a) => a.id_atencion !== message.data.id_atencion)
+        );
+      }
+    });
+
+    return () => unsubscribe();
+  }, [subscribe]);
 
   const handleSync = async (fechaInicio: string, fechaFin: string) => {
     try {

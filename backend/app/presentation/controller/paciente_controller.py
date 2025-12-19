@@ -12,10 +12,12 @@ from app.presentation.dto.paciente_dto import (
 )
 from app.service.implementation.paciente_service import PacienteService
 from app.service.implementation.lock_service import get_lock_service
+from app.service.implementation.websocket_manager import get_websocket_manager
 
 
 router = APIRouter(prefix="/pacientes", dependencies=[Depends(get_current_user)])
 lock_service = get_lock_service()
+ws_manager = get_websocket_manager()
 
 
 @router.get("", response_model=List[PacienteResponseDto], tags=["Pacientes"])
@@ -62,7 +64,7 @@ def get_paciente_by_id(
 
 
 @router.post("", response_model=PacienteResponseDto, tags=["Pacientes"], status_code=201)
-def create_paciente(
+async def create_paciente(
     data: PacienteCreateDto,
     db: Session = Depends(get_db)
 ):
@@ -75,7 +77,10 @@ def create_paciente(
         paciente = PacienteService.create(db, data.model_dump())
         db.commit()
         db.refresh(paciente)
-        return _map_to_response_dto(paciente)
+        result = _map_to_response_dto(paciente)
+        # Emitir evento WebSocket
+        await ws_manager.send_event("create", "pacientes", result.model_dump(mode='json') if hasattr(result, 'model_dump') else dict(result))
+        return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -84,7 +89,7 @@ def create_paciente(
 
 
 @router.put("/{paciente_id}", response_model=PacienteResponseDto, tags=["Pacientes"])
-def update_paciente(
+async def update_paciente(
     paciente_id: str,
     data: PacienteUpdateDto,
     db: Session = Depends(get_db)
@@ -99,7 +104,10 @@ def update_paciente(
         paciente = PacienteService.update(db, paciente_id, data.model_dump(exclude_none=True))
         db.commit()
         db.refresh(paciente)
-        return _map_to_response_dto(paciente)
+        result = _map_to_response_dto(paciente)
+        # Emitir evento WebSocket
+        await ws_manager.send_event("update", "pacientes", result.model_dump(mode='json') if hasattr(result, 'model_dump') else dict(result))
+        return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -108,7 +116,7 @@ def update_paciente(
 
 
 @router.delete("/{paciente_id}", tags=["Pacientes"], status_code=204)
-def delete_paciente(
+async def delete_paciente(
     paciente_id: str,
     db: Session = Depends(get_db)
 ):
@@ -121,6 +129,8 @@ def delete_paciente(
     try:
         PacienteService.delete(db, paciente_id)
         db.commit()
+        # Emitir evento WebSocket
+        await ws_manager.send_event("delete", "pacientes", {"id": paciente_id})
         return None
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

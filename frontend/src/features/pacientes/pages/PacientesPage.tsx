@@ -1,6 +1,7 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../../hooks/useAuth';
+import { useWebSocket } from '../../../hooks/useWebSocket';
 import type { Paciente } from '../types';
 import { getPacientes, deletePaciente, updatePaciente, acquirePacienteLock, releasePacienteLock, checkPacienteLock } from '../Paciente.api';
 import PacienteForm from '../components/PacienteForm';
@@ -10,6 +11,7 @@ import Search from '../../../components/search/Search';
 
 export default function PacientesPage() {
   const { auth } = useAuth();
+  const { subscribe } = useWebSocket();
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,6 +22,34 @@ export default function PacientesPage() {
   useEffect(() => {
     loadPacientes();
   }, []);
+
+  // Suscribirse a eventos WebSocket para pacientes
+  useEffect(() => {
+    const unsubscribe = subscribe('pacientes', (message) => {
+      console.log('[Pacientes] Evento WebSocket:', message);
+      
+      if (message.event === 'create') {
+        // Añadir nuevo paciente al inicio
+        setPacientes((prev) => {
+          const exists = prev.some(p => p.id === message.data.id);
+          if (exists) return prev;
+          return [message.data, ...prev];
+        });
+      } else if (message.event === 'update') {
+        // Actualizar paciente existente
+        setPacientes((prev) =>
+          prev.map((p) => (p.id === message.data.id ? message.data : p))
+        );
+      } else if (message.event === 'delete') {
+        // Eliminar paciente
+        setPacientes((prev) =>
+          prev.filter((p) => p.id !== message.data.id)
+        );
+      }
+    });
+
+    return () => unsubscribe();
+  }, [subscribe]);
 
   const loadPacientes = async () => {
     try {
