@@ -114,13 +114,13 @@ export default function AtencionesPage() {
 
 
   return (
-    <div className="py-6 max-w-full overflow-x-hidden">
+    <div className="py-6 w-full max-w-[calc(100vw-290px)] mx-auto">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
         <span>Gestión de Atenciones</span>
       </h2>
 
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex-shrink-0 flex items-center gap-3">
+      <div className="mb-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div className="flex-shrink-0 flex flex-wrap items-center gap-3">
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
             const isAdmin = role.includes('ADMINISTRADOR');
@@ -157,12 +157,14 @@ export default function AtencionesPage() {
           })()}
         </div>
 
-        <Search 
-          value={searchTerm} 
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
-          onClear={() => setSearchTerm('')} 
-          placeholder="Buscar por ID, Paciente, Empresa o Estado" 
-        />
+        <div className="flex-shrink-0 min-w-[300px] lg:min-w-[400px]">
+          <Search 
+            value={searchTerm} 
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
+            onClear={() => setSearchTerm('')} 
+            placeholder="Buscar por ID, Paciente, Empresa o Estado" 
+          />
+        </div>
       </div>
 
       {showSyncModal && (

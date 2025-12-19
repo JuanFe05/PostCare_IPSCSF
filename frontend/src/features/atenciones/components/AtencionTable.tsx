@@ -80,34 +80,35 @@ export default function AtencionTable({
   };
 
   const columns = [
+    { Header: 'Estado', accessor: 'nombre_estado_atencion' },
+    { Header: 'Seguimiento', accessor: 'nombre_seguimiento_atencion' },
     { Header: 'ID Atención', accessor: 'id_atencion' },
     { Header: 'ID Paciente', accessor: 'id_paciente' },
     { Header: 'F. Atención', accessor: 'fecha_atencion' },
     { Header: 'Paciente', accessor: 'nombre_paciente' },
+    { Header: 'Empresa', accessor: 'nombre_empresa' },
     { Header: 'Tel 1', accessor: 'telefono_uno' },
     { Header: 'Tel 2', accessor: 'telefono_dos' },
     { Header: 'Email', accessor: 'email' },
-    { Header: 'Empresa', accessor: 'nombre_empresa' },
-    { Header: 'Estado', accessor: 'nombre_estado_atencion' },
-    { Header: 'Seguimiento', accessor: 'nombre_seguimiento_atencion' },
     { Header: 'Servicios', accessor: 'servicios' },
   ];
 
   return loading ? (
     <div className="text-center py-8">Cargando atenciones...</div>
   ) : (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full w-full text-sm divide-y table-fixed">
+    <div className="bg-white rounded-lg shadow overflow-hidden w-full">
+      <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+        <table className="text-xs divide-y border-collapse" style={{ minWidth: '2400px' }}>
         {/* Header */}
-        <thead className="bg-blue-100 text-blue-900 select-none">
+        <thead className="bg-blue-100 text-blue-900 select-none sticky top-0 z-10">
           <tr>
+            <th className="p-3 font-semibold w-30 text-center whitespace-nowrap">Acciones</th>
             {columns.map((col: any) => {
               return (
                 <th 
                   key={col.accessor} 
-                  className={`p-3 font-semibold text-center ${
-                    (col.accessor === 'id_atencion' || col.accessor === 'id_paciente' || col.accessor === 'fecha_atencion') ? 'w-28' : (col.accessor === 'telefono_uno' || col.accessor === 'telefono_dos' ? 'w-28' : (col.accessor === 'nombre_paciente' || col.accessor === 'email' || col.accessor === 'nombre_empresa' ? 'w-56' : ''))
+                  className={`p-3 font-semibold text-center whitespace-nowrap ${
+                    (col.accessor === 'nombre_estado_atencion' || col.accessor === 'nombre_seguimiento_atencion') ? 'w-40' : (col.accessor === 'id_atencion' || col.accessor === 'id_paciente' || col.accessor === 'fecha_atencion') ? 'w-32' : (col.accessor === 'telefono_uno' || col.accessor === 'telefono_dos' ? 'w-32' : (col.accessor === 'nombre_paciente' || col.accessor === 'nombre_empresa' ? 'w-96' : (col.accessor === 'email' ? 'w-68' : (col.accessor === 'servicios' ? 'w-96' : ''))))
                   } ${
                     col.accessor === 'servicios' || col.accessor === 'id_atencion' ? '' : 'cursor-pointer'
                   }`} 
@@ -125,7 +126,6 @@ export default function AtencionTable({
                 </th>
               );
             })}
-            <th className="p-3 font-semibold w-32 text-center">Acciones</th>
           </tr>
         </thead>
 
