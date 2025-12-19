@@ -40,14 +40,14 @@ export default function AtencionRow({
   };
   return (
     <>
-      <td className="px-2 py-1 text-xs text-center max-w-[50px]">{atencion.id_atencion}</td>
-      <td className="px-2 py-1 text-xs text-center max-w-[50px]">{atencion.id_paciente}</td>
-      <td className="px-2 py-1 text-xs text-center max-w-[50px]">{formatFecha(atencion.fecha_atencion)}</td>
-      <td className="px-2 py-1 text-xs text-center max-w-[160px]">{atencion.nombre_paciente}</td>
-      <td className="px-2 py-1 text-xs text-center">{atencion.telefono_uno || '-'}</td>
-      <td className="px-2 py-1 text-xs text-center">{atencion.telefono_dos || '-'}</td>
-      <td className="px-2 py-1 text-xs text-center truncate max-w-[180px]">{atencion.email || '-'}</td>
-      <td className="px-2 py-1 text-xs text-center truncate max-w-[180px]">{atencion.nombre_empresa}</td>
+      <td className="px-2 py-1 text-xs text-center w-28">{atencion.id_atencion}</td>
+      <td className="px-2 py-1 text-xs text-center w-28">{atencion.id_paciente}</td>
+      <td className="px-2 py-1 text-xs text-center w-28">{formatFecha(atencion.fecha_atencion)}</td>
+      <td className="px-2 py-1 text-xs text-center truncate w-56">{atencion.nombre_paciente}</td>
+      <td className="px-2 py-1 text-xs text-center w-28">{atencion.telefono_uno || '-'}</td>
+      <td className="px-2 py-1 text-xs text-center w-28">{atencion.telefono_dos || '-'}</td>
+      <td className="px-2 py-1 text-xs text-center truncate w-56">{atencion.email || '-'}</td>
+      <td className="px-2 py-1 text-xs text-center truncate w-56">{atencion.nombre_empresa}</td>
       {/** Estado: mostrar como badge con color según valor */}
       <td className="px-2 py-1 text-center">
         {(() => {

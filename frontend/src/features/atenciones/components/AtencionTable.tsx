@@ -107,6 +107,8 @@ export default function AtencionTable({
                 <th 
                   key={col.accessor} 
                   className={`p-3 font-semibold text-center ${
+                    (col.accessor === 'id_atencion' || col.accessor === 'id_paciente' || col.accessor === 'fecha_atencion') ? 'w-28' : (col.accessor === 'telefono_uno' || col.accessor === 'telefono_dos' ? 'w-28' : (col.accessor === 'nombre_paciente' || col.accessor === 'email' || col.accessor === 'nombre_empresa' ? 'w-56' : ''))
+                  } ${
                     col.accessor === 'servicios' || col.accessor === 'id_atencion' ? '' : 'cursor-pointer'
                   }`} 
                   onClick={() => col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && toggleSort(col.accessor)}
