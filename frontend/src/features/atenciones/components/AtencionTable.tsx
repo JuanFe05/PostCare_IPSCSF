@@ -23,7 +23,7 @@ export default function AtencionTable({
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
-  const pageSize = 7;
+  const pageSize = 10;
 
   // Calcular lista filtrada + ordenada
   const displayed = useMemo(() => {

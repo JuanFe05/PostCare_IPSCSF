@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -12,9 +13,11 @@ from app.presentation.dto.atencion_paciente_dto import (
     AtencionConPacienteCreateDto,
 )
 from app.service.implementation.atencion_service import AtencionService
+from app.service.implementation.lock_service import get_lock_service
 
 
 router = APIRouter(prefix="/atenciones", dependencies=[Depends(get_current_user)])
+lock_service = get_lock_service()
 
 
 # ==================== NUEVOS ENDPOINTS ====================
@@ -175,3 +178,40 @@ def delete_atencion(
     if not success:
         raise HTTPException(status_code=404, detail="Atención no encontrada")
     return None
+
+
+# --- Lock endpoints para control de concurrencia de edición ---
+@router.post("/{atencion_id}/lock", tags=["Atenciones"])
+def acquire_lock(atencion_id: str, current_user: dict = Depends(get_current_user)):
+    try:
+        locker = {'id': current_user.get('id'), 'username': current_user.get('sub') or current_user.get('username')}
+        res = lock_service.acquire(str(atencion_id), locker)
+        if res.get('ok'):
+            return {'locked': True, 'lockedBy': res.get('lockedBy')}
+        else:
+            return JSONResponse(status_code=409, content={'locked': True, 'lockedBy': res.get('lockedBy')})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{atencion_id}/lock", tags=["Atenciones"])
+def status_lock(atencion_id: str):
+    try:
+        st = lock_service.status(str(atencion_id))
+        return st
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{atencion_id}/lock", tags=["Atenciones"])
+def release_lock(atencion_id: str, current_user: dict = Depends(get_current_user)):
+    try:
+        locker_id = current_user.get('id')
+        ok = lock_service.release(str(atencion_id), locker_id)
+        if not ok:
+            raise HTTPException(status_code=403, detail="Solo el dueño del lock puede liberarlo")
+        return {'released': True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

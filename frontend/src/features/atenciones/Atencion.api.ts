@@ -130,3 +130,35 @@ export const getServicios = async (): Promise<ServicioOption[]> => {
     return [];
   }
 };
+
+// ==================== LOCKING ====================
+
+export const acquireAtencionLock = async (id: string): Promise<{ ok: boolean; lockedBy?: any; unsupported?: boolean }> => {
+  try {
+    const res = await client.post(`/atenciones/${id}/lock`);
+    return { ok: true, lockedBy: res.data?.lockedBy };
+  } catch (err: any) {
+    if (err?.response?.status === 409) {
+      return { ok: false, lockedBy: err.response.data?.lockedBy };
+    }
+    if (err?.response?.status === 404) return { ok: true, unsupported: true };
+    return { ok: true, unsupported: true };
+  }
+};
+
+export const releaseAtencionLock = async (id: string): Promise<void> => {
+  try {
+    await client.delete(`/atenciones/${id}/lock`);
+  } catch (err) {
+    console.warn('releaseAtencionLock failed', err);
+  }
+};
+
+export const checkAtencionLock = async (id: string): Promise<{ locked: boolean; lockedBy?: any }> => {
+  try {
+    const res = await client.get(`/atenciones/${id}/lock`);
+    return { locked: !!res.data?.locked, lockedBy: res.data?.lockedBy };
+  } catch (err) {
+    return { locked: false };
+  }
+};

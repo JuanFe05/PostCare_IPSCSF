@@ -3,7 +3,7 @@ import type { ChangeEvent } from "react";
 import { FaSyncAlt } from 'react-icons/fa';
 import { useAuth } from "../../../hooks/useAuth";
 import type { Atencion, NewAtencionConPaciente, UpdateAtencion } from "../types";
-import { getAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion } from "../Atencion.api";
+import { getAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock } from "../Atencion.api";
 import { syncPacientesRangoFechas } from "../../../api/Sync.api";
 import Swal from "sweetalert2";
 import AtencionForm from "../components/AtencionForm";
@@ -12,6 +12,7 @@ import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import AtencionTable from '../components/AtencionTable';
 import Search from "../../../components/search/Search";
 import { IoMdAddCircleOutline } from "react-icons/io";
+import { prepareAtencionesPorServicio } from "../utils";
 
 export default function AtencionesPage() {
   const [showAddAtencion, setShowAddAtencion] = useState(false);
@@ -21,6 +22,7 @@ export default function AtencionesPage() {
   const [atenciones, setAtenciones] = useState<Atencion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [heldLockId, setHeldLockId] = useState<string | null>(null);
 
   const { auth } = useAuth();
 
@@ -101,15 +103,70 @@ export default function AtencionesPage() {
     }
   };
 
-  const attemptEdit = (atencion: Atencion) => {
-    setEditAtencion(atencion);
-    setShowEditAtencion(true);
+  const attemptEdit = async (atencion: Atencion) => {
+    if (!atencion.id_atencion) {
+      setEditAtencion(atencion);
+      setShowEditAtencion(true);
+      return;
+    }
+    try {
+      const status = await checkAtencionLock(atencion.id_atencion);
+      if (status.locked) {
+        const by = status.lockedBy;
+        const who = by?.username || by?.name || 'otro usuario';
+        await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
+        return;
+      }
+
+      const res = await acquireAtencionLock(atencion.id_atencion);
+      if (res.lockedBy) {
+        const who = res.lockedBy?.username || res.lockedBy?.name || 'otro usuario';
+        const meId = auth?.user?.id ?? auth?.user?.username;
+        if (res.lockedBy?.id && meId && String(res.lockedBy.id) !== String(meId)) {
+          await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
+          return;
+        }
+      }
+
+      if (res.ok && !res.unsupported) {
+        setHeldLockId(atencion.id_atencion);
+        setEditAtencion(atencion);
+        setShowEditAtencion(true);
+        return;
+      }
+
+      if (res.ok && res.unsupported) {
+        // backend doesn't support locks — allow edit
+        setEditAtencion(atencion);
+        setShowEditAtencion(true);
+        return;
+      }
+    } catch (err) {
+      console.warn('attemptEdit: lock check failed, allowing edit', err);
+      setEditAtencion(atencion);
+      setShowEditAtencion(true);
+    }
   };
 
-  const closeEditor = () => {
+  const closeEditor = async () => {
+    if (heldLockId) {
+      try { await releaseAtencionLock(heldLockId); } catch (_) { /* best-effort */ }
+      setHeldLockId(null);
+    }
     setShowEditAtencion(false);
     setEditAtencion(null);
   };
+
+  // try to release lock on unload (best-effort)
+  useEffect(() => {
+    const handler = () => {
+      if (heldLockId) {
+        try { releaseAtencionLock(heldLockId); } catch (_) { /* ignore */ }
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [heldLockId]);
 
 
 
@@ -149,7 +206,7 @@ export default function AtencionesPage() {
                       Sincronizar
                     </button>
 
-                    <ExportExcel data={atenciones} fileName="atenciones.xlsx" />
+                    <ExportExcel data={prepareAtencionesPorServicio(atenciones)} fileName="atenciones.xlsx" />
                   </>
                 )}
               </>
@@ -211,7 +268,13 @@ export default function AtencionesPage() {
                 setAtenciones((prev: Atencion[]) => 
                   prev.map((a: Atencion) => a.id_atencion === id ? actualizada : a)
                 );
-                closeEditor();
+                // release lock if held
+                if (heldLockId) {
+                  try { await releaseAtencionLock(heldLockId); } catch (e) { /* best-effort */ }
+                  setHeldLockId(null);
+                }
+                setShowEditAtencion(false);
+                setEditAtencion(null);
                 await Swal.fire({ icon: 'success', title: 'Atención actualizada', text: `Atención actualizada correctamente.` });
               } catch (err: any) {
                 console.error("Error actualizando atención:", err);
