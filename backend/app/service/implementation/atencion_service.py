@@ -91,6 +91,11 @@ class AtencionService:
             for as_rel in atencion.servicios_rel
         ]
         
+        # Obtener nombre del usuario que modificó (si existe)
+        nombre_usuario_modificacion = None
+        if atencion.usuario:
+            nombre_usuario_modificacion = atencion.usuario.username
+        
         return AtencionListResponseDto(
             id_atencion=atencion.id,
             fecha_atencion=atencion.fecha_ingreso,
@@ -105,7 +110,9 @@ class AtencionService:
             nombre_estado_atencion=atencion.estado_atencion.nombre,
             id_seguimiento_atencion=atencion.seguimiento_atencion.id if atencion.seguimiento_atencion else None,
             nombre_seguimiento_atencion=atencion.seguimiento_atencion.nombre if atencion.seguimiento_atencion else None,
-            servicios=servicios
+            servicios=servicios,
+            fecha_modificacion=atencion.fecha_modificacion,
+            nombre_usuario_modificacion=nombre_usuario_modificacion
         )
     
     @staticmethod

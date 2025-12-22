@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -10,9 +11,13 @@ from app.presentation.dto.paciente_dto import (
     PacienteResponseDto
 )
 from app.service.implementation.paciente_service import PacienteService
+from app.service.implementation.lock_service import get_lock_service
+from app.service.implementation.websocket_manager import get_websocket_manager
 
 
 router = APIRouter(prefix="/pacientes", dependencies=[Depends(get_current_user)])
+lock_service = get_lock_service()
+ws_manager = get_websocket_manager()
 
 
 @router.get("", response_model=List[PacienteResponseDto], tags=["Pacientes"])
@@ -59,7 +64,7 @@ def get_paciente_by_id(
 
 
 @router.post("", response_model=PacienteResponseDto, tags=["Pacientes"], status_code=201)
-def create_paciente(
+async def create_paciente(
     data: PacienteCreateDto,
     db: Session = Depends(get_db)
 ):
@@ -72,7 +77,10 @@ def create_paciente(
         paciente = PacienteService.create(db, data.model_dump())
         db.commit()
         db.refresh(paciente)
-        return _map_to_response_dto(paciente)
+        result = _map_to_response_dto(paciente)
+        # Emitir evento WebSocket
+        await ws_manager.send_event("create", "pacientes", result.model_dump(mode='json') if hasattr(result, 'model_dump') else dict(result))
+        return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -81,7 +89,7 @@ def create_paciente(
 
 
 @router.put("/{paciente_id}", response_model=PacienteResponseDto, tags=["Pacientes"])
-def update_paciente(
+async def update_paciente(
     paciente_id: str,
     data: PacienteUpdateDto,
     db: Session = Depends(get_db)
@@ -96,7 +104,10 @@ def update_paciente(
         paciente = PacienteService.update(db, paciente_id, data.model_dump(exclude_none=True))
         db.commit()
         db.refresh(paciente)
-        return _map_to_response_dto(paciente)
+        result = _map_to_response_dto(paciente)
+        # Emitir evento WebSocket
+        await ws_manager.send_event("update", "pacientes", result.model_dump(mode='json') if hasattr(result, 'model_dump') else dict(result))
+        return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -105,7 +116,7 @@ def update_paciente(
 
 
 @router.delete("/{paciente_id}", tags=["Pacientes"], status_code=204)
-def delete_paciente(
+async def delete_paciente(
     paciente_id: str,
     db: Session = Depends(get_db)
 ):
@@ -118,6 +129,8 @@ def delete_paciente(
     try:
         PacienteService.delete(db, paciente_id)
         db.commit()
+        # Emitir evento WebSocket
+        await ws_manager.send_event("delete", "pacientes", {"id": paciente_id})
         return None
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -150,3 +163,40 @@ def _map_to_response_dto(paciente) -> PacienteResponseDto:
         email=paciente.email,
         nombre_completo=nombre_completo.strip()
     )
+
+
+# --- Lock endpoints para control de concurrencia de edición ---
+@router.post("/{paciente_id}/lock", tags=["Pacientes"])
+def acquire_lock(paciente_id: str, current_user: dict = Depends(get_current_user)):
+    try:
+        locker = {'id': current_user.get('id'), 'username': current_user.get('sub') or current_user.get('username')}
+        res = lock_service.acquire(str(paciente_id), locker)
+        if res.get('ok'):
+            return {'locked': True, 'lockedBy': res.get('lockedBy')}
+        else:
+            return JSONResponse(status_code=409, content={'locked': True, 'lockedBy': res.get('lockedBy')})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{paciente_id}/lock", tags=["Pacientes"])
+def status_lock(paciente_id: str):
+    try:
+        st = lock_service.status(str(paciente_id))
+        return st
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{paciente_id}/lock", tags=["Pacientes"])
+def release_lock(paciente_id: str, current_user: dict = Depends(get_current_user)):
+    try:
+        locker_id = current_user.get('id')
+        ok = lock_service.release(str(paciente_id), locker_id)
+        if not ok:
+            raise HTTPException(status_code=403, detail="Solo el dueño del lock puede liberarlo")
+        return {'released': True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

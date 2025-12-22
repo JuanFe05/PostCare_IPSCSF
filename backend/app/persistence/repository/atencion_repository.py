@@ -32,6 +32,7 @@ def get_all_atenciones(db: Session, skip: int = 0, limit: int = 100) -> List[Ate
             joinedload(Atencion.empresa),
             joinedload(Atencion.estado_atencion),
             joinedload(Atencion.seguimiento_atencion),
+            joinedload(Atencion.usuario),
             joinedload(Atencion.servicios_rel).joinedload(AtencionServicio.servicio)
         )\
         .offset(skip)\

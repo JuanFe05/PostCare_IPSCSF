@@ -27,8 +27,6 @@ export default function AtencionRow({
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
       });
     } catch {
       return fecha;
@@ -41,21 +39,24 @@ export default function AtencionRow({
     return servicios.map(s => s.nombre_servicio).join(', ');
   };
 
+  // Formatear fecha de modificación
+  const formatFechaModificacion = (fecha: string | undefined) => {
+    if (!fecha) return '-';
+    try {
+      const date = new Date(fecha);
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    } catch {
+      return '-';
+    }
+  };
+
   return (
     <>
-      <td className="p-3 text-center">{atencion.id_atencion}</td>
-      <td className="p-3 text-center">{atencion.id_paciente}</td>
-      <td className="p-3 text-center">{formatFecha(atencion.fecha_atencion)}</td>
-      <td className="p-3 text-center">{atencion.nombre_paciente}</td>
-      <td className="p-3 text-center">{atencion.telefono_uno || '-'}</td>
-      <td className="p-3 text-center">{atencion.telefono_dos || '-'}</td>
-      <td className="p-3 text-center">{atencion.email || '-'}</td>
-      <td className="p-3 text-center">{atencion.nombre_empresa}</td>
-      <td className="p-3 text-center">{atencion.nombre_estado_atencion}</td>
-      <td className="p-3 text-center">{atencion.nombre_seguimiento_atencion || '-'}</td>
-      <td className="p-3 text-center">{formatServicios(atencion.servicios)}</td>
-      
-      <td className="p-3 text-center">
+      <td className="p-3 text-center w-30 whitespace-nowrap">
         <div className="flex gap-2 justify-center">
           {canEdit ? (
             <>
@@ -77,10 +78,68 @@ export default function AtencionRow({
               )}
             </>
           ) : (
-            <span className="text-sm text-gray-500">Sin acciones</span>
+            <span className="text-xs text-gray-500">Sin acciones</span>
           )}
         </div>
       </td>
+
+      {/** Estado (columna 2) */}
+      <td className="p-3 text-center w-40 whitespace-nowrap">
+        {(() => {
+          const estadoText = String(atencion.nombre_estado_atencion ?? '').trim();
+          const estadoClass = estadoText === 'Urgencias' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700';
+          return (
+            <span className={`inline-flex items-center justify-center px-2 py-1 rounded text-xs font-bold ${estadoClass}`}>{estadoText || '-'}</span>
+          );
+        })()}
+      </td>
+
+      {/** Seguimiento (columna 3) */}
+      <td className="p-3 text-center w-40 whitespace-nowrap">
+        {(() => {
+          const segText = String(atencion.nombre_seguimiento_atencion ?? '').trim();
+          let segClass = 'bg-blue-100 text-blue-700';
+          if (segText === 'No Contactado') segClass = 'bg-red-100 text-red-700';
+          else if (segText === 'Finalizado') segClass = 'bg-green-100 text-green-700';
+          return (
+            <span className={`inline-flex items-center justify-center px-2 py-1 rounded text-xs font-bold ${segClass}`}>{segText || '-'}</span>
+          );
+        })()}
+      </td>
+
+      <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.id_atencion}</td>
+      <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.id_paciente}</td>
+      <td className="p-3 text-center w-32 whitespace-nowrap">{formatFecha(atencion.fecha_atencion)}</td>
+
+      <td className="p-3 text-center w-96">
+        <div className="truncate">{atencion.nombre_paciente}</div>
+      </td>
+
+      <td className="p-3 text-center w-96">
+        <div className="truncate">{atencion.nombre_empresa}</div>
+      </td>
+
+      <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.telefono_uno || '-'}</td>
+      <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.telefono_dos || '-'}</td>
+      <td className="p-3 text-center w-68">
+        <div className="truncate">{atencion.email || '-'}</div>
+      </td>
+
+      <td className="p-3 text-center w-96">
+        <div className="truncate">{formatServicios(atencion.servicios)}</div>
+      </td>
+
+      {/** Columnas de auditoría solo para ADMINISTRADOR */}
+      {isAdmin && (
+        <>
+          <td className="p-3 text-center w-64">
+            <div className="truncate">{atencion.nombre_usuario_modificacion || '-'}</div>
+          </td>
+          <td className="p-3 text-center w-40 whitespace-nowrap">
+            {formatFechaModificacion(atencion.fecha_modificacion)}
+          </td>
+        </>
+      )}
     </>
   );
 }

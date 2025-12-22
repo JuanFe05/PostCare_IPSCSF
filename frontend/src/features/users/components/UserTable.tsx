@@ -74,9 +74,10 @@ export default function UserTable({
   ) : usuarios.length === 0 ? (
     <p>No hay usuarios registrados.</p>
   ) : (
-    <>
-      <table className="min-w-full text-sm divide-y table-auto">
-        <thead className="bg-blue-100 text-blue-900">
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm divide-y table-auto">
+          <thead className="bg-blue-100 text-blue-900">
           <tr>
             <th onClick={() => toggleSort('id')} className="p-3 font-semibold w-16 text-center cursor-pointer select-none">
               <div className="flex items-center justify-center gap-1">
@@ -146,8 +147,9 @@ export default function UserTable({
               </tr>
             ))
           )}
-        </tbody>
-      </table>
-    </>
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }

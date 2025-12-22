@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../../hooks/useAuth';
 import { useForm } from 'react-hook-form';
 import type { NewAtencionConPaciente, UpdateAtencion, Atencion, TipoDocumento, Empresa, EstadoAtencion, SeguimientoAtencion, ServicioOption } from '../types';
 import { getEmpresas, getEstadosAtencion, getSeguimientosAtencion, getServicios, getTiposDocumento } from '../Atencion.api';
@@ -25,6 +26,14 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
   const [servicios, setServicios] = useState<ServicioOption[]>([]);
   
   const [loading, setLoading] = useState(true);
+
+  const { auth } = useAuth();
+  const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+  // Allow some flexibility in role naming (e.g. prefixes/suffixes). Use includes to be permissive.
+  const canEditFields = ['ADMINISTRADOR', 'ASESOR', 'FACTURADOR'].some(r => role.includes(r));
+
+  // Diagnostic log to help debug visibility for ASESOR/FACTURADOR
+  // debug log removed
 
   type FormValues = {
     idTipoDocumento: number;
@@ -210,11 +219,11 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                   <span className="px-2 py-1.5 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 font-medium text-sm">T</span>
                 )}
                 <input
-                  {...register('idAtencion', {
-                    required: !isEditMode ? 'El ID de la atención es obligatorio' : undefined,
+                  {...register('idAtencion', !isEditMode ? {
+                    required: 'El ID de la atención es obligatorio',
                     pattern: { value: /^\d+$/, message: 'El ID debe contener solo números' },
                     maxLength: { value: 10, message: 'El ID no debe superar 10 dígitos' }
-                  })}
+                  } : {})}
                   type="text"
                   inputMode="numeric"
                   className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition text-sm"
@@ -310,7 +319,8 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
               </label>
               <select
                 {...register('idEmpresa', { valueAsNumber: true, validate: (v) => v !== 0 || 'Seleccione una empresa' })}
-                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition text-sm"
+                disabled={!canEditFields}
+                className={`w-full px-3 py-1.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition text-sm ${!canEditFields ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 aria-invalid={errors.idEmpresa ? 'true' : 'false'}
               >
                 <option value={0}>Seleccione una empresa</option>
@@ -468,7 +478,8 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
               </label>
               <select
                 {...register('idEstado', { valueAsNumber: true, validate: (v) => v !== 0 || 'Seleccione un estado' })}
-                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition text-sm"
+                disabled={!canEditFields}
+                className={`w-full px-3 py-1.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition text-sm ${!canEditFields ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 aria-invalid={errors.idEstado ? 'true' : 'false'}
               >
                 <option value={0}>Seleccione un estado</option>
@@ -490,7 +501,8 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
               </label>
               <select
                 {...register('idSeguimiento', { valueAsNumber: true, validate: (v) => v !== 0 || 'Seleccione un seguimiento' })}
-                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition text-sm"
+                disabled={!canEditFields}
+                className={`w-full px-3 py-1.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition text-sm ${!canEditFields ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 aria-invalid={errors.idSeguimiento ? 'true' : 'false'}
               >
                 <option value={0}>Seleccione un seguimiento</option>
@@ -517,11 +529,12 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
               ) : (
                 <div className="grid grid-cols-3 gap-2">
                   {servicios.map(serv => (
-                    <label key={serv.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                    <label key={serv.id} className={`flex items-center gap-2 ${!canEditFields ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'} p-1 rounded`}>
                       <input
                         type="checkbox"
                         checked={selectedServicios.includes(serv.id)}
                         onChange={() => toggleServicio(serv.id)}
+                        disabled={!canEditFields}
                         className="w-4 h-4"
                       />
                       <span className="text-sm">{serv.nombre}</span>

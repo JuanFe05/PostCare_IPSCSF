@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import type { ChangeEvent } from "react";
 import { FaSyncAlt } from 'react-icons/fa';
 import { useAuth } from "../../../hooks/useAuth";
+import { useWebSocket } from "../../../hooks/useWebSocket";
 import type { Atencion, NewAtencionConPaciente, UpdateAtencion } from "../types";
-import { getAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion } from "../Atencion.api";
+import { getAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock } from "../Atencion.api";
 import { syncPacientesRangoFechas } from "../../../api/Sync.api";
 import Swal from "sweetalert2";
 import AtencionForm from "../components/AtencionForm";
@@ -12,6 +13,7 @@ import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import AtencionTable from '../components/AtencionTable';
 import Search from "../../../components/search/Search";
 import { IoMdAddCircleOutline } from "react-icons/io";
+import { prepareAtencionesPorServicio } from "../utils";
 
 export default function AtencionesPage() {
   const [showAddAtencion, setShowAddAtencion] = useState(false);
@@ -21,8 +23,10 @@ export default function AtencionesPage() {
   const [atenciones, setAtenciones] = useState<Atencion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [heldLockId, setHeldLockId] = useState<string | null>(null);
 
   const { auth } = useAuth();
+  const { subscribe } = useWebSocket();
 
   const loadAtenciones = async () => {
     setLoading(true);
@@ -41,6 +45,34 @@ export default function AtencionesPage() {
   useEffect(() => {
     loadAtenciones();
   }, []);
+
+  // Suscribirse a eventos WebSocket para atenciones
+  useEffect(() => {
+    const unsubscribe = subscribe('atenciones', (message) => {
+      console.log('[Atenciones] Evento WebSocket:', message);
+      
+      if (message.event === 'create') {
+        // Añadir nueva atención al inicio
+        setAtenciones((prev) => {
+          const exists = prev.some(a => a.id_atencion === message.data.id_atencion);
+          if (exists) return prev;
+          return [message.data, ...prev];
+        });
+      } else if (message.event === 'update') {
+        // Actualizar atención existente
+        setAtenciones((prev) =>
+          prev.map((a) => (a.id_atencion === message.data.id_atencion ? message.data : a))
+        );
+      } else if (message.event === 'delete') {
+        // Eliminar atención
+        setAtenciones((prev) =>
+          prev.filter((a) => a.id_atencion !== message.data.id_atencion)
+        );
+      }
+    });
+
+    return () => unsubscribe();
+  }, [subscribe]);
 
   const handleSync = async (fechaInicio: string, fechaFin: string) => {
     try {
@@ -101,31 +133,89 @@ export default function AtencionesPage() {
     }
   };
 
-  const attemptEdit = (atencion: Atencion) => {
-    setEditAtencion(atencion);
-    setShowEditAtencion(true);
+  const attemptEdit = async (atencion: Atencion) => {
+    if (!atencion.id_atencion) {
+      setEditAtencion(atencion);
+      setShowEditAtencion(true);
+      return;
+    }
+    try {
+      const status = await checkAtencionLock(atencion.id_atencion);
+      if (status.locked) {
+        const by = status.lockedBy;
+        const who = by?.username || by?.name || 'otro usuario';
+        await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
+        return;
+      }
+
+      const res = await acquireAtencionLock(atencion.id_atencion);
+      if (res.lockedBy) {
+        const who = res.lockedBy?.username || res.lockedBy?.name || 'otro usuario';
+        const meId = auth?.user?.id ?? auth?.user?.username;
+        if (res.lockedBy?.id && meId && String(res.lockedBy.id) !== String(meId)) {
+          await Swal.fire({ icon: 'info', title: 'Registro en edición', text: `No se puede editar. Actualmente lo está editando ${who}.` });
+          return;
+        }
+      }
+
+      if (res.ok && !res.unsupported) {
+        setHeldLockId(atencion.id_atencion);
+        setEditAtencion(atencion);
+        setShowEditAtencion(true);
+        return;
+      }
+
+      if (res.ok && res.unsupported) {
+        // backend doesn't support locks — allow edit
+        setEditAtencion(atencion);
+        setShowEditAtencion(true);
+        return;
+      }
+    } catch (err) {
+      console.warn('attemptEdit: lock check failed, allowing edit', err);
+      setEditAtencion(atencion);
+      setShowEditAtencion(true);
+    }
   };
 
-  const closeEditor = () => {
+  const closeEditor = async () => {
+    if (heldLockId) {
+      try { await releaseAtencionLock(heldLockId); } catch (_) { /* best-effort */ }
+      setHeldLockId(null);
+    }
     setShowEditAtencion(false);
     setEditAtencion(null);
   };
 
+  // try to release lock on unload (best-effort)
+  useEffect(() => {
+    const handler = () => {
+      if (heldLockId) {
+        try { releaseAtencionLock(heldLockId); } catch (_) { /* ignore */ }
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [heldLockId]);
+
 
 
   return (
-    <div className="py-6">
+    <div className="py-6 w-full max-w-[calc(100vw-290px)] mx-auto">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
         <span>Gestión de Atenciones</span>
       </h2>
 
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex-shrink-0 flex items-center gap-3">
+      <div className="mb-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div className="flex-shrink-0 flex flex-wrap items-center gap-3">
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
-            if (role === 'ADMINISTRADOR') {
-              return (
-                <>
+            const isAdmin = role.includes('ADMINISTRADOR');
+            const canAdd = isAdmin || role.includes('ASESOR') || role.includes('FACTURADOR');
+
+            return (
+              <>
+                {canAdd && (
                   <button
                     onClick={() => setShowAddAtencion(true)}
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer"
@@ -133,30 +223,35 @@ export default function AtencionesPage() {
                     <IoMdAddCircleOutline />
                     Agregar nueva atención
                   </button>
+                )}
 
-                  <button
-                    onClick={() => setShowSyncModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700 shadow cursor-pointer"
-                    title="Sincronizar desde Clínica Florida"
-                  >
-                    <FaSyncAlt />
-                    Sincronizar
-                  </button>
+                {isAdmin && (
+                  <>
+                    <button
+                      onClick={() => setShowSyncModal(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700 shadow cursor-pointer"
+                      title="Sincronizar desde Clínica Florida"
+                    >
+                      <FaSyncAlt />
+                      Sincronizar
+                    </button>
 
-                  <ExportExcel data={atenciones} fileName="atenciones.xlsx" />
-                </>
-              );
-            }
-            return null;
+                    <ExportExcel data={prepareAtencionesPorServicio(atenciones)} fileName="atenciones.xlsx" />
+                  </>
+                )}
+              </>
+            );
           })()}
         </div>
 
-        <Search 
-          value={searchTerm} 
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
-          onClear={() => setSearchTerm('')} 
-          placeholder="Buscar por ID, Paciente, Empresa o Estado" 
-        />
+        <div className="flex-shrink-0 min-w-[300px] lg:min-w-[400px]">
+          <Search 
+            value={searchTerm} 
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
+            onClear={() => setSearchTerm('')} 
+            placeholder="Buscar por ID, Paciente, Empresa o Estado" 
+          />
+        </div>
       </div>
 
       {showSyncModal && (
@@ -191,8 +286,6 @@ export default function AtencionesPage() {
         </div>
       )}
 
-
-
       {showEditAtencion && editAtencion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <AtencionForm
@@ -205,7 +298,13 @@ export default function AtencionesPage() {
                 setAtenciones((prev: Atencion[]) => 
                   prev.map((a: Atencion) => a.id_atencion === id ? actualizada : a)
                 );
-                closeEditor();
+                // release lock if held
+                if (heldLockId) {
+                  try { await releaseAtencionLock(heldLockId); } catch (e) { /* best-effort */ }
+                  setHeldLockId(null);
+                }
+                setShowEditAtencion(false);
+                setEditAtencion(null);
                 await Swal.fire({ icon: 'success', title: 'Atención actualizada', text: `Atención actualizada correctamente.` });
               } catch (err: any) {
                 console.error("Error actualizando atención:", err);

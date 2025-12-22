@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -12,9 +13,13 @@ from app.presentation.dto.atencion_paciente_dto import (
     AtencionConPacienteCreateDto,
 )
 from app.service.implementation.atencion_service import AtencionService
+from app.service.implementation.lock_service import get_lock_service
+from app.service.implementation.websocket_manager import get_websocket_manager
 
 
 router = APIRouter(prefix="/atenciones", dependencies=[Depends(get_current_user)])
+lock_service = get_lock_service()
+ws_manager = get_websocket_manager()
 
 
 # ==================== NUEVOS ENDPOINTS ====================
@@ -111,7 +116,7 @@ def search_atenciones(
 
 
 @router.post("/con-paciente", response_model=AtencionDetalleResponseDto, tags=["Atenciones"], status_code=201)
-def create_atencion_con_paciente(
+async def create_atencion_con_paciente(
     data: AtencionConPacienteCreateDto,
     db: Session = Depends(get_db)
 ):
@@ -122,7 +127,10 @@ def create_atencion_con_paciente(
     Si el paciente no existe, se crea primero y luego la atención.
     """
     try:
-        return AtencionService.create_atencion_con_paciente(db, data)
+        result = AtencionService.create_atencion_con_paciente(db, data)
+        # Emitir evento WebSocket
+        await ws_manager.send_event("create", "atenciones", result.model_dump(mode='json') if hasattr(result, 'model_dump') else dict(result))
+        return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -130,7 +138,7 @@ def create_atencion_con_paciente(
 
 
 @router.post("", response_model=AtencionDetalleResponseDto, tags=["Atenciones"], status_code=201)
-def create_atencion(
+async def create_atencion(
     atencion_data: AtencionCreateDto,
     db: Session = Depends(get_db)
 ):
@@ -141,7 +149,10 @@ def create_atencion(
     Se pueden asignar servicios en la creación.
     """
     try:
-        return AtencionService.create_atencion(db, atencion_data)
+        result = AtencionService.create_atencion(db, atencion_data)
+        # Emitir evento WebSocket
+        await ws_manager.send_event("create", "atenciones", result.model_dump(mode='json') if hasattr(result, 'model_dump') else dict(result))
+        return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -149,7 +160,7 @@ def create_atencion(
 
 
 @router.put("/{atencion_id}", response_model=AtencionDetalleResponseDto, tags=["Atenciones"])
-def update_atencion(
+async def update_atencion(
     atencion_id: str,
     atencion_data: AtencionUpdateDto,
     db: Session = Depends(get_db)
@@ -162,11 +173,13 @@ def update_atencion(
     atencion = AtencionService.update_atencion(db, atencion_id, atencion_data)
     if not atencion:
         raise HTTPException(status_code=404, detail="Atención no encontrada")
+    # Emitir evento WebSocket
+    await ws_manager.send_event("update", "atenciones", atencion.model_dump(mode='json') if hasattr(atencion, 'model_dump') else dict(atencion))
     return atencion
 
 
 @router.delete("/{atencion_id}", tags=["Atenciones"], status_code=204)
-def delete_atencion(
+async def delete_atencion(
     atencion_id: str,
     db: Session = Depends(get_db)
 ):
@@ -174,4 +187,43 @@ def delete_atencion(
     success = AtencionService.delete_atencion(db, atencion_id)
     if not success:
         raise HTTPException(status_code=404, detail="Atención no encontrada")
+    # Emitir evento WebSocket
+    await ws_manager.send_event("delete", "atenciones", {"id_atencion": atencion_id})
     return None
+
+
+# --- Lock endpoints para control de concurrencia de edición ---
+@router.post("/{atencion_id}/lock", tags=["Atenciones"])
+def acquire_lock(atencion_id: str, current_user: dict = Depends(get_current_user)):
+    try:
+        locker = {'id': current_user.get('id'), 'username': current_user.get('sub') or current_user.get('username')}
+        res = lock_service.acquire(str(atencion_id), locker)
+        if res.get('ok'):
+            return {'locked': True, 'lockedBy': res.get('lockedBy')}
+        else:
+            return JSONResponse(status_code=409, content={'locked': True, 'lockedBy': res.get('lockedBy')})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{atencion_id}/lock", tags=["Atenciones"])
+def status_lock(atencion_id: str):
+    try:
+        st = lock_service.status(str(atencion_id))
+        return st
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{atencion_id}/lock", tags=["Atenciones"])
+def release_lock(atencion_id: str, current_user: dict = Depends(get_current_user)):
+    try:
+        locker_id = current_user.get('id')
+        ok = lock_service.release(str(atencion_id), locker_id)
+        if not ok:
+            raise HTTPException(status_code=403, detail="Solo el dueño del lock puede liberarlo")
+        return {'released': True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

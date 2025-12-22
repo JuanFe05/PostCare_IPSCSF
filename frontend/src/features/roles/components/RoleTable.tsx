@@ -58,9 +58,10 @@ export default function RoleTable({ roles, loading, auth, attemptEdit }: RoleTab
   ) : roles.length === 0 ? (
     <p>No hay roles registrados.</p>
   ) : (
-    <>
-      <table className="min-w-full text-sm divide-y table-auto">
-        <thead className="bg-blue-100 text-blue-900 select-none">
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm divide-y table-auto">
+          <thead className="bg-blue-100 text-blue-900 select-none">
           <tr>
             <th
               onClick={() => toggleSort("id")}
@@ -136,8 +137,9 @@ export default function RoleTable({ roles, loading, auth, attemptEdit }: RoleTab
               </tr>
             );
           })}
-        </tbody>
-      </table>
-    </>
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }

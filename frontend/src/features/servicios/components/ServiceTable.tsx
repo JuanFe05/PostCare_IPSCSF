@@ -72,9 +72,10 @@ export default function ServiceTable({
   ) : services.length === 0 ? (
     <p>No hay servicios registrados.</p>
   ) : (
-    <>
-      <table className="min-w-full text-sm divide-y table-auto">
-        <thead className="bg-blue-100 text-blue-900">
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm divide-y table-auto">
+          <thead className="bg-blue-100 text-blue-900">
           <tr>
             {columns.map((col) => (
               <th 
@@ -115,8 +116,9 @@ export default function ServiceTable({
               </tr>
             ))
           )}
-        </tbody>
-      </table>
-    </>
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.presentation.dto.servicio_dto import ServicioCreateDto, ServicioUpdateDto, ServicioResponseDto
 from app.service.implementation.servicio_service_impl import ServicioServiceImpl
-from app.configuration.security.security_dependencies import get_current_admin
+from app.configuration.security.security_dependencies import get_current_admin, get_current_user_with_roles
 
 router = APIRouter(prefix="/servicios", tags=["Servicios"])
 service = ServicioServiceImpl()
@@ -12,12 +12,12 @@ def create_servicio(data: ServicioCreateDto):
     return service.create_servicio(data)
 
 
-@router.get("", response_model=list[ServicioResponseDto], dependencies=[Depends(get_current_admin)])
+@router.get("", response_model=list[ServicioResponseDto], dependencies=[Depends(get_current_user_with_roles)])
 def list_servicios():
     return service.get_all_servicios()
 
 
-@router.get("/{servicio_id}", response_model=ServicioResponseDto, dependencies=[Depends(get_current_admin)])
+@router.get("/{servicio_id}", response_model=ServicioResponseDto, dependencies=[Depends(get_current_user_with_roles)])
 def get_servicio(servicio_id: int):
     try:
         return service.get_servicio(servicio_id)

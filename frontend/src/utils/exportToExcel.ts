@@ -13,5 +13,5 @@ export const exportToExcel = (data: any[], fileName: string) => {
   });
 
   const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-  saveAs(blob, `${fileName}.xlsx`);
+  saveAs(blob, `${fileName}`);
 };

@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Input from '../../components/forms/Input';
 import Button from '../../components/forms/Button';
-import { FiLock, FiUser } from 'react-icons/fi';
+import { FiLock, FiUser, FiEye, FiEyeOff } from 'react-icons/fi';
 import { login } from '../../api/Auth.api';
 import { useAuth } from '../../hooks/useAuth';
 import axios from 'axios';
@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 
 const schema = z.object({
   username: z.string().min(3, 'El usuario es obligatorio'),
-  password: z.string().min(3, 'Mínimo 3 caracteres'),
+  password: z.string().min(6, 'Mínimo 6 caracteres'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -22,6 +22,7 @@ export default function LoginForm() {
   const { setAuth } = useAuth();
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { register, handleSubmit, formState } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -89,8 +90,18 @@ export default function LoginForm() {
       <Input
         label="Contraseña"
         icon={<FiLock />}
-        type="password"
+        type={showPassword ? 'text' : 'password'}
         error={formState.errors.password?.message}
+        rightElement={(
+          <button
+            type="button"
+            onClick={() => setShowPassword((s) => !s)}
+            className="text-gray-500 hover:text-gray-700 focus:outline-none cursor-pointer"
+            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+          >
+            {showPassword ? <FiEyeOff /> : <FiEye />}
+          </button>
+        )}
         {...register('password')}
       />
 

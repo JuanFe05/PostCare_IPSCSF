@@ -99,9 +99,10 @@ export default function EmpresaTable({
   return loading ? (
     <div className="text-center py-8">Cargando empresas...</div>
   ) : (
-    <>
-      <table {...getTableProps()} className="min-w-full text-sm divide-y table-auto">
-        <thead className="bg-blue-100 text-blue-900">
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="overflow-x-auto">
+        <table {...getTableProps()} className="min-w-full text-sm divide-y table-auto">
+          <thead className="bg-blue-100 text-blue-900">
           <tr>
             {columns.map((col: any) => (
               <th 
@@ -145,8 +146,9 @@ export default function EmpresaTable({
               );
             })
           )}
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
 
       <EmpresaPagination
         pageIndex={pageIndex}
@@ -158,6 +160,6 @@ export default function EmpresaTable({
         nextPage={nextPage}
         previousPage={previousPage}
       />
-    </>
+    </div>
   );
 }
