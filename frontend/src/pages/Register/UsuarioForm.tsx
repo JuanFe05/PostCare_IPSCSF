@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { useForm } from "react-hook-form";
 import { getRoles } from "../../features/users/Users.api";
 
@@ -27,6 +28,8 @@ export default function UsuarioForm({ onCancel, onSave, initial = {}, isEdit = f
   }, []);
 
   const passwordValue = watch('password');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const onSubmit = (data: any) => {
     const payload = {
@@ -81,35 +84,45 @@ export default function UsuarioForm({ onCancel, onSave, initial = {}, isEdit = f
 
         <div>
           <label className="block text-sm font-medium mb-1">Contraseña{isEdit ? ' (dejar vacío para no cambiar)' : ''}</label>
-          <input
-            {...register("password", {
-              validate: (val: string) => {
-                if (!val) return true;
-                return val.length >= 6 || 'Mínimo 6 caracteres';
-              },
-              ...(isEdit ? {} : { required: 'Contraseña obligatoria' }),
-            })}
-            type="password"
-            placeholder="********"
-            className={`border p-2 rounded w-full ${errors.password ? 'border-red-500' : ''}`}
-          />
+          <div className="relative">
+            <input
+              {...register("password", {
+                validate: (val: string) => {
+                  if (!val) return true;
+                  return val.length >= 6 || 'Mínimo 6 caracteres';
+                },
+                ...(isEdit ? {} : { required: 'Contraseña obligatoria' }),
+              })}
+              type={showPassword ? 'text' : 'password'}
+              placeholder="********"
+              className={`border p-2 rounded w-full pr-10 ${errors.password ? 'border-red-500' : ''}`}
+            />
+            <button type="button" onClick={() => setShowPassword(s => !s)} className="absolute inset-y-0 right-2 flex items-center text-gray-500">
+              {showPassword ? <FiEyeOff /> : <FiEye />}
+            </button>
+          </div>
           {errors.password && <p className="text-xs text-red-600 mt-1">{String((errors.password as any).message)}</p>}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1">Confirmar contraseña{isEdit ? ' (si cambia)' : ''}</label>
-          <input
-            {...register("passwordConfirm", {
-              validate: (val: string) => {
-                const pwd = passwordValue;
-                if (!pwd && !val) return true;
-                return val === pwd || 'Las contraseñas no coinciden';
-              }
-            })}
-            type="password"
-            placeholder="Repite la contraseña"
-            className={`border p-2 rounded w-full ${errors.passwordConfirm ? 'border-red-500' : ''}`}
-          />
+          <div className="relative">
+            <input
+              {...register("passwordConfirm", {
+                validate: (val: string) => {
+                  const pwd = passwordValue;
+                  if (!pwd && !val) return true;
+                  return val === pwd || 'Las contraseñas no coinciden';
+                }
+              })}
+              type={showPasswordConfirm ? 'text' : 'password'}
+              placeholder="Repite la contraseña"
+              className={`border p-2 rounded w-full pr-10 ${errors.passwordConfirm ? 'border-red-500' : ''}`}
+            />
+            <button type="button" onClick={() => setShowPasswordConfirm(s => !s)} className="absolute inset-y-0 right-2 flex items-center text-gray-500">
+              {showPasswordConfirm ? <FiEyeOff /> : <FiEye />}
+            </button>
+          </div>
           {errors.passwordConfirm && <p className="text-xs text-red-600 mt-1">{String((errors.passwordConfirm as any).message)}</p>}
         </div>
 
