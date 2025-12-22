@@ -128,17 +128,17 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
     const segundoApellidoNorm = values.segundoApellido?.trim() ? values.segundoApellido.trim().toUpperCase() : undefined;
     const idPacienteNorm = values.idPaciente.trim();
     const telefonoUnoNorm = values.telefonoUno.trim();
-    const telefonoDosNorm = values.telefonoDos?.trim() || undefined;
+    const telefonoDosNorm = values.telefonoDos?.trim() ?? '';
 
     if (isEditMode) {
-      const updateData: UpdateAtencion = {
+        const updateData: UpdateAtencion = {
         id_usuario: userId,
         observacion: values.observacion?.trim() || undefined,
         servicios: selectedServicios,
         id_paciente: idPacienteNorm || undefined,
         id_tipo_documento: values.idTipoDocumento || undefined,
-        telefono_uno: telefonoUnoNorm || undefined,
-        telefono_dos: telefonoDosNorm,
+          telefono_uno: telefonoUnoNorm !== '' ? telefonoUnoNorm : null,
+          telefono_dos: telefonoDosNorm !== '' ? telefonoDosNorm : null,
         email: emailNorm || undefined,
         primer_nombre: primerNombreNorm,
         segundo_nombre: segundoNombreNorm,
