@@ -75,6 +75,9 @@ class AtencionService:
             
             # Servicios
             servicios=servicios
+                ,
+                fecha_modificacion=atencion.fecha_modificacion,
+                nombre_usuario_modificacion=(atencion.usuario.username if getattr(atencion, 'usuario', None) else None)
         )
     
     @staticmethod

@@ -4,6 +4,7 @@ from typing import Dict, Any
 from datetime import datetime, date
 from app.persistence.entity.pacientes_entity import Paciente
 from app.persistence.entity.atenciones_entity import Atencion
+from app.persistence.entity.empresas_entity import Empresa
 from app.persistence.repository.paciente_repository import get_paciente_by_id
 from app.persistence.repository.atencion_repository import get_atencion_by_id
 from app.configuration.app.config import settings
@@ -162,6 +163,28 @@ class SyncClinicaService:
             errores.append(f"Registro {idx}: id_empresa vacío")
             return (0, 0, 1)
         
+        # Asegurar que la empresa exista en la BD local (evita violaciones FK)
+        empresa_existente = db_local.query(Empresa).filter(Empresa.id == id_empresa).first()
+        if not empresa_existente:
+            # Intentar crear una empresa mínima con la información disponible
+            tipo_empresa_id = data.get("tipo_empresa_id")
+            tipo_empresa_desc = data.get("tipo_empresa_desc") or f"Empresa {id_empresa}"
+            nueva_empresa = Empresa(
+                id=id_empresa,
+                id_tipo_empresa=tipo_empresa_id or 0,
+                nombre=tipo_empresa_desc
+            )
+            db_local.add(nueva_empresa)
+            try:
+                db_local.flush()
+                logger.debug(f"Empresa {id_empresa} creada (mínima) para evitar FK")
+            except Exception as e:
+                # Si crear la empresa falla, registrar el error y omitir la atención
+                errores.append(f"Registro {idx}: no se pudo crear empresa {id_empresa}: {e}")
+                logger.error(f"Error creando empresa {id_empresa}: {e}")
+                db_local.rollback()
+                return (0, 0, 1)
+
         # Estados por defecto
         id_estado_atencion = 1  # Ingresado
         id_seguimiento_atencion = 8
@@ -222,6 +245,11 @@ class SyncClinicaService:
             except Exception as e:
                 errores.append(f"Registro {idx}: {str(e)}")
                 logger.error(f"Error procesando registro {idx}: {e}")
+                # Asegurar que la sesión se restaure si hubo un fallo en flush/commit
+                try:
+                    db_local.rollback()
+                except Exception:
+                    logger.exception("Error al hacer rollback de la sesión después de excepción por registro")
                 continue
         
         return {
