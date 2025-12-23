@@ -1,0 +1,65 @@
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: postcare_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "45321:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - postcare_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: postcare_backend
+    restart: unless-stopped
+    ports:
+      - "48555:8000"
+    environment:
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      RUN_STARTUP_TABLES: "true"
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      # External Database (SQL Server)
+      EXTERNAL_DB_HOST: ${EXTERNAL_DB_HOST}
+      EXTERNAL_DB_PORT: ${EXTERNAL_DB_PORT}
+      EXTERNAL_DB_NAME: ${EXTERNAL_DB_NAME}
+      EXTERNAL_DB_USER: ${EXTERNAL_DB_USER}
+      EXTERNAL_DB_PASSWORD: ${EXTERNAL_DB_PASSWORD}
+    depends_on:
+      - mysql
+    networks:
+      - postcare_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: postcare_frontend
+    restart: unless-stopped
+    ports:
+      - "41777:80"
+    depends_on:
+      - backend
+    networks:
+      - postcare_net
+
+networks:
+  postcare_net:
+    driver: bridge
+
+volumes:
+  mysql_data:
