@@ -130,10 +130,11 @@ class AtencionService:
     def get_all_atenciones(
         db: Session,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
+        fecha: Optional[datetime] = None
     ) -> List[AtencionListResponseDto]:
-        """Obtiene todas las atenciones"""
-        atenciones = atencion_repository.get_all_atenciones(db, skip=skip, limit=limit)
+        """Obtiene todas las atenciones. Si `fecha` se provee, filtra por ese día."""
+        atenciones = atencion_repository.get_all_atenciones(db, skip=skip, limit=limit, fecha=fecha)
         return [AtencionService._atencion_to_list_dto(a) for a in atenciones]
     
     @staticmethod
