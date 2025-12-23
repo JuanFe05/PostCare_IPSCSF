@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import date
 
 from app.configuration.app.database import get_db
 from app.configuration.security.security_dependencies import get_current_user
@@ -28,11 +29,12 @@ ws_manager = get_websocket_manager()
 def get_all_atenciones(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
+    fecha: Optional[date] = Query(None, description="Filtrar por fecha (YYYY-MM-DD)"),
     db: Session = Depends(get_db)
 ):
     """Obtiene todas las atenciones con información resumida"""
     try:
-        return AtencionService.get_all_atenciones(db, skip=skip, limit=limit)
+        return AtencionService.get_all_atenciones(db, skip=skip, limit=limit, fecha=fecha)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error obteniendo atenciones: {str(e)}")
 

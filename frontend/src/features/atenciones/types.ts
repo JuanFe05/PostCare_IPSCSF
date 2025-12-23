@@ -63,8 +63,8 @@ export type UpdateAtencion = {
   // Identificación y contacto
   id_paciente?: string;
   id_tipo_documento?: number;
-  telefono_uno?: string;
-  telefono_dos?: string;
+  telefono_uno?: string | null;
+  telefono_dos?: string | null;
   email?: string;
   primer_nombre?: string;
   segundo_nombre?: string;

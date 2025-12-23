@@ -13,6 +13,7 @@ import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import AtencionTable from '../components/AtencionTable';
 import Search from "../../../components/search/Search";
 import { IoMdAddCircleOutline } from "react-icons/io";
+import { FiX } from 'react-icons/fi';
 import { prepareAtencionesPorServicio } from "../utils";
 
 export default function AtencionesPage() {
@@ -23,6 +24,7 @@ export default function AtencionesPage() {
   const [atenciones, setAtenciones] = useState<Atencion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [heldLockId, setHeldLockId] = useState<string | null>(null);
 
   const { auth } = useAuth();
@@ -31,7 +33,7 @@ export default function AtencionesPage() {
   const loadAtenciones = async () => {
     setLoading(true);
     try {
-      const data = await getAtenciones(0, 500);
+      const data = await getAtenciones(0, 500, selectedDate ?? undefined);
       console.log("Atenciones recibidas:", data);
       console.log("Total de atenciones:", data.length);
       setAtenciones(data);
@@ -45,6 +47,11 @@ export default function AtencionesPage() {
   useEffect(() => {
     loadAtenciones();
   }, []);
+
+  // recargar cuando cambie la fecha seleccionada
+  useEffect(() => {
+    loadAtenciones();
+  }, [selectedDate]);
 
   // Suscribirse a eventos WebSocket para atenciones
   useEffect(() => {
@@ -245,12 +252,31 @@ export default function AtencionesPage() {
         </div>
 
         <div className="flex-shrink-0 min-w-[300px] lg:min-w-[400px]">
-          <Search 
-            value={searchTerm} 
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
-            onClear={() => setSearchTerm('')} 
-            placeholder="Buscar por ID, Paciente, Empresa o Estado" 
-          />
+          <div className="flex items-center gap-2">
+            <Search 
+              value={searchTerm} 
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
+              onClear={() => setSearchTerm('')} 
+              placeholder="Buscar..." 
+            />
+            <input
+              type="date"
+              value={selectedDate ?? ''}
+              onChange={(e) => setSelectedDate(e.target.value ? e.target.value : null)}
+              className="px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              title="Filtrar por fecha"
+            />
+            {selectedDate && (
+              <button
+                onClick={() => setSelectedDate(null)}
+                className="h-10 px-3 rounded-md bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center cursor-pointer ml-2"
+                title="Limpiar fecha"
+                aria-label="Limpiar fecha"
+              >
+                <FiX className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
