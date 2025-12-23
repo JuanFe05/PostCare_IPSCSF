@@ -108,8 +108,8 @@ export default function AtencionRow({
       </td>
 
       <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.id_atencion}</td>
-      <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.id_paciente}</td>
       <td className="p-3 text-center w-32 whitespace-nowrap">{formatFecha(atencion.fecha_atencion)}</td>
+      <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.id_paciente}</td>
 
       <td className="p-3 text-center w-96">
         <div className="truncate">{atencion.nombre_paciente}</div>
