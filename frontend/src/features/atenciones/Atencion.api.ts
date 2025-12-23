@@ -14,8 +14,13 @@ import type {
 
 // ==================== ATENCIONES ====================
 
-export const getAtenciones = async (skip = 0, limit = 100): Promise<Atencion[]> => {
-  const resp = await client.get(`/atenciones?skip=${skip}&limit=${limit}`);
+export const getAtenciones = async (skip = 0, limit = 100, fecha?: string): Promise<Atencion[]> => {
+  const params = new URLSearchParams();
+  params.append('skip', String(skip));
+  params.append('limit', String(limit));
+  if (fecha) params.append('fecha', fecha);
+  const query = params.toString();
+  const resp = await client.get(`/atenciones?${query}`);
   return Array.isArray(resp.data) ? resp.data : [resp.data];
 };
 

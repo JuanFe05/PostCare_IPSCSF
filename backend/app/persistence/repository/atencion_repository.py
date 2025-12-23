@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, and_
+from datetime import datetime, timedelta
 from typing import List, Optional
 from app.persistence.entity.atenciones_entity import Atencion
 from app.persistence.entity.atenciones_servicios_entity import AtencionServicio
@@ -24,9 +25,9 @@ def get_atencion_with_relations(db: Session, atencion_id: str) -> Atencion | Non
         .first()
 
 
-def get_all_atenciones(db: Session, skip: int = 0, limit: int = 100) -> List[Atencion]:
-    """Obtiene todas las atenciones con paginación"""
-    return db.query(Atencion)\
+def get_all_atenciones(db: Session, skip: int = 0, limit: int = 100, fecha: datetime | None = None) -> List[Atencion]:
+    """Obtiene todas las atenciones con paginación. Si `fecha` se provee (date/datetime), filtra por ese día."""
+    query = db.query(Atencion)\
         .options(
             joinedload(Atencion.paciente),
             joinedload(Atencion.empresa),
@@ -35,9 +36,19 @@ def get_all_atenciones(db: Session, skip: int = 0, limit: int = 100) -> List[Ate
             joinedload(Atencion.usuario),
             joinedload(Atencion.servicios_rel).joinedload(AtencionServicio.servicio)
         )\
-        .offset(skip)\
-        .limit(limit)\
-        .all()
+    
+    # Aplicar filtro por fecha si fue proporcionada (comparar rango [fecha, fecha+1d))
+    if fecha is not None:
+        # Normalizar fecha: si vino como date, convertir a datetime al inicio del día
+        if isinstance(fecha, datetime):
+            start = datetime(fecha.year, fecha.month, fecha.day)
+        else:
+            # fecha puede ser objeto tipo date
+            start = datetime(fecha.year, fecha.month, fecha.day)
+        end = start + timedelta(days=1)
+        query = query.filter(Atencion.fecha_ingreso >= start, Atencion.fecha_ingreso < end)
+
+    return query.offset(skip).limit(limit).all()
 
 
 def get_atenciones_by_paciente(db: Session, paciente_id: str) -> List[Atencion]:

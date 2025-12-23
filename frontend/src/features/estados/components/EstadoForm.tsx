@@ -45,9 +45,9 @@ export default function EstadoForm({ onCancel, onSave, initial, isEdit = false }
             className="w-full px-3 py-1.5 border border-gray-300 rounded-lg" />
         </div>
 
-        <div className="flex justify-end gap-3 mt-4">
-          <button type="button" onClick={onCancel} className="px-4 py-1.5 rounded-lg text-white" style={{ backgroundColor: '#e63946' }}>Cancelar</button>
-          <button type="submit" className="px-5 py-1.5 rounded-lg text-white" style={{ backgroundColor: '#1938bc' }}>Guardar</button>
+        <div className="flex justify-end gap-3 mt-6">
+          <button type="button" onClick={onCancel} className="px-4 py-1.5 rounded-lg text-white cursor-pointer" style={{ backgroundColor: '#e63946' }}>Cancelar</button>
+          <button type="submit" className="px-5 py-1.5 rounded-lg text-white cursor-pointer" style={{ backgroundColor: '#1938bc' }}>Guardar</button>
         </div>
       </form>
     </div>

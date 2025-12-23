@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { useForm } from "react-hook-form";
 import { getRoles } from "../Users.api";
 
@@ -40,6 +41,8 @@ export default function UserForm({ onCancel, onSave, initial, isEdit = false }: 
   }, [initial, roles, reset]);
 
   const passwordValue = watch('password');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const onSubmit = (data: any) => {
     const payload = {
@@ -104,35 +107,45 @@ export default function UserForm({ onCancel, onSave, initial, isEdit = false }: 
         {/* Fila 2: Contraseña | Confirmar contraseña */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña{isEdit ? ' (opcional)' : ''}</label>
-          <input
-            {...register("password", {
-              validate: (val: string) => {
-                if (!val) return true;
-                return val.length >= 6 || 'Mínimo 6 caracteres';
-              },
-              ...(isEdit ? {} : { required: 'Contraseña obligatoria' }),
-            })}
-            type="password"
-            placeholder="********"
-            className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
-          />
+          <div className="relative">
+            <input
+              {...register("password", {
+                validate: (val: string) => {
+                  if (!val) return true;
+                  return val.length >= 6 || 'Mínimo 6 caracteres';
+                },
+                ...(isEdit ? {} : { required: 'Contraseña obligatoria' }),
+              })}
+              type={showPassword ? 'text' : 'password'}
+              placeholder="********"
+              className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-10 ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            <button type="button" onClick={() => setShowPassword(s => !s)} className="absolute inset-y-0 right-2 flex items-center text-gray-500 cursor-pointer">
+              {showPassword ? <FiEyeOff /> : <FiEye />}
+            </button>
+          </div>
           {errors.password && <p className="text-xs text-red-600 mt-1">{String((errors.password as any).message)}</p>}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña{isEdit ? ' (si cambia)' : ''}</label>
-          <input
-            {...register("passwordConfirm", {
-              validate: (val: string) => {
-                const pwd = passwordValue;
-                if (!pwd && !val) return true;
-                return val === pwd || 'Las contraseñas no coinciden';
-              }
-            })}
-            type="password"
-            placeholder="Repite la contraseña"
-            className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition ${errors.passwordConfirm ? 'border-red-500' : 'border-gray-300'}`}
-          />
+          <div className="relative">
+            <input
+              {...register("passwordConfirm", {
+                validate: (val: string) => {
+                  const pwd = passwordValue;
+                  if (!pwd && !val) return true;
+                  return val === pwd || 'Las contraseñas no coinciden';
+                }
+              })}
+              type={showPasswordConfirm ? 'text' : 'password'}
+              placeholder="Repite la contraseña"
+              className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition pr-10 ${errors.passwordConfirm ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            <button type="button" onClick={() => setShowPasswordConfirm(s => !s)} className="absolute inset-y-0 right-2 flex items-center text-gray-500 cursor-pointer">
+              {showPasswordConfirm ? <FiEyeOff /> : <FiEye />}
+            </button>
+          </div>
           {errors.passwordConfirm && <p className="text-xs text-red-600 mt-1">{String((errors.passwordConfirm as any).message)}</p>}
         </div>
 

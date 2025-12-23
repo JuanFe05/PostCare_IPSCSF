@@ -51,7 +51,10 @@ export default function EstadosPage() {
       <div className="mb-6 flex items-center justify-between">
         <div className="flex-shrink-0 flex items-center gap-3">
           {role === 'ADMINISTRADOR' ? (
-            <button onClick={() => setShowAdd(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2"><IoMdAddCircleOutline />Agregar estado</button>
+            <button onClick={() => setShowAdd(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer">
+              <IoMdAddCircleOutline />
+              Agregar estado
+            </button>
           ) : (
             <p className="text-sm text-gray-600">Solo administradores pueden gestionar estados.</p>
           )}
