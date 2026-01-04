@@ -11,7 +11,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/login", response_model=TokenResponse)
-@limiter.limit("5/minute")  # Max 5 login attempts per minute per IP
+@limiter.limit("5/minute")  # Máximo 5 intentos de inicio de sesión por minuto por IP
 def login(request: Request, data: LoginDto):
     db = SessionLocal()
 
