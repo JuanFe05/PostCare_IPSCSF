@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 import os
 from contextlib import asynccontextmanager
+from app.configuration.app.rate_limiter import limiter
 from app.configuration.app.cors_config import configure_cors
 from app.configuration.app.router_config import configure_routers
 from app.configuration.app.startup import run_startup_tables
