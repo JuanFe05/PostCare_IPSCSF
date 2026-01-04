@@ -1,5 +1,3 @@
-"""Application configuration package."""
-
 __all__ = [
     "config",
     "database",
