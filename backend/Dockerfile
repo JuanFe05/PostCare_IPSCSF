@@ -25,10 +25,10 @@ RUN pip install --upgrade pip && \
 COPY . .
 
 # Convertir formato de líneas Windows a Unix y dar permisos de ejecución
-RUN dos2unix /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+RUN dos2unix /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh
 
 # Exponer puerto de la app
 EXPOSE 8000
 
 # Usar entrypoint que ejecuta migraciones antes de iniciar
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
