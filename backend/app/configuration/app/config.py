@@ -6,7 +6,7 @@ try:
 except Exception:
     # Solución alternativa para versiones antiguas de Pydantic en las que BaseSettings sigue estando en Pydantic.
     from pydantic import BaseSettings
-from pydantic import Field
+from pydantic import Field, field_validator
 from dotenv import load_dotenv, find_dotenv
 
 # Cargar .env desde la raíz del repositorio (si existe) para que la configuración funcione al ejecutarse desde /backend.
@@ -30,8 +30,8 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = Field("HS256", env="JWT_ALGORITHM")
     JWT_EXPIRE_MINUTES: int = Field(300, env="JWT_EXPIRE_MINUTES")  # 5 horas
 
-    # CORS / Orígenes frontend (separados por comas)
-    CORS_ORIGINS: List[str] = Field(["http://localhost:41777"], env="CORS_ORIGINS")
+    # CORS / Orígenes frontend (separados por comas en el .env)
+    CORS_ORIGINS: str = Field("http://localhost:41777", env="CORS_ORIGINS")
 
     # Entorno de la aplicación
     APP_ENV: str = Field("development", env="APP_ENV")
@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     EXTERNAL_DB_PASSWORD: Optional[str] = Field(None, env="EXTERNAL_DB_PASSWORD")
 
     model_config = {"env_file": ".env", "extra": "ignore"}
+    
+    def get_cors_origins_list(self) -> List[str]:
+        """Parse CORS_ORIGINS string separada por comas a lista"""
+        if not self.CORS_ORIGINS:
+            return ["http://localhost:41777"]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
     def __init__(self, **data):
         super().__init__(**data)

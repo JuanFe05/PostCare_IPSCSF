@@ -1,5 +1,7 @@
 from fastapi.middleware.cors import CORSMiddleware
+import logging
 import os
+from app.configuration.app.config import settings
 
 try:
     from dotenv import load_dotenv
@@ -24,7 +26,7 @@ def configure_cors(app):
         "http://127.0.0.1:41777",
     ]
 
-    env_origins = _parse_origins(os.getenv("CORS_ORIGINS", ""))
+    env_origins = settings.get_cors_origins_list()
 
     # Combinar manteniendo el orden y sin duplicados
     origins = []
@@ -33,6 +35,9 @@ def configure_cors(app):
         if o not in seen:
             origins.append(o)
             seen.add(o)
+    # Loggear configuración para depuración (se verá en los logs del contenedor)
+    logger = logging.getLogger("postcare.cors")
+    logger.info("CORS origins configured: %s", origins)
 
     app.add_middleware(
         CORSMiddleware,
