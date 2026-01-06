@@ -53,7 +53,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
     observacion?: string;
   };
 
-  const { register, handleSubmit: rhfHandleSubmit, setValue, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit: rhfHandleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
     defaultValues: {
       idTipoDocumento: 0,
       idPaciente: initialData?.id_paciente || '',
@@ -70,6 +70,8 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
       observacion: initialData?.observacion || ''
     }
   });
+
+  const observacion = watch('observacion') || '';
 
   useEffect(() => {
     console.log('Iniciando carga de catálogos...');
@@ -558,9 +560,13 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
             <textarea
               {...register('observacion')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition text-sm"
-              rows={3}
+              rows={6}
               placeholder="Observaciones adicionales..."
+              maxLength={255}
             />
+            <p className="text-xs text-gray-500 mt-1 text-right">
+              {observacion.length}/255 caracteres
+            </p>
           </div>
 
           {/* Botones */}

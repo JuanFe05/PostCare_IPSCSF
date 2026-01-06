@@ -94,6 +94,7 @@ class AtencionListResponseDto(BaseModel):
     """DTO para lista de atenciones"""
     id_atencion: str
     fecha_atencion: datetime
+    observacion: Optional[str] = None
     
     # Datos del paciente
     id_paciente: str

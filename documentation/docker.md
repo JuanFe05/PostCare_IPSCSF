@@ -106,6 +106,6 @@ docker-compose logs --tail=200 mysql
 
 ### 10. Probar en navegador
 ```
-Abrir http://192.0.0.16:41777
+Abrir http://190.0.0.0:41777
 Forzar recarga sin caché (Ctrl+Shift+R) o DevTools → Network → Disable cache
 ```

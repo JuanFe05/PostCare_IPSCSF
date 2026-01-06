@@ -129,6 +129,13 @@ export default function AtencionRow({
         <div className="truncate">{formatServicios(atencion.servicios)}</div>
       </td>
 
+      {/** Observación */}
+      <td className="p-3 text-center" style={{ width: '320px', maxWidth: '320px', minWidth: '320px' }}>
+        <div className="truncate" style={{ maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }} title={atencion.observacion || '-'}>
+          {atencion.observacion || '-'}
+        </div>
+      </td>
+
       {/** Columnas de auditoría solo para ADMINISTRADOR */}
       {isAdmin && (
         <>

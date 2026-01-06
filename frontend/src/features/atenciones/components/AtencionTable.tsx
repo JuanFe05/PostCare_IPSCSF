@@ -91,6 +91,7 @@ export default function AtencionTable({
     { Header: 'Teléfono 2', accessor: 'telefono_dos' },
     { Header: 'Email', accessor: 'email' },
     { Header: 'Servicios', accessor: 'servicios' },
+    { Header: 'Observación', accessor: 'observacion' },
   ];
 
   // Verificar si el usuario es ADMINISTRADOR
@@ -110,7 +111,7 @@ export default function AtencionTable({
   ) : (
     <div className="bg-white rounded-lg shadow overflow-hidden w-full">
       <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
-        <table className="text-xs divide-y border-collapse" style={{ minWidth: '2400px' }}>
+        <table className="text-xs divide-y border-collapse" style={{ minWidth: '2800px' }}>
         {/* Header */}
         <thead className="bg-blue-100 text-blue-900 select-none sticky top-0 z-10">
           <tr>
@@ -122,13 +123,14 @@ export default function AtencionTable({
                   className={`p-3 font-semibold text-center whitespace-nowrap ${
                     (col.accessor === 'nombre_estado_atencion' || col.accessor === 'nombre_seguimiento_atencion') ? 'w-40' : (col.accessor === 'id_atencion' || col.accessor === 'id_paciente' || col.accessor === 'fecha_atencion') ? 'w-32' : (col.accessor === 'telefono_uno' || col.accessor === 'telefono_dos' ? 'w-32' : (col.accessor === 'nombre_paciente' || col.accessor === 'nombre_empresa' ? 'w-96' : (col.accessor === 'email' ? 'w-68' : (col.accessor === 'servicios' ? 'w-96' : (col.accessor === 'nombre_usuario_modificacion' ? 'w-64' : (col.accessor === 'fecha_modificacion' ? 'w-40' : ''))))))
                   } ${
-                    col.accessor === 'servicios' || col.accessor === 'id_atencion' ? '' : 'cursor-pointer'
-                  }`} 
-                  onClick={() => col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && toggleSort(col.accessor)}
+                    col.accessor === 'servicios' || col.accessor === 'id_atencion' || col.accessor === 'observacion' ? '' : 'cursor-pointer'
+                  }`}
+                  style={col.accessor === 'observacion' ? { width: '320px', maxWidth: '320px', minWidth: '320px' } : undefined}
+                  onClick={() => col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && col.accessor !== 'observacion' && toggleSort(col.accessor)}
                 >
                   <div className="flex items-center justify-center gap-1">
                     <span>{col.Header}</span>
-                    {col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && (
+                    {col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && col.accessor !== 'observacion' && (
                       <span className="inline-flex flex-col ml-1 text-[10px] leading-none">
                         <span className={sortKey === col.accessor && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
                         <span className={sortKey === col.accessor && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
@@ -145,7 +147,7 @@ export default function AtencionTable({
         <tbody className="bg-white">
           {paginatedData.length === 0 ? (
             <tr>
-              <td colSpan={isAdmin ? 14 : 12} className="p-6 text-center text-gray-500">No se encontraron atenciones.</td>
+              <td colSpan={isAdmin ? 15 : 13} className="p-6 text-center text-gray-500">No se encontraron atenciones.</td>
             </tr>
           ) : (
             paginatedData.map((atencion: Atencion, ridx: number) => {
