@@ -102,6 +102,7 @@ class AtencionService:
         return AtencionListResponseDto(
             id_atencion=atencion.id,
             fecha_atencion=atencion.fecha_ingreso,
+            observacion=atencion.observacion,
             id_paciente=atencion.id_paciente,
             nombre_paciente=nombre_paciente,
             telefono_uno=atencion.paciente.telefono_uno,
