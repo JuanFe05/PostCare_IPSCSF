@@ -21,7 +21,7 @@ cd d:\Apps\PostCare_IPSCSF
 docker-compose down --volumes --remove-orphans
 ```
 
-🧹 Opcional — eliminar imágenes generadas por `docker-compose`
+🧹 Opcional - eliminar imágenes generadas por `docker-compose`
 
 ```powershell
 docker-compose down --rmi all
@@ -47,7 +47,7 @@ docker-compose logs -f backend
 
 --------------------------------------------------
 
-## Paso a paso recomendado (local → servidor)
+## Paso a paso recomendado (local - servidor)
 
 Sigue este flujo cuando necesites asegurarte de limpiar artefactos antiguos y desplegar una versión limpia.
 
@@ -81,7 +81,7 @@ docker image rm postcare_ipscsf-backend:latest -f
 docker image rm mysql:8.0 -f
 ```
 
-⚠️ Nota: si `docker image rm mysql:8.0` falla porque la imagen está en uso, asegúrate de haber detenido y eliminado el contenedor (`docker-compose down`) y vuelve a intentarlo.
+⚠️ **Nota:** si `docker image rm mysql:8.0` falla porque la imagen está en uso, asegúrate de haber detenido y eliminado el contenedor (`docker-compose down`) y vuelve a intentarlo.
 
 4. 🧼 Limpiar redes y builder cache (opcional)
 
@@ -149,5 +149,3 @@ Forzar recarga sin caché (Ctrl+Shift+R) o DevTools → Network → Disable cach
 - Mantén una carpeta en el servidor para imágenes transferidas, por ejemplo `C:\Images-Docker\Postcare_IPSCSF`.
 - Si trabajas en Windows, usa PowerShell con permisos elevados cuando gestiones imágenes y redes.
 - Para deploys repetibles en servidores, considera usar tags (por ejemplo `postcare_ipscsf-backend:v1.2.3`) en lugar de `latest`.
-
-¿Quieres que también convierta esto en un checklist imprimible o agregue un script PowerShell para automatizar pasos comunes? 
