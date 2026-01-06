@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 
 interface ProtectedRouteProps {
   children: JSX.Element;
-  allowedRoles?: string[]; // 👈 opcional: lista de roles permitidos
+  allowedRoles?: string[];
 }
 
 const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) => {

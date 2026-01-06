@@ -1,16 +1,18 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from app.presentation.dto.auth_dto import LoginDto, TokenResponse
 from app.configuration.security.password_utils import verify_password
 from app.configuration.security.jwt_utils import create_token
 from app.persistence.repository.user_repository import UserRepository
 from app.persistence.repository.user_role_repository import UserRoleRepository
 from app.configuration.app.database import SessionLocal
+from app.configuration.app.rate_limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(data: LoginDto):
+@limiter.limit("5/minute")  # Máximo 5 intentos de inicio de sesión por minuto por IP
+def login(request: Request, data: LoginDto):
     db = SessionLocal()
 
     user_repo = UserRepository()

@@ -1,14 +1,7 @@
-"""seed tipos empresas
-
-Revision ID: 0004_seed_tipos_empresas
-Revises: 0003_add_descripcion_servicios
-Create Date: 2025-12-02
-
-"""
 from alembic import op
 import sqlalchemy as sa
 
-# revision identifiers, used by Alembic.
+# Identificadores de revisión, utilizados por Alembic.
 revision = '0002_seed_tipos_empresas'
 down_revision = '0001_initial'
 branch_labels = None

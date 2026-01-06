@@ -15,6 +15,12 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - postcare_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   backend:
     build:
@@ -33,6 +39,10 @@ services:
       RUN_STARTUP_TABLES: "true"
       ADMIN_USERNAME: ${ADMIN_USERNAME}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES}
+      CORS_ORIGINS: ${CORS_ORIGINS}
       # External Database (SQL Server)
       EXTERNAL_DB_HOST: ${EXTERNAL_DB_HOST}
       EXTERNAL_DB_PORT: ${EXTERNAL_DB_PORT}
@@ -40,7 +50,8 @@ services:
       EXTERNAL_DB_USER: ${EXTERNAL_DB_USER}
       EXTERNAL_DB_PASSWORD: ${EXTERNAL_DB_PASSWORD}
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - postcare_net
 
@@ -48,10 +59,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL}
     container_name: postcare_frontend
     restart: unless-stopped
     ports:
       - "41777:80"
+    environment:
+      VITE_BACKEND_URL: ${FRONTEND_BACKEND_URL}
     depends_on:
       - backend
     networks:

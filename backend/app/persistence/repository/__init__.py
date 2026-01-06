@@ -1,5 +1,3 @@
-"""Repository package."""
-
 __all__ = [
     "user_repository",
     "role_repository",
