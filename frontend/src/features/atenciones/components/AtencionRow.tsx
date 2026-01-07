@@ -119,6 +119,10 @@ export default function AtencionRow({
         <div className="truncate">{atencion.nombre_empresa}</div>
       </td>
 
+      <td className="p-3 text-center w-64">
+        <div className="truncate">{atencion.tipo_empresa_nombre || '-'}</div>
+      </td>
+
       <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.telefono_uno || '-'}</td>
       <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.telefono_dos || '-'}</td>
       <td className="p-3 text-center w-68">

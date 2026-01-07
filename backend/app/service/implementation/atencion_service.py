@@ -64,6 +64,7 @@ class AtencionService:
             # Datos de la empresa
             id_empresa=atencion.empresa.id,
             nombre_empresa=atencion.empresa.nombre,
+            tipo_empresa_nombre=(atencion.empresa.tipo_empresa.nombre if getattr(atencion.empresa, 'tipo_empresa', None) else getattr(atencion.empresa, 'tipo_empresa_nombre', None)),
             
             # Datos del estado
             id_estado_atencion=atencion.estado_atencion.id,
@@ -110,6 +111,7 @@ class AtencionService:
             email=atencion.paciente.email,
             id_empresa=atencion.empresa.id,
             nombre_empresa=atencion.empresa.nombre,
+            tipo_empresa_nombre=(atencion.empresa.tipo_empresa.nombre if getattr(atencion.empresa, 'tipo_empresa', None) else getattr(atencion.empresa, 'tipo_empresa_nombre', None)),
             id_estado_atencion=atencion.estado_atencion.id,
             nombre_estado_atencion=atencion.estado_atencion.nombre,
             id_seguimiento_atencion=atencion.seguimiento_atencion.id if atencion.seguimiento_atencion else None,

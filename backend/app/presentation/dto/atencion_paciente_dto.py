@@ -70,6 +70,7 @@ class AtencionDetalleResponseDto(BaseModel):
     # Datos de la empresa
     id_empresa: int
     nombre_empresa: str
+    tipo_empresa_nombre: Optional[str] = None
     
     # Datos del estado
     id_estado_atencion: int
@@ -106,6 +107,7 @@ class AtencionListResponseDto(BaseModel):
     # Datos de la empresa
     id_empresa: int
     nombre_empresa: str
+    tipo_empresa_nombre: Optional[str] = None
     
     # Datos del estado
     id_estado_atencion: int
