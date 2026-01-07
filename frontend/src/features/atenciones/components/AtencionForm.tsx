@@ -54,6 +54,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
   };
 
   const { register, handleSubmit: rhfHandleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
+    mode: 'onChange',
     defaultValues: {
       idTipoDocumento: 0,
       idPaciente: initialData?.id_paciente || '',
