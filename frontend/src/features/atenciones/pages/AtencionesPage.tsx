@@ -4,7 +4,7 @@ import { FaSyncAlt } from 'react-icons/fa';
 import { useAuth } from "../../../hooks/useAuth";
 import { useWebSocket } from "../../../hooks/useWebSocket";
 import type { Atencion, NewAtencionConPaciente, UpdateAtencion } from "../types";
-import { getAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock } from "../Atencion.api";
+import { getAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock, getEstadosAtencion, getSeguimientosAtencion } from "../Atencion.api";
 import { syncPacientesRangoFechas } from "../../../api/Sync.api";
 import Swal from "sweetalert2";
 import AtencionForm from "../components/AtencionForm";
@@ -25,6 +25,11 @@ export default function AtencionesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [estados, setEstados] = useState<any[]>([]);
+  const [seguimientos, setSeguimientos] = useState<any[]>([]);
+  const [selectedEstadoId, setSelectedEstadoId] = useState<number | null>(null);
+  const [selectedSeguimientoId, setSelectedSeguimientoId] = useState<number | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [heldLockId, setHeldLockId] = useState<string | null>(null);
 
   const { auth } = useAuth();
@@ -46,6 +51,24 @@ export default function AtencionesPage() {
 
   useEffect(() => {
     loadAtenciones();
+  }, []);
+
+  // cargar listas para filtros
+  useEffect(() => {
+    (async () => {
+      try {
+        const e = await getEstadosAtencion();
+        setEstados(e);
+      } catch (err) {
+        console.error('Error cargando estados:', err);
+      }
+      try {
+        const s = await getSeguimientosAtencion();
+        setSeguimientos(s);
+      } catch (err) {
+        console.error('Error cargando seguimientos:', err);
+      }
+    })();
   }, []);
 
   // recargar cuando cambie la fecha seleccionada
@@ -258,12 +281,61 @@ export default function AtencionesPage() {
               onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
               onClear={() => setSearchTerm('')} 
               placeholder="Buscar..." 
+              title="Buscar por Id Atención, Id Paciente, Paciente o Empresa."
             />
+            <div className="relative">
+              <select
+                value={selectedFilter ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setSelectedFilter(v || null);
+                  if (!v) {
+                    setSelectedEstadoId(null);
+                    setSelectedSeguimientoId(null);
+                  } else {
+                    const [type, id] = v.split(':');
+                    if (type === 'estado') {
+                      setSelectedEstadoId(Number(id));
+                      setSelectedSeguimientoId(null);
+                    } else if (type === 'seguimiento') {
+                      setSelectedSeguimientoId(Number(id));
+                      setSelectedEstadoId(null);
+                    } else {
+                      setSelectedEstadoId(null);
+                      setSelectedSeguimientoId(null);
+                    }
+                  }
+                }}
+                className="h-10 px-3 pr-10 border border-gray-300 rounded-md bg-white text-sm shadow-sm hover:shadow-md transition-shadow duration-150 cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[260px]"
+                title="Filtrar por estado o seguimiento"
+              >
+              <option value="">Estado / Seguimiento</option>
+              {estados.length > 0 && (
+                <optgroup label="Estados">
+                  {estados.map((st: any) => (
+                    <option key={`estado-${st.id}`} value={`estado:${st.id}`}>{st.nombre}</option>
+                  ))}
+                </optgroup>
+              )}
+              {seguimientos.length > 0 && (
+                <optgroup label="Seguimientos">
+                  {seguimientos.map((sg: any) => (
+                    <option key={`seguimiento-${sg.id}`} value={`seguimiento:${sg.id}`}>{sg.nombre}</option>
+                  ))}
+                </optgroup>
+              )}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center"> 
+                <svg className="w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M10 12a1 1 0 01-.707-.293l-3-3a1 1 0 011.414-1.414L10 9.586l2.293-2.293a1 1 0 011.414 1.414l-3 3A1 1 0 0110 12z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
             <input
               type="date"
               value={selectedDate ?? ''}
               onChange={(e) => setSelectedDate(e.target.value ? e.target.value : null)}
-              className="px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="h-10 px-3 border border-gray-300 rounded-md bg-white text-sm shadow-sm hover:shadow-md transition-shadow duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               title="Filtrar por fecha"
             />
             {selectedDate && (
@@ -349,6 +421,8 @@ export default function AtencionesPage() {
         atenciones={atenciones}
         loading={loading}
         searchTerm={searchTerm}
+        selectedEstadoId={selectedEstadoId}
+        selectedSeguimientoId={selectedSeguimientoId}
         auth={auth}
         attemptEdit={attemptEdit}
         handleEliminar={handleEliminar}
