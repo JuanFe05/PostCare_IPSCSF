@@ -379,8 +379,17 @@ export default function AtencionesPage() {
                 await Swal.fire({ icon: 'success', title: 'Atención creada', text: `Atención creada correctamente.` });
               } catch (err: any) {
                 console.error("Error creando atención:", err);
-                const errorMsg = err.response?.data?.detail || 'No se pudo crear la atención.';
-                await Swal.fire({ icon: 'error', title: 'Error', text: errorMsg });
+                const detail = err.response?.data?.detail || err.message || '';
+                let userMsg = 'No se pudo crear la atención.';
+                // Detect common duplicate/constraint messages
+                if (err?.response?.status === 409) {
+                  userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
+                } else if (typeof detail === 'string' && /duplicate|already exists|unique|integrityerror|duplicate entry/i.test(detail)) {
+                  userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
+                } else if (detail) {
+                  userMsg = detail;
+                }
+                await Swal.fire({ icon: 'error', title: 'Error', text: userMsg });
               } finally { setLoading(false); }
             }}
             userId={auth?.user?.id}
