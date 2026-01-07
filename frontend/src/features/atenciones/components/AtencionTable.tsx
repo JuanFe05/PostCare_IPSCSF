@@ -32,10 +32,11 @@ export default function AtencionTable({
       if (!searchTerm) return true;
       const q = searchTerm.trim().toLowerCase();
       const idMatch = String(a.id_atencion ?? '').toLowerCase().includes(q);
+      const idPacienteMatch = String(a.id_paciente ?? '').toLowerCase().includes(q);
       const pacienteMatch = String(a.nombre_paciente ?? '').toLowerCase().includes(q);
       const empresaMatch = String(a.nombre_empresa ?? '').toLowerCase().includes(q);
       const estadoMatch = String(a.nombre_estado_atencion ?? '').toLowerCase().includes(q);
-      return idMatch || pacienteMatch || empresaMatch || estadoMatch;
+      return idMatch || idPacienteMatch || pacienteMatch || empresaMatch || estadoMatch;
     });
 
     // Ordenar
