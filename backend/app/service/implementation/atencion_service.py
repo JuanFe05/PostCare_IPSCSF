@@ -199,6 +199,10 @@ class AtencionService:
             
             # 2. Si no existe, crear el paciente
             if not paciente_existente:
+                # Validar que se haya seleccionado un tipo de documento válido
+                if not getattr(data, 'id_tipo_documento', None):
+                    raise ValueError('Debe seleccionar un Tipo de Documento para el paciente')
+
                 nuevo_paciente = Paciente(
                     id=data.id_paciente,
                     id_tipo_documento=data.id_tipo_documento,
@@ -216,13 +220,15 @@ class AtencionService:
             atencion_id = data.id_atencion
             
             # 4. Crear la atención
+            now = datetime.now()
             nueva_atencion = Atencion(
                 id=atencion_id,
                 id_paciente=data.id_paciente,
                 id_empresa=data.id_empresa,
                 id_estado_atencion=data.id_estado_atencion,
                 id_seguimiento_atencion=data.id_seguimiento_atencion,
-                fecha_ingreso=data.fecha_ingreso or datetime.now(),
+                fecha_ingreso=data.fecha_ingreso or now,
+                fecha_modificacion=now,
                 id_usuario=data.id_usuario,
                 observacion=data.observacion or ""
             )
@@ -256,13 +262,15 @@ class AtencionService:
             atencion_id = f"AT{datetime.now().strftime('%Y%m%d%H%M%S')}"
         
         # Crear entidad de atención
+        now = datetime.now()
         nueva_atencion = Atencion(
             id=atencion_id,
             id_paciente=atencion_data.id_paciente,
             id_empresa=atencion_data.id_empresa,
             id_estado_atencion=atencion_data.id_estado_atencion,
             id_seguimiento_atencion=atencion_data.id_seguimiento_atencion,
-            fecha_ingreso=atencion_data.fecha_ingreso or datetime.now(),
+            fecha_ingreso=atencion_data.fecha_ingreso or now,
+            fecha_modificacion=now,
             id_usuario=atencion_data.id_usuario,
             observacion=atencion_data.observacion or ""
         )

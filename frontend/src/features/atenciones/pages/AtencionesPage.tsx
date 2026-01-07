@@ -370,7 +370,11 @@ export default function AtencionesPage() {
               setLoading(true);
               try {
                 const nueva = await createAtencionConPaciente(data);
-                setAtenciones((prev: Atencion[]) => [nueva, ...prev]);
+                setAtenciones((prev: Atencion[]) => {
+                  const exists = prev.some(a => a.id_atencion === nueva.id_atencion);
+                  if (exists) return prev;
+                  return [nueva, ...prev];
+                });
                 setShowAddAtencion(false);
                 await Swal.fire({ icon: 'success', title: 'Atención creada', text: `Atención creada correctamente.` });
               } catch (err: any) {
