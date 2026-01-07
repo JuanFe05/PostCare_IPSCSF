@@ -99,6 +99,7 @@ export default function AtencionTable({
     { Header: 'ID Paciente', accessor: 'id_paciente' },
     { Header: 'Paciente', accessor: 'nombre_paciente' },
     { Header: 'Empresa', accessor: 'nombre_empresa' },
+    { Header: 'Tipo Empresa', accessor: 'tipo_empresa_nombre' },
     { Header: 'Teléfono 1', accessor: 'telefono_uno' },
     { Header: 'Teléfono 2', accessor: 'telefono_dos' },
     { Header: 'Email', accessor: 'email' },
@@ -159,7 +160,7 @@ export default function AtencionTable({
         <tbody className="bg-white">
           {paginatedData.length === 0 ? (
             <tr>
-              <td colSpan={isAdmin ? 15 : 13} className="p-6 text-center text-gray-500">No se encontraron atenciones.</td>
+              <td colSpan={1 + allColumns.length} className="p-6 text-center text-gray-500">No se encontraron atenciones.</td>
             </tr>
           ) : (
             paginatedData.map((atencion: Atencion, ridx: number) => {
