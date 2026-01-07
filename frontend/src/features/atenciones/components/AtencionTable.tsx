@@ -24,14 +24,52 @@ export default function AtencionTable({
   attemptEdit,
   handleEliminar 
 }: AtencionTableProps) {
+  // ==================== Estado ====================
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 10;
 
+  // ==================== Verificación de Roles ====================
+  const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+  const isAdmin = role === 'ADMINISTRADOR';
+  const canViewTipoEmpresa = isAdmin || role === 'ASESOR' || role === 'FACTURADOR';
+
+  // ==================== Definición de Columnas ====================
+  const columns = [
+    { Header: 'Estado', accessor: 'nombre_estado_atencion' },
+    { Header: 'Seguimiento', accessor: 'nombre_seguimiento_atencion' },
+    { Header: 'ID Atención', accessor: 'id_atencion' },
+    { Header: 'F. Atención', accessor: 'fecha_atencion' },
+    { Header: 'ID Paciente', accessor: 'id_paciente' },
+    { Header: 'Paciente', accessor: 'nombre_paciente' },
+    { Header: 'Empresa', accessor: 'nombre_empresa' },
+    { Header: 'Tipo Empresa', accessor: 'tipo_empresa_nombre' },
+    { Header: 'Teléfono 1', accessor: 'telefono_uno' },
+    { Header: 'Teléfono 2', accessor: 'telefono_dos' },
+    { Header: 'Email', accessor: 'email' },
+    { Header: 'Servicios', accessor: 'servicios' },
+    { Header: 'Observación', accessor: 'observacion' },
+  ];
+
+  // Columnas adicionales solo para ADMINISTRADOR
+  const adminColumns = isAdmin ? [
+    { Header: 'Usuario Modificación', accessor: 'nombre_usuario_modificacion' },
+    { Header: 'Fecha Modificación', accessor: 'fecha_modificacion' },
+  ] : [];
+
+  const allColumns = [...columns, ...adminColumns];
+
+  // Filtrar columnas visibles según permisos
+  const visibleColumns = allColumns.filter((col: any) => {
+    if (col.accessor === 'tipo_empresa_nombre' && !canViewTipoEmpresa) return false;
+    return true;
+  });
+
+  // ==================== Valores Derivados (Memoized) ====================
   // Calcular lista filtrada + ordenada
   const displayed = useMemo(() => {
-    // Filtrar
+    // Filtrar por búsqueda
     const filtered = atenciones.filter((a: Atencion) => {
       if (!searchTerm) return true;
       const q = searchTerm.trim().toLowerCase();
@@ -43,7 +81,7 @@ export default function AtencionTable({
       return idMatch || idPacienteMatch || pacienteMatch || empresaMatch || estadoMatch;
     });
 
-    // Aplicar filtros por estado/seguimiento si se proporcionan
+    // Aplicar filtros por estado/seguimiento
     const byFilters = filtered.filter((a: Atencion) => {
       if (selectedEstadoId && Number(a.id_estado_atencion) !== Number(selectedEstadoId)) return false;
       if (selectedSeguimientoId && Number(a.id_seguimiento_atencion ?? -1) !== Number(selectedSeguimientoId)) return false;
@@ -66,18 +104,20 @@ export default function AtencionTable({
     return sorted;
   }, [atenciones, searchTerm, sortKey, sortDir, selectedEstadoId, selectedSeguimientoId]);
 
-  // Paginación
+  // Calcular datos paginados
   const pageCount = Math.ceil(displayed.length / pageSize);
   const paginatedData = useMemo(() => {
     const start = pageIndex * pageSize;
     return displayed.slice(start, start + pageSize);
   }, [displayed, pageIndex, pageSize]);
 
+  // ==================== Efectos ====================
   // Reset page cuando cambia el filtro
   useEffect(() => {
     setPageIndex(0);
   }, [searchTerm, selectedEstadoId, selectedSeguimientoId]);
 
+  // ==================== Handlers ====================
   const toggleSort = (key: string) => {
     if (sortKey !== key) {
       setSortKey(key);
@@ -91,34 +131,6 @@ export default function AtencionTable({
     } else setSortDir('asc');
   };
 
-  const columns = [
-    { Header: 'Estado', accessor: 'nombre_estado_atencion' },
-    { Header: 'Seguimiento', accessor: 'nombre_seguimiento_atencion' },
-    { Header: 'ID Atención', accessor: 'id_atencion' },
-    { Header: 'F. Atención', accessor: 'fecha_atencion' },
-    { Header: 'ID Paciente', accessor: 'id_paciente' },
-    { Header: 'Paciente', accessor: 'nombre_paciente' },
-    { Header: 'Empresa', accessor: 'nombre_empresa' },
-    { Header: 'Tipo Empresa', accessor: 'tipo_empresa_nombre' },
-    { Header: 'Teléfono 1', accessor: 'telefono_uno' },
-    { Header: 'Teléfono 2', accessor: 'telefono_dos' },
-    { Header: 'Email', accessor: 'email' },
-    { Header: 'Servicios', accessor: 'servicios' },
-    { Header: 'Observación', accessor: 'observacion' },
-  ];
-
-  // Verificar si el usuario es ADMINISTRADOR
-  const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
-  const isAdmin = role === 'ADMINISTRADOR';
-
-  // Columnas adicionales solo para ADMINISTRADOR
-  const adminColumns = isAdmin ? [
-    { Header: 'Usuario Modificación', accessor: 'nombre_usuario_modificacion' },
-    { Header: 'Fecha Modificación', accessor: 'fecha_modificacion' },
-  ] : [];
-
-  const allColumns = [...columns, ...adminColumns];
-
   return loading ? (
     <div className="text-center py-8">Cargando atenciones...</div>
   ) : (
@@ -129,7 +141,7 @@ export default function AtencionTable({
         <thead className="bg-blue-100 text-blue-900 select-none sticky top-0 z-10">
           <tr>
             <th className="p-3 font-semibold w-30 text-center whitespace-nowrap">Acciones</th>
-            {allColumns.map((col: any) => {
+            {visibleColumns.map((col: any) => {
               return (
                 <th 
                   key={col.accessor} 
@@ -160,7 +172,7 @@ export default function AtencionTable({
         <tbody className="bg-white">
           {paginatedData.length === 0 ? (
             <tr>
-              <td colSpan={1 + allColumns.length} className="p-6 text-center text-gray-500">No se encontraron atenciones.</td>
+              <td colSpan={1 + visibleColumns.length} className="p-6 text-center text-gray-500">No se encontraron atenciones.</td>
             </tr>
           ) : (
             paginatedData.map((atencion: Atencion, ridx: number) => {
