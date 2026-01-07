@@ -7,6 +7,8 @@ interface AtencionTableProps {
   atenciones: Atencion[];
   loading: boolean;
   searchTerm: string;
+  selectedEstadoId?: number | null;
+  selectedSeguimientoId?: number | null;
   auth: any;
   attemptEdit: (atencion: Atencion) => void;
   handleEliminar: (id: string, nombrePaciente: string) => Promise<void>;
@@ -16,6 +18,8 @@ export default function AtencionTable({
   atenciones, 
   loading, 
   searchTerm,
+  selectedEstadoId,
+  selectedSeguimientoId,
   auth,
   attemptEdit,
   handleEliminar 
@@ -39,9 +43,16 @@ export default function AtencionTable({
       return idMatch || idPacienteMatch || pacienteMatch || empresaMatch || estadoMatch;
     });
 
+    // Aplicar filtros por estado/seguimiento si se proporcionan
+    const byFilters = filtered.filter((a: Atencion) => {
+      if (selectedEstadoId && Number(a.id_estado_atencion) !== Number(selectedEstadoId)) return false;
+      if (selectedSeguimientoId && Number(a.id_seguimiento_atencion ?? -1) !== Number(selectedSeguimientoId)) return false;
+      return true;
+    });
+
     // Ordenar
-    if (!sortKey || !sortDir) return filtered;
-    const sorted = [...filtered].sort((a: any, b: any) => {
+    if (!sortKey || !sortDir) return byFilters;
+    const sorted = [...byFilters].sort((a: any, b: any) => {
       const va = (a as any)[sortKey];
       const vb = (b as any)[sortKey];
       if (va == null && vb == null) return 0;
@@ -53,7 +64,7 @@ export default function AtencionTable({
       return sortDir === 'asc' ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
     return sorted;
-  }, [atenciones, searchTerm, sortKey, sortDir]);
+  }, [atenciones, searchTerm, sortKey, sortDir, selectedEstadoId, selectedSeguimientoId]);
 
   // Paginación
   const pageCount = Math.ceil(displayed.length / pageSize);
@@ -65,7 +76,7 @@ export default function AtencionTable({
   // Reset page cuando cambia el filtro
   useEffect(() => {
     setPageIndex(0);
-  }, [searchTerm]);
+  }, [searchTerm, selectedEstadoId, selectedSeguimientoId]);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) {
