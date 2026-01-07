@@ -15,10 +15,13 @@ export default function AtencionRow({
   attemptEdit,
   handleEliminar,
 }: AtencionRowProps) {
+  // ==================== Verificación de Roles ====================
   const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
   const isAdmin = role === 'ADMINISTRADOR';
+  const canViewTipoEmpresa = isAdmin || role === 'ASESOR' || role === 'FACTURADOR';
   const canEdit = isAdmin || role === 'ASESOR' || role === 'FACTURADOR';
 
+  // ==================== Funciones de Formato ====================
   // Formatear fecha
   const formatFecha = (fecha: string) => {
     try {
@@ -119,9 +122,11 @@ export default function AtencionRow({
         <div className="truncate">{atencion.nombre_empresa}</div>
       </td>
 
-      <td className="p-3 text-center w-64">
-        <div className="truncate">{atencion.tipo_empresa_nombre || '-'}</div>
-      </td>
+      {canViewTipoEmpresa && (
+        <td className="p-3 text-center w-64">
+          <div className="truncate">{atencion.tipo_empresa_nombre || '-'}</div>
+        </td>
+      )}
 
       <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.telefono_uno || '-'}</td>
       <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.telefono_dos || '-'}</td>
