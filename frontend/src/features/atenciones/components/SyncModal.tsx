@@ -174,7 +174,7 @@ export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
             <button
               type="submit"
               disabled={loading || !startDate || !endDate}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none cursor-pointer flex items-center justify-center gap-2 shadow-lg"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
             >
               {loading ? (
                 <>
