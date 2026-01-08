@@ -25,8 +25,8 @@ export default function AtencionTable({
   handleEliminar 
 }: AtencionTableProps) {
   // ==================== Estado ====================
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
+  const [sortKey, setSortKey] = useState<string | null>('fecha_atencion');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>('desc');
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 10;
 
@@ -89,7 +89,15 @@ export default function AtencionTable({
     });
 
     // Ordenar
-    if (!sortKey || !sortDir) return byFilters;
+    if (!sortKey || !sortDir) {
+      // Orden por defecto: fecha_atencion descendente
+      const sorted = [...byFilters].sort((a: any, b: any) => {
+        const dateA = new Date(a.fecha_atencion);
+        const dateB = new Date(b.fecha_atencion);
+        return dateB.getTime() - dateA.getTime();
+      });
+      return sorted;
+    }
     const sorted = [...byFilters].sort((a: any, b: any) => {
       const va = (a as any)[sortKey];
       const vb = (b as any)[sortKey];

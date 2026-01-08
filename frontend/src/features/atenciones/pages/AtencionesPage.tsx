@@ -13,7 +13,6 @@ import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
 import AtencionTable from '../components/AtencionTable';
 import Search from "../../../components/search/Search";
 import { IoMdAddCircleOutline } from "react-icons/io";
-import { FiX } from 'react-icons/fi';
 import { prepareAtencionesPorServicio } from "../utils";
 
 export default function AtencionesPage() {
@@ -338,16 +337,6 @@ export default function AtencionesPage() {
               className="h-10 px-3 border border-gray-300 rounded-md bg-white text-sm shadow-sm hover:shadow-md transition-shadow duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               title="Filtrar por fecha"
             />
-            {selectedDate && (
-              <button
-                onClick={() => setSelectedDate(null)}
-                className="h-10 px-3 rounded-md bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center cursor-pointer ml-2"
-                title="Limpiar fecha"
-                aria-label="Limpiar fecha"
-              >
-                <FiX className="w-4 h-4" />
-              </button>
-            )}
           </div>
         </div>
       </div>
