@@ -9,7 +9,7 @@ ENV VITE_BACKEND_URL=${VITE_BACKEND_URL}
 
 COPY package.json package-lock.json ./
 # Use --unsafe-perm and --legacy-peer-deps so install scripts (esbuild) can run reliably inside Docker
-RUN npm ci --unsafe-perm --legacy-peer-deps
+RUN npm install --unsafe-perm --legacy-peer-deps
 
 COPY . .
 RUN npm run build
