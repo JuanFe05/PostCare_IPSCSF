@@ -25,8 +25,15 @@ def get_atencion_with_relations(db: Session, atencion_id: str) -> Atencion | Non
         .first()
 
 
-def get_all_atenciones(db: Session, skip: int = 0, limit: int = 100, fecha: datetime | None = None) -> List[Atencion]:
-    """Obtiene todas las atenciones con paginación. Si `fecha` se provee (date/datetime), filtra por ese día."""
+def get_all_atenciones(
+    db: Session, 
+    skip: int = 0, 
+    limit: int = 100, 
+    fecha: datetime | None = None,
+    fecha_inicio: datetime | None = None,
+    fecha_fin: datetime | None = None
+) -> List[Atencion]:
+    """Obtiene todas las atenciones con paginación. Si `fecha` se provee, filtra por ese día. Si fecha_inicio y fecha_fin se proveen, filtra por rango."""
     query = db.query(Atencion)\
         .options(
             joinedload(Atencion.paciente),
@@ -37,16 +44,28 @@ def get_all_atenciones(db: Session, skip: int = 0, limit: int = 100, fecha: date
             joinedload(Atencion.servicios_rel).joinedload(AtencionServicio.servicio)
         )\
     
-    # Aplicar filtro por fecha si fue proporcionada (comparar rango [fecha, fecha+1d))
+    # Aplicar filtro por fecha específica si fue proporcionada
     if fecha is not None:
-        # Normalizar fecha: si vino como date, convertir a datetime al inicio del día
         if isinstance(fecha, datetime):
             start = datetime(fecha.year, fecha.month, fecha.day)
         else:
-            # fecha puede ser objeto tipo date
             start = datetime(fecha.year, fecha.month, fecha.day)
         end = start + timedelta(days=1)
         query = query.filter(Atencion.fecha_ingreso >= start, Atencion.fecha_ingreso < end)
+    
+    # Aplicar filtro por rango de fechas si fue proporcionado
+    elif fecha_inicio is not None and fecha_fin is not None:
+        if isinstance(fecha_inicio, datetime):
+            start = datetime(fecha_inicio.year, fecha_inicio.month, fecha_inicio.day)
+        else:
+            start = datetime(fecha_inicio.year, fecha_inicio.month, fecha_inicio.day)
+        
+        if isinstance(fecha_fin, datetime):
+            end = datetime(fecha_fin.year, fecha_fin.month, fecha_fin.day, 23, 59, 59)
+        else:
+            end = datetime(fecha_fin.year, fecha_fin.month, fecha_fin.day, 23, 59, 59)
+        
+        query = query.filter(Atencion.fecha_ingreso >= start, Atencion.fecha_ingreso <= end)
 
     return query.offset(skip).limit(limit).all()
 

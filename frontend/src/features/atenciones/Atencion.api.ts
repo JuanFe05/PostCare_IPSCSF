@@ -24,6 +24,17 @@ export const getAtenciones = async (skip = 0, limit = 100, fecha?: string): Prom
   return Array.isArray(resp.data) ? resp.data : [resp.data];
 };
 
+export const getAtencionesByRango = async (fechaInicio: string, fechaFin: string): Promise<Atencion[]> => {
+  const params = new URLSearchParams();
+  params.append('skip', '0');
+  params.append('limit', '100000');
+  params.append('fecha_inicio', fechaInicio);
+  params.append('fecha_fin', fechaFin);
+  const query = params.toString();
+  const resp = await client.get(`/atenciones?${query}`);
+  return Array.isArray(resp.data) ? resp.data : [resp.data];
+};
+
 export const getAtencion = async (id: string): Promise<Atencion> => {
   const resp = await client.get(`/atenciones/${id}`);
   return resp.data;

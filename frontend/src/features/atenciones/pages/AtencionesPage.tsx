@@ -4,7 +4,7 @@ import { FaSyncAlt } from 'react-icons/fa';
 import { useAuth } from "../../../hooks/useAuth";
 import { useWebSocket } from "../../../hooks/useWebSocket";
 import type { Atencion, NewAtencionConPaciente, UpdateAtencion } from "../types";
-import { getAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock, getEstadosAtencion, getSeguimientosAtencion } from "../Atencion.api";
+import { getAtenciones, getAtencionesByRango, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock, getEstadosAtencion, getSeguimientosAtencion } from "../Atencion.api";
 import { syncPacientesRangoFechas } from "../../../api/Sync.api";
 import Swal from "sweetalert2";
 import AtencionForm from "../components/AtencionForm";
@@ -138,6 +138,76 @@ export default function AtencionesPage() {
     }
   };
 
+  const handleExportWithRange = async (): Promise<any[]> => {
+    const { value: formValues } = await Swal.fire({
+      title: 'Seleccione el rango de fechas',
+      html: `
+        <div style="display: flex; flex-direction: column; gap: 16px; text-align: left;">
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Fecha inicio</label>
+            <input id="swal-fecha-inicio" type="date" class="swal2-input" style="width: 100%; margin: 0;" />
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Fecha fin</label>
+            <input id="swal-fecha-fin" type="date" class="swal2-input" style="width: 100%; margin: 0;" />
+          </div>
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Exportar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#0d9488',
+      cancelButtonColor: '#6b7280',
+      preConfirm: () => {
+        const inicio = (document.getElementById('swal-fecha-inicio') as HTMLInputElement)?.value;
+        const fin = (document.getElementById('swal-fecha-fin') as HTMLInputElement)?.value;
+        
+        if (!inicio || !fin) {
+          Swal.showValidationMessage('Por favor seleccione ambas fechas');
+          return null;
+        }
+        
+        if (new Date(inicio) > new Date(fin)) {
+          Swal.showValidationMessage('La fecha inicio debe ser menor o igual a la fecha fin');
+          return null;
+        }
+        
+        return { inicio, fin };
+      }
+    });
+
+    if (!formValues) {
+      throw new Error('Exportación cancelada');
+    }
+
+    const { inicio, fin } = formValues;
+    
+    // Mostrar loading mientras se obtienen los datos
+    Swal.fire({
+      title: 'Obteniendo datos...',
+      text: 'Por favor espere',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+    
+    try {
+      // Obtener datos del servidor filtrados por rango
+      const atencionesFiltradas = await getAtencionesByRango(inicio, fin);
+      
+      // Cerrar el modal de loading
+      Swal.close();
+      
+      // Preparar datos para exportación
+      return prepareAtencionesPorServicio(atencionesFiltradas);
+    } catch (error) {
+      Swal.close();
+      throw error;
+    }
+  };
+
   const handleEliminar = async (id: string, nombrePaciente: string) => {
     const result = await Swal.fire({
       title: `¿Eliminar la atención del paciente "${nombrePaciente}"?`,
@@ -265,7 +335,10 @@ export default function AtencionesPage() {
                       Sincronizar
                     </button>
 
-                    <ExportExcel data={prepareAtencionesPorServicio(atenciones)} fileName="atenciones.xlsx" />
+                    <ExportExcel 
+                      fileName="atenciones.xlsx" 
+                      onExport={handleExportWithRange}
+                    />
                   </>
                 )}
               </>

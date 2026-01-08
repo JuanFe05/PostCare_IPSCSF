@@ -134,10 +134,19 @@ class AtencionService:
         db: Session,
         skip: int = 0,
         limit: int = 100,
-        fecha: Optional[datetime] = None
+        fecha: Optional[datetime] = None,
+        fecha_inicio: Optional[datetime] = None,
+        fecha_fin: Optional[datetime] = None
     ) -> List[AtencionListResponseDto]:
-        """Obtiene todas las atenciones. Si `fecha` se provee, filtra por ese día."""
-        atenciones = atencion_repository.get_all_atenciones(db, skip=skip, limit=limit, fecha=fecha)
+        """Obtiene todas las atenciones. Si `fecha` se provee, filtra por ese día. Si fecha_inicio y fecha_fin se proveen, filtra por rango."""
+        atenciones = atencion_repository.get_all_atenciones(
+            db, 
+            skip=skip, 
+            limit=limit, 
+            fecha=fecha,
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin
+        )
         return [AtencionService._atencion_to_list_dto(a) for a in atenciones]
     
     @staticmethod
