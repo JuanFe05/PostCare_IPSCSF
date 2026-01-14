@@ -28,13 +28,22 @@ ws_manager = get_websocket_manager()
 @router.get("", response_model=List[AtencionListResponseDto], tags=["Atenciones"])
 def get_all_atenciones(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = Query(100, ge=1, le=100000),
     fecha: Optional[date] = Query(None, description="Filtrar por fecha (YYYY-MM-DD)"),
+    fecha_inicio: Optional[date] = Query(None, description="Fecha inicio del rango (YYYY-MM-DD)"),
+    fecha_fin: Optional[date] = Query(None, description="Fecha fin del rango (YYYY-MM-DD)"),
     db: Session = Depends(get_db)
 ):
     """Obtiene todas las atenciones con información resumida"""
     try:
-        return AtencionService.get_all_atenciones(db, skip=skip, limit=limit, fecha=fecha)
+        return AtencionService.get_all_atenciones(
+            db, 
+            skip=skip, 
+            limit=limit, 
+            fecha=fecha,
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error obteniendo atenciones: {str(e)}")
 

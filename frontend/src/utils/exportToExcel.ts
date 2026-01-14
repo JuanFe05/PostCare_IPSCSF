@@ -1,5 +1,4 @@
 import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 
 export const exportToExcel = (data: any[], fileName: string) => {
   const worksheet = XLSX.utils.json_to_sheet(data);
@@ -12,6 +11,15 @@ export const exportToExcel = (data: any[], fileName: string) => {
     type: "array",
   });
 
-  const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-  saveAs(blob, `${fileName}`);
+  const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  
+  // Crear un enlace temporal para forzar el diálogo de descarga
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
 };

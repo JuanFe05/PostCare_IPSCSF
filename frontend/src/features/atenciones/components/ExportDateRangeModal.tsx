@@ -2,22 +2,27 @@ import { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FiCalendar } from 'react-icons/fi';
-import { FaSyncAlt } from 'react-icons/fa';
+import { IoMdDownload } from 'react-icons/io';
 import { MdError, MdInfo } from 'react-icons/md';
 
-interface SyncModalProps {
+interface ExportDateRangeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSync: (fechaInicio: string, fechaFin: string) => Promise<void>;
+  onExport: (startDate: Date, endDate: Date) => void;
+  isLoading?: boolean;
 }
 
-export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
+const ExportDateRangeModal = ({ 
+  isOpen, 
+  onClose, 
+  onExport, 
+  isLoading = false 
+}: ExportDateRangeModalProps) => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [error, setError] = useState<string>('');
-  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -31,25 +36,11 @@ export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
       return;
     }
 
-    try {
-      setLoading(true);
-      // Formatear fechas a YYYY-MM-DD
-      const fechaInicio = startDate.toISOString().split('T')[0];
-      const fechaFin = endDate.toISOString().split('T')[0];
-      await onSync(fechaInicio, fechaFin);
-      setStartDate(null);
-      setEndDate(null);
-      onClose();
-    } catch (error) {
-      console.error('Error en sincronización:', error);
-      setError('Error al sincronizar. Por favor intente nuevamente.');
-    } finally {
-      setLoading(false);
-    }
+    onExport(startDate, endDate);
   };
 
   const handleClose = () => {
-    if (!loading) {
+    if (!isLoading) {
       setStartDate(null);
       setEndDate(null);
       setError('');
@@ -74,8 +65,8 @@ export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div>
-                <h2 className="text-xl font-bold text-white">Sincronizar Datos</h2>
-                <p className="text-sky-100 text-sm">Desde la Base de Datos de la Clínica</p>
+                <h2 className="text-xl font-bold text-white">Exportar Atenciones</h2>
+                <p className="text-blue-100 text-sm">Seleccione el rango de fechas</p>
               </div>
             </div>
           </div>
@@ -102,11 +93,11 @@ export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
                   maxDate={new Date()}
                   dateFormat="dd/MM/yyyy"
                   placeholderText="Seleccione fecha inicio"
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                  disabled={loading}
+                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  disabled={isLoading}
                   calendarClassName="shadow-xl"
                 />
-                <FiCalendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-sky-600" size={20} />
+                <FiCalendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-600" size={20} />
               </div>
             </div>
 
@@ -129,11 +120,11 @@ export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
                   maxDate={new Date()}
                   dateFormat="dd/MM/yyyy"
                   placeholderText="Seleccione fecha fin"
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                  disabled={loading}
+                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  disabled={isLoading}
                   calendarClassName="shadow-xl"
                 />
-                <FiCalendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-sky-600" size={20} />
+                <FiCalendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-600" size={20} />
               </div>
             </div>
 
@@ -146,15 +137,14 @@ export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
             )}
 
             {/* Info Box */}
-            <div className="bg-sky-50 border border-sky-200 rounded-lg p-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex gap-3">
-                <MdInfo className="w-5 h-5 text-sky-500 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-sky-800">
+                <MdInfo className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
                   <p className="font-medium mb-1">Información importante:</p>
-                  <ul className="list-disc list-inside space-y-1 text-sky-700">
-                    <li>Se sincronizarán pacientes y atenciones del rango seleccionado</li>
-                    <li>Solo se crearán nuevos registros</li>
-                    <li>Los datos existentes NO serán modificados</li>
+                  <ul className="list-disc list-inside space-y-1 text-blue-700">
+                    <li>Solo se exportarán las atenciones dentro del rango seleccionado</li>
+                    <li>El archivo incluirá todos los servicios asociados</li>
                   </ul>
                 </div>
               </div>
@@ -166,28 +156,28 @@ export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
             <button
               type="button"
               onClick={handleClose}
-              disabled={loading}
+              disabled={isLoading}
               className="flex-1 px-6 py-3 bg-red-400 hover:bg-red-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={loading || !startDate || !endDate}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
+              disabled={isLoading || !startDate || !endDate}
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-sky-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
             >
-              {loading ? (
+              {isLoading ? (
                 <>
                   <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Sincronizando...</span>
+                  <span>Exportando...</span>
                 </>
               ) : (
                 <>
-                  <FaSyncAlt size={20} />
-                  <span>Sincronizar</span>
+                  <IoMdDownload size={24} />
+                  <span>Exportar</span>
                 </>
               )}
             </button>
@@ -196,4 +186,6 @@ export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
       </div>
     </div>
   );
-}
+};
+
+export default ExportDateRangeModal;

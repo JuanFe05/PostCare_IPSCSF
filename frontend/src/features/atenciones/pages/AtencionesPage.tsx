@@ -4,23 +4,25 @@ import { FaSyncAlt } from 'react-icons/fa';
 import { useAuth } from "../../../hooks/useAuth";
 import { useWebSocket } from "../../../hooks/useWebSocket";
 import type { Atencion, NewAtencionConPaciente, UpdateAtencion } from "../types";
-import { getAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock, getEstadosAtencion, getSeguimientosAtencion } from "../Atencion.api";
+import { getAtenciones, getAtencionesByRango, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock, getEstadosAtencion, getSeguimientosAtencion } from "../Atencion.api";
 import { syncPacientesRangoFechas } from "../../../api/Sync.api";
 import Swal from "sweetalert2";
 import AtencionForm from "../components/AtencionForm";
 import SyncModal from "../components/SyncModal";
-import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
+import ExportDateRangeModal from "../components/ExportDateRangeModal";
 import AtencionTable from '../components/AtencionTable';
 import Search from "../../../components/search/Search";
 import { IoMdAddCircleOutline } from "react-icons/io";
-import { FiX } from 'react-icons/fi';
 import { prepareAtencionesPorServicio } from "../utils";
+import { PiMicrosoftExcelLogoFill } from "react-icons/pi";
 
 export default function AtencionesPage() {
   const [showAddAtencion, setShowAddAtencion] = useState(false);
   const [showEditAtencion, setShowEditAtencion] = useState(false);
   const [editAtencion, setEditAtencion] = useState<Atencion | null>(null);
   const [showSyncModal, setShowSyncModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [atenciones, setAtenciones] = useState<Atencion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -136,6 +138,62 @@ export default function AtencionesPage() {
     } catch (error: any) {
       const errorMsg = error.response?.data?.detail || 'Error al sincronizar datos';
       Swal.fire('Error', errorMsg, 'error');
+    }
+  };
+
+  const handleExportWithRange = async (startDate: Date, endDate: Date) => {
+    setIsExporting(true);
+    
+    try {
+      // Formatear fechas a YYYY-MM-DD
+      const inicio = startDate.toISOString().split('T')[0];
+      const fin = endDate.toISOString().split('T')[0];
+      
+      // Obtener datos del servidor filtrados por rango
+      const atencionesFiltradas = await getAtencionesByRango(inicio, fin);
+      
+      if (!atencionesFiltradas || atencionesFiltradas.length === 0) {
+        setShowExportModal(false);
+        setIsExporting(false);
+        Swal.fire({
+          icon: 'info',
+          title: 'Sin datos',
+          text: 'No se encontraron atenciones en el rango seleccionado',
+          confirmButtonColor: '#1938bc'
+        });
+        return;
+      }
+      
+      // Preparar datos para exportación
+      const datosPreparados = prepareAtencionesPorServicio(atencionesFiltradas);
+      
+      // Importar dinámicamente la función de exportación
+      const { exportToExcel } = await import("../../../utils/exportToExcel");
+      exportToExcel(datosPreparados, "atenciones.xlsx");
+      
+      // Cerrar modal y mostrar éxito
+      setShowExportModal(false);
+      setIsExporting(false);
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Exportación exitosa',
+        text: `Se han exportado ${atencionesFiltradas.length} atenciones`,
+        timer: 3000,
+        showConfirmButton: false
+      });
+    } catch (error: any) {
+      setIsExporting(false);
+      console.error('Error al exportar:', error);
+      
+      if (error?.message !== 'Exportación cancelada') {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: error?.message || 'No se pudo exportar los datos',
+          confirmButtonColor: '#1938bc'
+        });
+      }
     }
   };
 
@@ -266,7 +324,14 @@ export default function AtencionesPage() {
                       Sincronizar
                     </button>
 
-                    <ExportExcel data={prepareAtencionesPorServicio(atenciones)} fileName="atenciones.xlsx" />
+                    <button
+                      onClick={() => setShowExportModal(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 shadow cursor-pointer"
+                      title="Exportar a Excel"
+                    >
+                      <PiMicrosoftExcelLogoFill size={24} />
+                      Exportar
+                    </button>
                   </>
                 )}
               </>
@@ -338,29 +403,22 @@ export default function AtencionesPage() {
               className="h-10 px-3 border border-gray-300 rounded-md bg-white text-sm shadow-sm hover:shadow-md transition-shadow duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               title="Filtrar por fecha"
             />
-            {selectedDate && (
-              <button
-                onClick={() => setSelectedDate(null)}
-                className="h-10 px-3 rounded-md bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center cursor-pointer ml-2"
-                title="Limpiar fecha"
-                aria-label="Limpiar fecha"
-              >
-                <FiX className="w-4 h-4" />
-              </button>
-            )}
           </div>
         </div>
       </div>
 
-      {showSyncModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <SyncModal
-            isOpen={showSyncModal}
-            onClose={() => setShowSyncModal(false)}
-            onSync={handleSync}
-          />
-        </div>
-      )}
+      <SyncModal
+        isOpen={showSyncModal}
+        onClose={() => setShowSyncModal(false)}
+        onSync={handleSync}
+      />
+
+      <ExportDateRangeModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExportWithRange}
+        isLoading={isExporting}
+      />
 
       {showAddAtencion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
