@@ -43,7 +43,8 @@ class SyncClinicaService:
         INNER JOIN tbEmpresas             AS emp ON ae.unco_emprsa = emp.unco 
         INNER JOIN tbTipoEmpresa          AS te  ON emp.unco_tpo_emprsa = te.unco
     WHERE 
-        emp.unco_tpo_emprsa IN (4, 5) 
+        emp.unco_tpo_emprsa IN (4, 5)
+        AND ae.unco_emprsa <> 89
         AND CAST(adm.fcha_admsn AS DATE) = CAST(DATEADD(day, -1, GETDATE()) AS DATE)
         AND adm.cnsctvo_admsns IS NOT NULL
     """
@@ -86,7 +87,8 @@ class SyncClinicaService:
             INNER JOIN tbEmpresas             AS emp ON ae.unco_emprsa = emp.unco 
             INNER JOIN tbTipoEmpresa          AS te  ON emp.unco_tpo_emprsa = te.unco
         WHERE 
-            emp.unco_tpo_emprsa IN (4, 5) 
+            emp.unco_tpo_emprsa IN (4, 5)
+            AND ae.unco_emprsa <> 89
             AND CAST(adm.fcha_admsn AS DATE) BETWEEN :fecha_inicio AND :fecha_fin
             AND adm.cnsctvo_admsns IS NOT NULL
         """
