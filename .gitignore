@@ -306,3 +306,8 @@ sketch
 # Ignore IDE project folders for subprojects
 backend/.idea/
 frontend/.idea/
+
+# Ignorar carpetas locales específicas del proyecto
+.agents/
+.claude/
+.github/
