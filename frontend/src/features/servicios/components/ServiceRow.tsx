@@ -1,5 +1,6 @@
+import { memo } from 'react';
 import type { Service } from "../types";
-import { FiEdit, FiTrash2 } from "react-icons/fi";
+import { FiEdit, FiTrash2 } from 'react-icons/fi';
 
 type Props = {
   service: Service;
@@ -8,7 +9,7 @@ type Props = {
   handleEliminar: (id: number, nombre: string) => Promise<void> | void;
 };
 
-export default function ServiceRow({ service, auth, attemptEdit, handleEliminar }: Props) {
+const ServiceRow = memo(function ServiceRow({ service, auth, attemptEdit, handleEliminar }: Props) {
   return (
     <>
       <td className="p-3 text-center">{service.id}</td>
@@ -36,4 +37,6 @@ export default function ServiceRow({ service, auth, attemptEdit, handleEliminar 
       </td>
     </>
   );
-}
+});
+
+export default ServiceRow;

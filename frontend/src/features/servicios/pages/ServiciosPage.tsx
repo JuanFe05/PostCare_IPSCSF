@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import type { ChangeEvent } from "react";
 import { useAuth } from "../../../hooks/useAuth";
 import type { Service } from "../types";
-import ServiceForm from "../components/ServiceForm";
 import ServiceTable from "../components/ServiceTable";
 import Swal from "sweetalert2";
 import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
@@ -16,7 +15,10 @@ import {
   releaseServiceLock,
   checkServiceLock,
 } from "../Service.api";
-import { IoMdAddCircleOutline } from "react-icons/io";
+import { IoMdAddCircleOutline } from 'react-icons/io';
+
+// Lazy loading del formulario pesado
+const ServiceForm = lazy(() => import("../components/ServiceForm"));
 
 export default function ServiciosPage() {
   const [showAdd, setShowAdd] = useState(false);
@@ -186,9 +188,10 @@ export default function ServiciosPage() {
       {/* ADD MODAL */}
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <ServiceForm
-            onCancel={() => setShowAdd(false)}
-            onSave={async ({ nombre }) => {
+          <Suspense fallback={<div className="bg-white p-8 rounded-lg shadow-xl"><p className="text-gray-600">Cargando formulario...</p></div>}>
+            <ServiceForm
+              onCancel={() => setShowAdd(false)}
+              onSave={async ({ nombre }) => {
               if (!nombre) {
                 await Swal.fire({ icon: "warning", title: "Datos incompletos", text: "El nombre es obligatorio." });
                 return;
@@ -207,16 +210,18 @@ export default function ServiciosPage() {
               }
             }}
           />
+          </Suspense>
         </div>
       )}
 
       {/* EDIT MODAL */}
       {showEdit && editService && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <ServiceForm
-            isEdit
-            initial={{ nombre: editService.nombre, descripcion: editService.descripcion }}
-            onCancel={closeEditor}
+          <Suspense fallback={<div className="bg-white p-8 rounded-lg shadow-xl"><p className="text-gray-600">Cargando formulario...</p></div>}>
+            <ServiceForm
+              isEdit
+              initial={{ nombre: editService.nombre, descripcion: editService.descripcion }}
+              onCancel={closeEditor}
             onSave={async ({ nombre }) => {
               if (!editService) return;
               setLoading(true);
@@ -238,6 +243,7 @@ export default function ServiciosPage() {
               }
             }}
           />
+          </Suspense>
         </div>
       )}
 

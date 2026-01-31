@@ -12,9 +12,9 @@ import SyncModal from "../components/SyncModal";
 import ExportDateRangeModal from "../components/ExportDateRangeModal";
 import AtencionTable from '../components/AtencionTable';
 import Search from "../../../components/search/Search";
-import { IoMdAddCircleOutline } from "react-icons/io";
+import { IoMdAddCircleOutline } from 'react-icons/io';
 import { prepareAtencionesPorServicio } from "../utils";
-import { PiMicrosoftExcelLogoFill } from "react-icons/pi";
+import { PiMicrosoftExcelLogoFill } from 'react-icons/pi';
 
 export default function AtencionesPage() {
   const [showAddAtencion, setShowAddAtencion] = useState(false);
