@@ -4,7 +4,8 @@ import { getRoles, updateRol, acquireRoleLock, releaseRoleLock, checkRoleLock } 
 import RoleForm from "../components/RoleForm";
 import RoleTable from "../components/RoleTable";
 import Swal from 'sweetalert2';
-import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
+import { exportToExcel } from '../../../utils/exportToExcel';
+import { Card, CardHeader, CardBody, Button } from '../../../components/notus';
 
 export interface Role {
   id: number;
@@ -95,19 +96,40 @@ export default function RolesPage() {
   }, [heldLockId]);
 
   return (
-    <div className="py-6">
-      <h2 className="text-2xl font-bold mb-6">Gestión de Roles</h2>
-
-      {/* BOTÓN EXPORTAR (solo ADMINISTRADOR) */}
-      <div className="mb-6">
-        {(() => {
-          const roleName = String(auth?.user?.role_name ?? '').trim().toUpperCase();
-          if (roleName === 'ADMINISTRADOR') {
-            return <ExportExcel data={roles} fileName="roles.xlsx" />;
-          }
-          return null;
-        })()}
-      </div>
+    <div>
+      <Card>
+        <CardHeader color="lightBlue" className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <i className="fas fa-user-shield text-2xl text-white"></i>
+            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Roles</h6>
+          </div>
+          {(() => {
+            const roleName = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+            if (roleName === 'ADMINISTRADOR') {
+              return (
+                <Button
+                  color="white"
+                  size="sm"
+                  onClick={() => exportToExcel(roles, 'roles')}
+                >
+                  <i className="fas fa-file-excel mr-2"></i>
+                  EXPORTAR
+                </Button>
+              );
+            }
+            return null;
+          })()}
+        </CardHeader>
+        
+        <CardBody>
+          <RoleTable
+            roles={roles}
+            loading={loading}
+            auth={auth}
+            attemptEdit={attemptEdit}
+          />
+        </CardBody>
+      </Card>
 
       {/* EDIT MODAL */}
       {showEdit && editRole && (
@@ -136,14 +158,6 @@ export default function RolesPage() {
           />
         </div>
       )}
-
-      {/* Tabla de Roles */}
-      <RoleTable
-        roles={roles}
-        loading={loading}
-        auth={auth}
-        attemptEdit={attemptEdit}
-      />
     </div>
   );
 }

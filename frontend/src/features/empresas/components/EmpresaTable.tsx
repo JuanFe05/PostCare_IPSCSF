@@ -3,6 +3,7 @@ import type { Empresa } from "../types";
 import EmpresaRow from "./EmpresaRow";
 import EmpresaPagination from "./EmpresaPagination";
 import { useTable, usePagination } from 'react-table';
+import { Table } from '../../../components/notus';
 
 interface EmpresaTableProps {
   empresas: Empresa[];
@@ -21,8 +22,8 @@ export default function EmpresaTable({
   attemptEdit,
   handleEliminar 
 }: EmpresaTableProps) {
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
+  const [sortKey] = useState<string | null>(null);
+  const [sortDir] = useState<'asc' | 'desc' | null>(null);
 
   // calcular lista filtrada + ordenada
   const displayed = useMemo(() => {
@@ -64,91 +65,51 @@ export default function EmpresaTable({
 
   const tableInstance: any = useTable({ columns, data, initialState: { pageIndex: 0 } as any }, usePagination);
   const {
-    getTableProps,
-    getTableBodyProps,
     page,
     canPreviousPage,
     canNextPage,
     pageOptions,
-    state: { pageIndex },
+    state: { pageIndex, pageSize },
     gotoPage,
     nextPage,
     previousPage,
   } = tableInstance;
 
-  // Establecer el tamaño de página en 10
+  // Establecer el tamaño de página en 7
   useEffect(() => {
     if (tableInstance.setPageSize) {
-      tableInstance.setPageSize(10);
+      tableInstance.setPageSize(7);
     }
   }, [tableInstance]);
-
-  const toggleSort = (key: string) => {
-    if (sortKey !== key) {
-      setSortKey(key);
-      setSortDir('asc');
-      return;
-    }
-    if (sortDir === 'asc') setSortDir('desc');
-    else if (sortDir === 'desc') {
-      setSortKey(null);
-      setSortDir(null);
-    } else setSortDir('asc');
-  };
 
   return loading ? (
     <div className="text-center py-8">Cargando empresas...</div>
   ) : (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="overflow-x-auto">
-        <table {...getTableProps()} className="min-w-full text-sm divide-y table-auto">
-          <thead className="bg-blue-100 text-blue-900">
+    <div>
+      <Table headers={['ID', 'Nombre', 'Tipo', 'Acciones']} color="light">
+        {data.length === 0 ? (
           <tr>
-            {columns.map((col: any) => (
-              <th 
-                key={col.accessor} 
-                className={`p-3 font-semibold text-center select-none ${col.Header !== 'Acciones' ? 'cursor-pointer' : ''}`} 
-                onClick={() => col.Header !== 'Acciones' && toggleSort(col.accessor)}
-              >
-                <div className="flex items-center justify-center gap-1">
-                  <span>{col.Header}</span>
-                  {col.Header !== 'Acciones' && (
-                    <span className="inline-flex flex-col ml-2 text-xs leading-none">
-                      <span className={sortKey === col.accessor && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                      <span className={sortKey === col.accessor && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                    </span>
-                  )}
-                </div>
-              </th>
-            ))}
+            <td colSpan={4} className="p-6 text-center text-gray-500">No se encontraron empresas.</td>
           </tr>
-        </thead>
-
-        <tbody {...getTableBodyProps()} className="bg-white">
-          {data.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="p-6 text-center text-gray-500">No se encontraron empresas.</td>
-            </tr>
-          ) : (
-            page.map((row: any, ridx: number) => {
-              const e: Empresa = row.original;
-              const globalIdx = pageIndex * 7 + ridx;
-              return (
-                <tr key={e.id} className={`${globalIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
-                  <EmpresaRow
-                    empresa={e}
-                    idx={globalIdx}
-                    auth={auth}
-                    attemptEdit={attemptEdit}
-                    handleEliminar={handleEliminar}
-                  />
-                </tr>
-              );
-            })
-          )}
-          </tbody>
-        </table>
-      </div>
+        ) : (
+          page.map((row: any, ridx: number) => {
+            const e: Empresa = row.original;
+            const usedPageSize = pageSize || 7;
+            const globalIdx = pageIndex * usedPageSize + ridx;
+            return (
+              <tr key={e.id} className="hover:bg-blue-50">
+                <EmpresaRow
+                  empresa={e}
+                  idx={globalIdx}
+                  auth={auth}
+                  attemptEdit={attemptEdit}
+                  handleEliminar={handleEliminar}
+                />
+              </tr>
+            );
+          })
+        )}
+      </Table>
 
       <EmpresaPagination
         pageIndex={pageIndex}

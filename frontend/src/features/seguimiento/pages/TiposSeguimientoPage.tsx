@@ -5,9 +5,8 @@ import { useAuth } from "../../../hooks/useAuth";
 import SeguimientoForm from "../components/SeguimientoForm";
 import SeguimientoTable from "../components/SeguimientoTable";
 import { getTiposSeguimiento, createTipoSeguimiento, updateTipoSeguimiento, deleteTipoSeguimiento } from "../Seguimiento.api";
-import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
-import Search from "../../../components/search/Search";
-import { IoMdAddCircleOutline } from "react-icons/io";
+import { exportToExcel } from '../../../utils/exportToExcel';
+import { Card, CardHeader, CardBody, Button } from "../../../components/notus";
 
 export interface TipoSeguimiento {
   id: number;
@@ -62,35 +61,67 @@ export default function TiposSeguimientoPage() {
   };
 
   return (
-    <div className="py-6">
-      <h2 className="text-2xl font-bold mb-6">Gestión de Tipos de Seguimiento</h2>
-
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div className="flex-shrink-0 flex items-center gap-3">
+    <div>
+      <Card>
+        <CardHeader color="lightBlue" className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <i className="fas fa-search text-2xl text-white"></i>
+            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Tipos de Seguimiento</h6>
+          </div>
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
             if (role === 'ADMINISTRADOR') {
               return (
-                <>
-                  <button onClick={() => setShowAdd(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer">
-                    <IoMdAddCircleOutline />
-                    Agregar nuevo tipo seguimiento
-                  </button>
-                  <ExportExcel data={tipos} fileName="seguimientos.xlsx" />
-                </>
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() => setShowAdd(true)}
+                    color="white"
+                    size="sm"
+                  >
+                    <i className="fas fa-plus mr-2"></i>
+                    AGREGAR TIPO
+                  </Button>
+                  <Button
+                    color="white"
+                    size="sm"
+                    onClick={() => exportToExcel(tipos, 'tipos-seguimiento')}
+                  >
+                    <i className="fas fa-file-excel mr-2"></i>
+                    EXPORTAR
+                  </Button>
+                </div>
               );
             }
-            return <p className="text-sm text-gray-600">Solo administradores pueden gestionar tipos.</p>;
+            return null;
           })()}
-        </div>
+        </CardHeader>
+        
+        <CardBody>
+          {/* Buscador */}
+          <div className="mb-8">
+            <div className="relative">
+              <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input
+                type="text"
+                placeholder="Buscar tipos de seguimiento por nombre o descripción..."
+                value={searchTerm}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all"
+              />
+            </div>
+          </div>
 
-        <Search 
-          value={searchTerm} 
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
-          onClear={() => setSearchTerm('')} 
-          placeholder="Buscar por Nombre o Descripción"
-        />
-      </div>
+          <SeguimientoTable
+            tipos={tipos}
+            loading={loading}
+            searchTerm={searchTerm}
+            auth={auth}
+            setEditTipo={setEditTipo}
+            setShowEdit={setShowEdit}
+            handleDelete={handleDelete}
+          />
+        </CardBody>
+      </Card>
 
       {/* ADD MODAL */}
       {showAdd && (
@@ -145,17 +176,6 @@ export default function TiposSeguimientoPage() {
           />
         </div>
       )}
-
-      {/* Tabla de Tipos de Seguimiento */}
-      <SeguimientoTable
-        tipos={tipos}
-        loading={loading}
-        searchTerm={searchTerm}
-        auth={auth}
-        setEditTipo={setEditTipo}
-        setShowEdit={setShowEdit}
-        handleDelete={handleDelete}
-      />
     </div>
   );
 }

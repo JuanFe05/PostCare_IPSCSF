@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import type { Service } from "../types";
-import { FiEdit, FiTrash2 } from 'react-icons/fi';
 
 type Props = {
   service: Service;
@@ -10,30 +9,41 @@ type Props = {
 };
 
 const ServiceRow = memo(function ServiceRow({ service, auth, attemptEdit, handleEliminar }: Props) {
+  const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
+  const isAdmin = role === 'ADMINISTRADOR';
+
   return (
     <>
-      <td className="p-3 text-center">{service.id}</td>
-      <td className="p-3 text-center">{service.nombre}</td>
-      <td className="p-3 text-center">{service.descripcion && String(service.descripcion).trim().length > 0 ? service.descripcion : `Servicio relacionado con ${String(service.nombre ?? '').toLowerCase()}`}</td>
-      <td className="p-3 text-center">
-        <div className="flex gap-2 justify-center">
-          {(() => {
-            const role = String(auth?.user?.role_name ?? "").trim().toUpperCase();
-            if (role === "ADMINISTRADOR") {
-              return (
-                <>
-                  <button className="text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => attemptEdit(service)} title="Editar">
-                    <FiEdit className="text-xl" />
-                  </button>
-                  <button className="text-red-600 hover:text-red-800 cursor-pointer" onClick={() => handleEliminar(service.id!, service.nombre)} title="Eliminar">
-                    <FiTrash2 className="text-xl" />
-                  </button>
-                </>
-              );
-            }
-            return <span className="text-sm text-gray-500">Sin acciones</span>;
-          })()}
-        </div>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center">
+        {service.id}
+      </td>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center">
+        <span className="font-semibold">{service.nombre}</span>
+      </td>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center">
+        {service.descripcion || '-'}
+      </td>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center">
+        {isAdmin ? (
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => attemptEdit(service)}
+              className="text-blue-600 hover:text-blue-800 font-semibold transition-colors cursor-pointer"
+              title="Editar"
+            >
+              <i className="fas fa-edit text-lg" />
+            </button>
+            <button
+              onClick={() => handleEliminar(service.id!, service.nombre)}
+              className="text-red-600 hover:text-red-800 font-semibold transition-colors cursor-pointer"
+              title="Eliminar"
+            >
+              <i className="fas fa-trash text-lg" />
+            </button>
+          </div>
+        ) : (
+          <span className="text-gray-400 text-xs">Sin permisos</span>
+        )}
       </td>
     </>
   );

@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useTable, usePagination } from 'react-table';
 import type { Paciente } from '../types';
 import PacienteRow from './PacienteRow';
 import PacientePagination from './PacientePagination';
+import { Table } from '../../../components/notus';
 
 interface PacienteTableProps {
   pacientes: Paciente[];
@@ -21,10 +21,11 @@ export default function PacienteTable({
   attemptEdit,
   handleEliminar,
 }: PacienteTableProps) {
-  const [sortKey, setSortKey] = useState<keyof Paciente | null>(null);
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageSize = 10;
 
-  const filtered = useMemo(() => {
+  // Filtrar pacientes por término de búsqueda
+  const displayed = useMemo(() => {
     if (!searchTerm.trim()) return pacientes;
     const term = searchTerm.toLowerCase();
     return pacientes.filter(
@@ -39,158 +40,71 @@ export default function PacienteTable({
     );
   }, [pacientes, searchTerm]);
 
-  const sorted = useMemo(() => {
-    if (!sortKey) return filtered;
-    return [...filtered].sort((a, b) => {
-      const aVal = a[sortKey] ?? '';
-      const bVal = b[sortKey] ?? '';
-      if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [filtered, sortKey, sortDir]);
+  // Calcular datos paginados
+  const pageCount = Math.ceil(displayed.length / pageSize);
+  const paginatedData = useMemo(() => {
+    const start = pageIndex * pageSize;
+    return displayed.slice(start, start + pageSize);
+  }, [displayed, pageIndex, pageSize]);
 
-  const columns = useMemo(
-    () => [
-      { Header: 'Tipo Doc', accessor: 'tipo_documento_codigo' as const },
-      { Header: 'ID', accessor: 'id' as const },
-      { Header: 'Primer Nombre', accessor: 'primer_nombre' as const },
-      { Header: 'Segundo Nombre', accessor: 'segundo_nombre' as const },
-      { Header: 'Primer Apellido', accessor: 'primer_apellido' as const },
-      { Header: 'Segundo Apellido', accessor: 'segundo_apellido' as const },
-      { Header: 'Teléfono 1', accessor: 'telefono_uno' as const },
-      { Header: 'Teléfono 2', accessor: 'telefono_dos' as const },
-      { Header: 'Email', accessor: 'email' as const },
-    ],
-    []
-  );
-
-  const tableInstance = useTable(
-    {
-      columns,
-      data: sorted,
-      initialState: { pageIndex: 0 } as any,
-    },
-    usePagination
-  ) as any;
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    page,
-    prepareRow,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    gotoPage,
-    nextPage,
-    previousPage,
-    state: { pageIndex },
-  } = tableInstance;
-
+  // Reset page cuando cambia el filtro
   useEffect(() => {
-    if (tableInstance.setPageSize) {
-      tableInstance.setPageSize(10);
-    }
-  }, [tableInstance]);
+    setPageIndex(0);
+  }, [searchTerm]);
 
-  const handleSort = (key: keyof Paciente) => {
-    if (sortKey === key) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDir('asc');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="overflow-x-auto">
-        <table {...getTableProps()} className="min-w-full text-sm divide-y table-auto">
-          <thead className="bg-blue-100 text-blue-900 select-none">
-            {headerGroups.map((headerGroup: any) => {
-              const { key: headerGroupKey, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
-              return (
-                <tr key={headerGroupKey} {...headerGroupProps}>
-                  {headerGroup.headers.map((column: any) => {
-                    const { key: columnKey, ...columnProps } = column.getHeaderProps();
-                    const accessor = column.id as keyof Paciente;
-                    return (
-                      <th
-                        key={columnKey}
-                        {...columnProps}
-                        className="p-3 font-semibold text-center cursor-pointer"
-                        onClick={() => handleSort(accessor)}
-                      >
-                        <div className="flex items-center justify-center gap-1">
-                          <span>{column.render('Header')}</span>
-                          <span className="inline-flex flex-col ml-1 text-[10px] leading-none">
-                            <span className={sortKey === accessor && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                            <span className={sortKey === accessor && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                          </span>
-                        </div>
-                      </th>
-                    );
-                  })}
-                  <th className="p-3 font-semibold w-32 text-center">
-                    Acciones
-                  </th>
-                </tr>
-              );
-            })}
-          </thead>
-          <tbody {...getTableBodyProps()} className="bg-white">
-            {page.length === 0 ? (
-              <tr>
-                <td colSpan={10} className="p-6 text-center text-gray-500">
-                  {searchTerm
-                    ? `No se encontraron pacientes que coincidan con "${searchTerm}".`
-                    : 'No hay pacientes registrados.'}
-                </td>
-              </tr>
-            ) : (
-              page.map((row: any, ridx: number) => {
-                prepareRow(row);
-                const { key: rowKey, ...rowProps } = row.getRowProps();
-                const paciente = row.original;
-                return (
-                  <tr
-                    key={rowKey}
-                    {...rowProps}
-                    className={`${ridx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}
-                  >
-                    <PacienteRow
-                      paciente={paciente}
-                      auth={auth}
-                      attemptEdit={attemptEdit}
-                      handleEliminar={handleEliminar}
-                    />
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+  return loading ? (
+    <div className="text-center py-8 text-xs">Cargando pacientes...</div>
+  ) : (
+    <div>
+      <Table 
+        headers={[
+          'Tipo Doc', 
+          'ID', 
+          'Primer Nombre', 
+          'Segundo Nombre', 
+          'Primer Apellido', 
+          'Segundo Apellido', 
+          'Teléfono 1', 
+          'Teléfono 2', 
+          'Email', 
+          'Acciones'
+        ]} 
+        color="light"
+      >
+        {displayed.length === 0 ? (
+          <tr>
+            <td colSpan={10} className="p-6 text-center text-gray-500 text-xs">
+              {searchTerm
+                ? `No se encontraron pacientes que coincidan con "${searchTerm}".`
+                : 'No hay pacientes registrados.'}
+            </td>
+          </tr>
+        ) : (
+          paginatedData.map((paciente, ridx) => {
+            const globalIdx = pageIndex * pageSize + ridx;
+            return (
+              <PacienteRow
+                key={paciente.id}
+                paciente={paciente}
+                idx={globalIdx}
+                auth={auth}
+                attemptEdit={attemptEdit}
+                handleEliminar={handleEliminar}
+              />
+            );
+          })
+        )}
+      </Table>
 
       <PacientePagination
         pageIndex={pageIndex}
-        pageOptions={pageOptions}
-        canPreviousPage={canPreviousPage}
-        canNextPage={canNextPage}
-        dataLength={sorted.length}
-        gotoPage={gotoPage}
-        nextPage={nextPage}
-        previousPage={previousPage}
+        pageOptions={Array.from({ length: pageCount }, (_, i) => i)}
+        canPreviousPage={pageIndex > 0}
+        canNextPage={pageIndex < pageCount - 1}
+        dataLength={displayed.length}
+        gotoPage={setPageIndex}
+        nextPage={() => setPageIndex(prev => Math.min(prev + 1, pageCount - 1))}
+        previousPage={() => setPageIndex(prev => Math.max(prev - 1, 0))}
       />
     </div>
   );

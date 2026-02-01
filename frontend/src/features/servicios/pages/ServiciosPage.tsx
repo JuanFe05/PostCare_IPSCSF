@@ -4,8 +4,6 @@ import { useAuth } from "../../../hooks/useAuth";
 import type { Service } from "../types";
 import ServiceTable from "../components/ServiceTable";
 import Swal from "sweetalert2";
-import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
-import Search from "../../../components/search/Search";
 import {
   getServices,
   createService,
@@ -15,7 +13,7 @@ import {
   releaseServiceLock,
   checkServiceLock,
 } from "../Service.api";
-import { IoMdAddCircleOutline } from 'react-icons/io';
+import { Card, CardHeader, CardBody, Button } from '../../../components/notus';
 
 // Lazy loading del formulario pesado
 const ServiceForm = lazy(() => import("../components/ServiceForm"));
@@ -142,48 +140,57 @@ export default function ServiciosPage() {
   }, [heldLockId]);
 
   return (
-    <div className="py-6">
-      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <span>Gestión de Servicios</span>
-      </h2>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex-shrink-0 flex items-center gap-3">
+    <div>
+      <Card>
+        <CardHeader color="lightBlue" className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <i className="fas fa-medkit text-2xl text-white"></i>
+            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Servicios</h6>
+          </div>
           {(() => {
             const role = String(auth?.user?.role_name ?? "").trim().toUpperCase();
             if (role === "ADMINISTRADOR") {
               return (
-                <>
-                  {/* Botón agregar */}
-                  <button
-                    onClick={() => setShowAdd(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer"
-                  >
-                    <IoMdAddCircleOutline className="text-lg" />
-                    Agregar nuevo servicio
-                  </button>
-
-                  {/* Botón Exportar Excel */}
-                  <ExportExcel data={services} fileName="services.xlsx" />
-                </>
+                <Button
+                  color="white"
+                  size="sm"
+                  onClick={() => setShowAdd(true)}
+                >
+                  <i className="fas fa-plus mr-2"></i>
+                  Agregar Servicio
+                </Button>
               );
             }
-
-            return (
-              <p className="text-sm text-gray-600">
-                Solo administradores pueden gestionar servicios.
-              </p>
-            );
+            return null;
           })()}
-        </div>
+        </CardHeader>
 
-        <Search 
-          value={searchTerm} 
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
-          onClear={() => setSearchTerm('')} 
-          placeholder="Buscar por ID, Nombre o Descripción"
-        />
-      </div>
+        <CardBody>
+          {/* Search bar */}
+          <div className="mb-8">
+            <div className="relative">
+              <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input
+                type="text"
+                placeholder="Buscar servicios por ID, nombre o descripción..."
+                value={searchTerm}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Tabla de Servicios */}
+          <ServiceTable
+            services={services}
+            loading={loading}
+            searchTerm={searchTerm}
+            auth={auth}
+            attemptEdit={attemptEdit}
+            handleEliminar={handleEliminar}
+          />
+        </CardBody>
+      </Card>
 
       {/* ADD MODAL */}
       {showAdd && (
@@ -246,16 +253,6 @@ export default function ServiciosPage() {
           </Suspense>
         </div>
       )}
-
-      {/* Tabla de Servicios */}
-      <ServiceTable
-        services={services}
-        loading={loading}
-        searchTerm={searchTerm}
-        auth={auth}
-        attemptEdit={attemptEdit}
-        handleEliminar={handleEliminar}
-      />
     </div>
   );
 }

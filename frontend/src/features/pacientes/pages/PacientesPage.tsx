@@ -6,8 +6,8 @@ import type { Paciente } from '../types';
 import { getPacientes, deletePaciente, updatePaciente, acquirePacienteLock, releasePacienteLock, checkPacienteLock } from '../Paciente.api';
 import PacienteForm from '../components/PacienteForm';
 import PacienteTable from '../components/PacienteTable';
-import ExportExcel from '../../../components/exportExcel/ExportExcelButton';
-import Search from '../../../components/search/Search';
+import { exportToExcel } from '../../../utils/exportToExcel';
+import { Card, CardHeader, CardBody, Button } from '../../../components/notus';
 
 export default function PacientesPage() {
   const { auth } = useAuth();
@@ -160,39 +160,53 @@ export default function PacientesPage() {
     setSearchTerm(e.target.value);
   };
 
-  const handleClearSearch = () => {
-    setSearchTerm('');
-  };
-
   const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
 
   return (
-    <div className="py-6">
-      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <span>Gestión de Pacientes</span>
-      </h2>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex-shrink-0 flex items-center gap-3">
+    <div>
+      <Card>
+        <CardHeader color="lightBlue" className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <i className="fas fa-user-injured text-2xl text-white"></i>
+            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Pacientes</h6>
+          </div>
           {role === 'ADMINISTRADOR' && (
-            <ExportExcel
-              data={pacientes}
-              fileName="pacientes"
-            />
+            <Button
+              color="white"
+              size="sm"
+              onClick={() => exportToExcel(pacientes, 'pacientes')}
+            >
+              <i className="fas fa-file-excel mr-2"></i>
+              EXPORTAR
+            </Button>
           )}
-        </div>
+        </CardHeader>
+        
+        <CardBody>
+          {/* Buscador */}
+          <div className="mb-8">
+            <div className="relative">
+              <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input
+                type="text"
+                placeholder="Buscar pacientes por ID, nombre, teléfono o email..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all"
+              />
+            </div>
+          </div>
 
-        <Search value={searchTerm} onChange={handleSearch} onClear={handleClearSearch} placeholder="Buscar por ID, Nombre, Teléfono o Email" />
-      </div>
-
-      <PacienteTable
-        pacientes={pacientes}
-        loading={loading}
-        searchTerm={searchTerm}
-        auth={auth}
-        attemptEdit={attemptEdit}
-        handleEliminar={handleEliminar}
-      />
+          <PacienteTable
+            pacientes={pacientes}
+            loading={loading}
+            searchTerm={searchTerm}
+            auth={auth}
+            attemptEdit={attemptEdit}
+            handleEliminar={handleEliminar}
+          />
+        </CardBody>
+      </Card>
 
       {showEditPaciente && editPaciente && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">

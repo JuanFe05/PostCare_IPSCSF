@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import Input from '../../components/notus/Input';
 import Button from '../../components/notus/Button';
 
-
 const schema = z.object({
   username: z.string().min(3, 'El usuario es obligatorio'),
   password: z.string().min(6, 'Mínimo 6 caracteres'),
@@ -30,12 +29,10 @@ export default function LoginForm() {
   const onSubmit = async (data: FormData) => {
     setServerError(null);
     try {
-      // Paso 1: login
       const res = await login({ username: data.username, password: data.password });
       const token = res.access_token;
       localStorage.setItem('access_token', token);
 
-      // Decodificar payload del JWT para obtener datos del usuario sin llamar a endpoints protegidos
       const parseJwt = (tk: string) => {
         try {
           const payload = tk.split('.')[1];
@@ -47,24 +44,21 @@ export default function LoginForm() {
       };
 
       const payload = parseJwt(token) as any;
-      // Build frontend user object that satisfies the `User` type
       const frontendUser: any = {
         id: payload?.id ?? null,
         username: payload?.sub ?? data.username,
         name: payload?.name ?? payload?.sub ?? data.username,
-        // frontend `User.estado` expects 'activo' | 'inactivo'
         estado: 'activo',
-        // keep role_name for UI checks (not part of User type but useful at runtime)
         role_name: payload?.rol ?? null,
       };
 
       localStorage.setItem('user', JSON.stringify(frontendUser));
       setAuth({ token, user: frontendUser as unknown as import('../../types/Auth.types').User });
 
-      // Redirigir a la página de análisis (dashboard)
-      navigate('/dashboard');
-
-
+      const rol = String(frontendUser.role_name ?? '').trim().toUpperCase();
+      if (rol === 'ADMINISTRADOR') navigate('/dashboard/atenciones');
+      else if (rol === 'ASESOR' || rol === 'FACTURADOR') navigate('/dashboard/atenciones');
+      else navigate('/unauthorized');
 
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -74,6 +68,7 @@ export default function LoginForm() {
       }
     }
   };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Input

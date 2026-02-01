@@ -1,4 +1,3 @@
-import { FiEdit, FiTrash2 } from 'react-icons/fi';
 import type { EstadoAtencion } from '../types';
 import Swal from 'sweetalert2';
 
@@ -28,21 +27,29 @@ export default function EstadoRow({ estado, auth, attemptEdit, handleEliminar }:
 
   return (
     <>
-      <td className="p-3 text-center">{estado.id}</td>
-      <td className="p-3 text-center">{estado.nombre}</td>
-      <td className="p-3 text-center">{estado.descripcion || '-'}</td>
-      <td className="p-3 text-center">
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center">{estado.id}</td>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center">{estado.nombre}</td>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center">{estado.descripcion || '-'}</td>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center">
         {role === 'ADMINISTRADOR' ? (
-          <div className="flex gap-2 justify-center">
-            <button title="Editar" className="text-blue-600 hover:text-blue-800 cursor-pointer cursor-pointer" onClick={() => attemptEdit(estado)}>
-              <FiEdit className="text-xl" />
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => attemptEdit(estado)}
+              className="text-blue-600 hover:text-blue-800 font-semibold transition-colors cursor-pointer"
+              title="Editar"
+            >
+              <i className="fas fa-edit text-lg" />
             </button>
-            <button title="Eliminar" className="text-red-600 hover:text-red-800 cursor-pointer cursor-pointer" onClick={doDelete}>
-              <FiTrash2 className="text-xl" />
+            <button
+              onClick={doDelete}
+              className="text-red-600 hover:text-red-800 font-semibold transition-colors cursor-pointer"
+              title="Eliminar"
+            >
+              <i className="fas fa-trash text-lg" />
             </button>
           </div>
         ) : (
-          <span className="text-sm text-gray-500">Sin acciones</span>
+          <span className="text-gray-400 text-xs">Sin permisos</span>
         )}
       </td>
     </>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import AppRouter from './router';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import './index.css';
 import { AuthProvider } from './hooks/useAuth';
 import { WebSocketProvider } from './hooks/useWebSocket';
