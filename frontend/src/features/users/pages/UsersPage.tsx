@@ -162,15 +162,16 @@ export default function UsersPage() {
         
         <CardBody>
           {/* Buscador */}
-          <div className="mb-8">
-            <div className="relative">
+          <div className="mb-8 flex justify-end">
+            <div className="relative max-w-md w-full">
               <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
               <input
                 type="text"
-                placeholder="Buscar usuarios por ID, nombre de usuario o email..."
+                placeholder="Buscar usuarios..."
                 value={searchTerm}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all"
+                className="w-full pl-12 pr-4 h-[52px] border-2 border-gray-200 rounded-lg bg-white font-medium shadow-sm hover:shadow-lg hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-all duration-200"
+                title="Buscar por: ID, Nombre de Usuario o Email"
               />
             </div>
           </div>

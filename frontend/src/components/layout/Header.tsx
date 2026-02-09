@@ -77,7 +77,7 @@ const Header = () => {
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer"
             >
               <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
                 <i className="fas fa-user text-blue-500 text-sm"></i>
@@ -100,7 +100,7 @@ const Header = () => {
                       setIsMenuOpen(false);
                       handleLogout();
                     }}
-                    className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-50 transition-colors"
+                    className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-red-50 transition-colors cursor-pointer"
                   >
                     <i className="fas fa-sign-out-alt text-red-600 w-5"></i>
                     <span className="text-sm font-medium text-red-600">Cerrar sesión</span>

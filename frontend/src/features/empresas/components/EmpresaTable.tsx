@@ -83,7 +83,15 @@ export default function EmpresaTable({
   }, [tableInstance]);
 
   return loading ? (
-    <div className="text-center py-8">Cargando empresas...</div>
+    <div className="text-center py-8">
+      <i className="fas fa-spinner fa-spin text-3xl text-blue-500" />
+      <p className="mt-2 text-gray-600">Cargando empresas...</p>
+    </div>
+  ) : empresas.length === 0 ? (
+    <div className="text-center py-8 text-gray-500">
+      <i className="fas fa-inbox text-4xl mb-2" />
+      <p>No hay empresas registradas.</p>
+    </div>
   ) : (
     <div>
       <Table headers={['ID', 'Nombre', 'Tipo', 'Acciones']} color="light">

@@ -32,7 +32,15 @@ export default function UserTable({
   }, [usuarios, searchTerm]);
 
   return loading ? (
-    <div className="text-center py-8">Cargando usuarios...</div>
+    <div className="text-center py-8">
+      <i className="fas fa-spinner fa-spin text-3xl text-blue-500" />
+      <p className="mt-2 text-gray-600">Cargando usuarios...</p>
+    </div>
+  ) : usuarios.length === 0 ? (
+    <div className="text-center py-8 text-gray-500">
+      <i className="fas fa-inbox text-4xl mb-2" />
+      <p>No hay usuarios registrados.</p>
+    </div>
   ) : (
     <Table headers={['ID', 'Username', 'Email', 'Estado', 'Rol', 'Acciones']} color="light">
       {displayed.length === 0 ? (

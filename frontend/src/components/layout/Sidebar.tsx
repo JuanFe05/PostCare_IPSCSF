@@ -44,12 +44,14 @@ const Sidebar = () => {
 
           {/* Brand */}
           <Link
-            className="md:block text-left md:pb-2 text-white mr-0 inline-block whitespace-nowrap text-sm uppercase font-bold p-4 px-0"
+            className="md:block text-center md:pb-2 text-white mr-0 inline-block whitespace-nowrap text-sm uppercase font-bold p-4 px-0 w-full"
             to="/dashboard"
           >
-            <div className="flex items-center gap-3">
-              <img src={logoIPS} alt="Logo" className="h-10 w-10 bg-white rounded-full p-1" />
-              <div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="bg-white rounded-2xl p-2 shadow-md">
+                <img src={logoIPS} alt="Logo" className="h-12 w-12" />
+              </div>
+              <div className="text-center">
                 <h1 className="text-white font-bold text-sm leading-tight">
                   IPS Clínica
                 </h1>

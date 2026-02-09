@@ -39,7 +39,15 @@ export default function SeguimientoTable({
   }, [tipos, searchTerm]);
 
   return loading ? (
-    <div className="text-center py-8">Cargando tipos...</div>
+    <div className="text-center py-8">
+      <i className="fas fa-spinner fa-spin text-3xl text-blue-500" />
+      <p className="mt-2 text-gray-600">Cargando tipos de seguimiento...</p>
+    </div>
+  ) : tipos.length === 0 ? (
+    <div className="text-center py-8 text-gray-500">
+      <i className="fas fa-inbox text-4xl mb-2" />
+      <p>No hay tipos de seguimiento registrados.</p>
+    </div>
   ) : (
     <Table headers={['ID', 'Nombre', 'Descripción', 'Acciones']} color="light">
       {displayedTipos.length === 0 ? (

@@ -11,6 +11,8 @@ export interface Paciente {
   telefono_dos?: string;
   email?: string;
   nombre_completo?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface PacienteCreateDto {

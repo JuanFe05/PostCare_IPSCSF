@@ -61,7 +61,8 @@ export default function PacientesPage() {
       console.error('Error cargando pacientes:', error);
       console.error('Error response:', error.response);
       const errorMsg = error.response?.data?.detail || error.message || 'Error desconocido';
-      Swal.fire('Error', `No se pudieron cargar los pacientes: ${errorMsg}`, 'error');
+      // Mostrar mensaje de error inline en la página en lugar de un modal
+      console.warn('No se pudieron cargar los pacientes:', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -184,15 +185,16 @@ export default function PacientesPage() {
         
         <CardBody>
           {/* Buscador */}
-          <div className="mb-8">
-            <div className="relative">
+          <div className="mb-8 flex justify-end">
+            <div className="relative max-w-md w-full">
               <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
               <input
                 type="text"
-                placeholder="Buscar pacientes por ID, nombre, teléfono o email..."
+                placeholder="Buscar pacientes..."
                 value={searchTerm}
                 onChange={handleSearch}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all"
+                className="w-full pl-12 pr-4 h-[52px] border-2 border-gray-200 rounded-lg bg-white font-medium shadow-sm hover:shadow-lg hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-all duration-200"
+                title="Buscar por: ID, Nombre, Apellido o Email"
               />
             </div>
           </div>

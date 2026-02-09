@@ -40,7 +40,15 @@ export default function EstadoTable({ estados, loading, searchTerm, auth, attemp
   }, [tableInstance]);
 
   return loading ? (
-    <div className="text-center py-8">Cargando estados...</div>
+    <div className="text-center py-8">
+      <i className="fas fa-spinner fa-spin text-3xl text-blue-500" />
+      <p className="mt-2 text-gray-600">Cargando estados...</p>
+    </div>
+  ) : estados.length === 0 ? (
+    <div className="text-center py-8 text-gray-500">
+      <i className="fas fa-inbox text-4xl mb-2" />
+      <p>No hay estados registrados.</p>
+    </div>
   ) : (
     <div>
       <Table headers={['ID', 'Nombre', 'Descripción', 'Acciones']} color="light">

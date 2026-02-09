@@ -2,7 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import type { Atencion } from "../types";
 import AtencionRow from "./AtencionRow";
 import AtencionPagination from "./AtencionPagination";
-import { Table } from '../../../components/notus';
+import { Table, VirtualizedTable } from '../../../components/notus';
+
+// Umbral para activar virtualización (performance con datasets grandes)
+const VIRTUALIZATION_THRESHOLD = 100;
 
 interface AtencionTableProps {
   atenciones: Atencion[];
@@ -98,12 +101,16 @@ export default function AtencionTable({
     return sorted;
   }, [atenciones, searchTerm, selectedEstadoId, selectedSeguimientoId]);
 
-  // Calcular datos paginados
+  // Determinar si usar virtualización
+  const useVirtualization = displayed.length > VIRTUALIZATION_THRESHOLD;
+
+  // Calcular datos paginados (solo si no se usa virtualización)
   const pageCount = Math.ceil(displayed.length / pageSize);
   const paginatedData = useMemo(() => {
+    if (useVirtualization) return displayed; // Mostrar todos si se virtualiza
     const start = pageIndex * pageSize;
     return displayed.slice(start, start + pageSize);
-  }, [displayed, pageIndex, pageSize]);
+  }, [displayed, pageIndex, pageSize, useVirtualization]);
 
   // ==================== Efectos ====================
   // Reset page cuando cambia el filtro
@@ -112,28 +119,78 @@ export default function AtencionTable({
   }, [searchTerm, selectedEstadoId, selectedSeguimientoId]);
 
   // ==================== Renderizado ====================
-  return loading ? (
-    <div className="text-center text-gray-500 py-12 text-xs">
-      Cargando atenciones...
-    </div>
-  ) : displayed.length === 0 ? (
-    <div className="text-center text-gray-400 py-12 text-xs">
-      No se encontraron atenciones.
-    </div>
-  ) : (
+  const headers = visibleColumns.map(c => c.Header);
+
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <i className="fas fa-spinner fa-spin text-3xl text-blue-500" />
+        <p className="mt-2 text-gray-600">Cargando atenciones...</p>
+      </div>
+    );
+  }
+
+  if (atenciones.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <i className="fas fa-inbox text-4xl mb-2" />
+        <p>No hay atenciones registradas.</p>
+      </div>
+    );
+  }
+
+  if (displayed.length === 0) {
+    return (
+      <Table headers={headers} color="light">
+        <tr>
+          <td colSpan={visibleColumns.length} className="p-6 text-center text-gray-500 text-xs">
+            No se encontraron atenciones con los filtros aplicados.
+          </td>
+        </tr>
+      </Table>
+    );
+  }
+
+  // Renderizar con virtualización para datasets grandes
+  if (useVirtualization) {
+    return (
+      <div>
+        <div className="mb-4 text-sm text-gray-600 text-center">
+          Mostrando {displayed.length} atenciones (virtualizado para mejor rendimiento)
+        </div>
+        <VirtualizedTable headers={headers} color="light" rowHeight={80} height={600}>
+          {displayed.map((atencion: Atencion, idx: number) => (
+            <tr key={atencion.id_atencion}>
+              <AtencionRow
+                atencion={atencion}
+                idx={idx}
+                auth={auth}
+                attemptEdit={attemptEdit}
+                handleEliminar={handleEliminar}
+              />
+            </tr>
+          ))}
+        </VirtualizedTable>
+      </div>
+    );
+  }
+
+  // Renderizar con paginación tradicional para datasets pequeños
+  return (
     <div>
-      <Table headers={visibleColumns.map(c => c.Header)}>
+      <Table headers={headers}>
         {paginatedData.map((atencion: Atencion, ridx: number) => {
           const globalIdx = pageIndex * pageSize + ridx;
           return (
-            <AtencionRow
-              key={atencion.id_atencion}
-              atencion={atencion}
-              idx={globalIdx}
-              auth={auth}
-              attemptEdit={attemptEdit}
-              handleEliminar={handleEliminar}
-            />
+            <tr key={atencion.id_atencion}>
+              <AtencionRow
+                atencion={atencion}
+                idx={globalIdx}
+                auth={auth}
+                attemptEdit={attemptEdit}
+                handleEliminar={handleEliminar}
+              />
+            </tr>
           );
         })}
       </Table>

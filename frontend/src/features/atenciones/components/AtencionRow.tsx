@@ -113,12 +113,14 @@ export default function AtencionRow({
       <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center w-32">{formatFecha(atencion.fecha_atencion)}</td>
       <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center w-32">{atencion.id_paciente}</td>
 
+      {/** Paciente - ancho mayor para nombres largos */}
       <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
-        <div className="max-w-xs break-words mx-auto">{atencion.nombre_paciente}</div>
+        <div className="min-w-[200px] max-w-sm break-words mx-auto">{atencion.nombre_paciente}</div>
       </td>
 
+      {/** Empresa - ancho mayor para nombres de empresas */}
       <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
-        <div className="max-w-xs break-words mx-auto">{atencion.nombre_empresa}</div>
+        <div className="min-w-[200px] max-w-sm break-words mx-auto">{atencion.nombre_empresa}</div>
       </td>
 
       {canViewTipoEmpresa && (
@@ -133,13 +135,14 @@ export default function AtencionRow({
         <div className="max-w-xs break-words mx-auto">{atencion.email || '-'}</div>
       </td>
 
+      {/** Servicios - ancho mayor para múltiples servicios */}
       <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
-        <div className="max-w-md break-words mx-auto">{formatServicios(atencion.servicios)}</div>
+        <div className="min-w-[250px] max-w-lg break-words mx-auto">{formatServicios(atencion.servicios)}</div>
       </td>
 
-      {/** Observación */}
+      {/** Observación - ancho máximo para hasta 255 caracteres */}
       <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
-        <div className="max-w-md break-words mx-auto">{atencion.observacion || '-'}</div>
+        <div className="min-w-[300px] max-w-2xl break-words mx-auto leading-relaxed">{atencion.observacion || '-'}</div>
       </td>
 
       {/** Columnas de auditoría solo para ADMINISTRADOR */}
