@@ -1,5 +1,4 @@
 import type { Atencion } from '../types';
-import { FiEdit, FiTrash2 } from 'react-icons/fi';
 
 type AtencionRowProps = {
   atencion: Atencion;
@@ -59,35 +58,35 @@ export default function AtencionRow({
 
   return (
     <>
-      <td className="p-3 text-center w-30 whitespace-nowrap">
-        <div className="flex gap-2 justify-center">
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center">
+        <div className="flex gap-3 justify-center items-center">
           {canEdit ? (
             <>
               <button 
-                className="text-blue-600 hover:text-blue-800 cursor-pointer" 
+                className="text-blue-600 hover:text-blue-800 font-semibold transition-colors cursor-pointer" 
                 onClick={() => attemptEdit(atencion)} 
                 title="Editar"
               >
-                <FiEdit className="text-xl" />
+                <i className="fas fa-edit text-lg" />
               </button>
               {isAdmin && (
                 <button 
-                  className="text-red-600 hover:text-red-800 cursor-pointer" 
+                  className="text-red-600 hover:text-red-800 font-semibold transition-colors cursor-pointer" 
                   onClick={() => handleEliminar(atencion.id_atencion, atencion.nombre_paciente)} 
                   title="Eliminar"
                 >
-                  <FiTrash2 className="text-xl" />
+                  <i className="fas fa-trash text-lg" />
                 </button>
               )}
             </>
           ) : (
-            <span className="text-xs text-gray-500">Sin acciones</span>
+            <span className="text-xs text-gray-400">Sin acciones</span>
           )}
         </div>
       </td>
 
       {/** Estado (columna 2) */}
-      <td className="p-3 text-center w-40 whitespace-nowrap">
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center w-40">
         {(() => {
           const estadoText = String(atencion.nombre_estado_atencion ?? '').trim();
           const estadoClass = estadoText === 'Urgencias' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700';
@@ -98,7 +97,7 @@ export default function AtencionRow({
       </td>
 
       {/** Seguimiento (columna 3) */}
-      <td className="p-3 text-center w-40 whitespace-nowrap">
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center w-40">
         {(() => {
           const segText = String(atencion.nombre_seguimiento_atencion ?? '').trim();
           let segClass = 'bg-blue-100 text-blue-700';
@@ -110,48 +109,49 @@ export default function AtencionRow({
         })()}
       </td>
 
-      <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.id_atencion}</td>
-      <td className="p-3 text-center w-32 whitespace-nowrap">{formatFecha(atencion.fecha_atencion)}</td>
-      <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.id_paciente}</td>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center w-32">{atencion.id_atencion}</td>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center w-32">{formatFecha(atencion.fecha_atencion)}</td>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center w-32">{atencion.id_paciente}</td>
 
-      <td className="p-3 text-center w-96">
-        <div className="truncate">{atencion.nombre_paciente}</div>
+      {/** Paciente - ancho mayor para nombres largos */}
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
+        <div className="min-w-[200px] max-w-sm break-words mx-auto">{atencion.nombre_paciente}</div>
       </td>
 
-      <td className="p-3 text-center w-96">
-        <div className="truncate">{atencion.nombre_empresa}</div>
+      {/** Empresa - ancho mayor para nombres de empresas */}
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
+        <div className="min-w-[200px] max-w-sm break-words mx-auto">{atencion.nombre_empresa}</div>
       </td>
 
       {canViewTipoEmpresa && (
-        <td className="p-3 text-center w-64">
-          <div className="truncate">{atencion.tipo_empresa_nombre || '-'}</div>
+        <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
+          <div className="max-w-xs break-words mx-auto">{atencion.tipo_empresa_nombre || '-'}</div>
         </td>
       )}
 
-      <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.telefono_uno || '-'}</td>
-      <td className="p-3 text-center w-32 whitespace-nowrap">{atencion.telefono_dos || '-'}</td>
-      <td className="p-3 text-center w-68">
-        <div className="truncate">{atencion.email || '-'}</div>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center w-32">{atencion.telefono_uno || '-'}</td>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center w-32">{atencion.telefono_dos || '-'}</td>
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
+        <div className="max-w-xs break-words mx-auto">{atencion.email || '-'}</div>
       </td>
 
-      <td className="p-3 text-center w-96">
-        <div className="truncate">{formatServicios(atencion.servicios)}</div>
+      {/** Servicios - ancho mayor para múltiples servicios */}
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
+        <div className="min-w-[250px] max-w-lg break-words mx-auto">{formatServicios(atencion.servicios)}</div>
       </td>
 
-      {/** Observación */}
-      <td className="p-3 text-center" style={{ width: '320px', maxWidth: '320px', minWidth: '320px' }}>
-        <div className="truncate" style={{ maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }} title={atencion.observacion || '-'}>
-          {atencion.observacion || '-'}
-        </div>
+      {/** Observación - ancho máximo para hasta 255 caracteres */}
+      <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
+        <div className="min-w-[300px] max-w-2xl break-words mx-auto leading-relaxed">{atencion.observacion || '-'}</div>
       </td>
 
       {/** Columnas de auditoría solo para ADMINISTRADOR */}
       {isAdmin && (
         <>
-          <td className="p-3 text-center w-64">
-            <div className="truncate">{atencion.nombre_usuario_modificacion || '-'}</div>
+          <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
+            <div className="max-w-xs break-words mx-auto">{atencion.nombre_usuario_modificacion || '-'}</div>
           </td>
-          <td className="p-3 text-center w-40 whitespace-nowrap">
+          <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-center w-40">
             {formatFechaModificacion(atencion.fecha_modificacion)}
           </td>
         </>

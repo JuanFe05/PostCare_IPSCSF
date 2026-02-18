@@ -6,9 +6,8 @@ import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, acquireUserLo
 import Swal from "sweetalert2";
 import UserForm from "../components/UserForm";
 import UserTable from "../components/UserTable";
-import ExportExcel from "../../../components/exportExcel/ExportExcelButton";
-import Search from "../../../components/search/Search";
-import { IoMdAddCircleOutline } from "react-icons/io";
+import { exportToExcel } from '../../../utils/exportToExcel';
+import { Card, CardHeader, CardBody, Button } from "../../../components/notus";
 
 export default function UsersPage() {
   const [showAddUser, setShowAddUser] = useState(false);
@@ -126,49 +125,68 @@ export default function UsersPage() {
   }, [heldLockId]);
 
   return (
-    <div className="py-6">
-      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <span>Gestión de Usuarios</span>
-      </h2>
-
-      <div className="mb-6 flex items-center justify-between">
-        {/* CONTENEDOR IZQUIERDO (Agregar + Exportar Excel) */}
-        <div className="flex-shrink-0 flex items-center gap-3">
+    <div>
+      <Card>
+        <CardHeader color="lightBlue" className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <i className="fas fa-users-cog text-2xl text-white"></i>
+            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Usuarios</h6>
+          </div>
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
             if (role === 'ADMINISTRADOR') {
               return (
-                <>
-                  {/* Botón AGREGAR USUARIO */}
-                  <button
+                <div className="flex items-center gap-3">
+                  <Button
                     onClick={() => setShowAddUser(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer"
+                    color="white"
+                    size="sm"
                   >
-                    <IoMdAddCircleOutline />
-                    Agregar nuevo usuario
-                  </button>
-
-                  {/* Botón EXPORTAR EXCEL */}
-                  <ExportExcel data={usuarios} fileName="usuarios.xlsx" />
-                </>
+                    <i className="fas fa-plus mr-2"></i>
+                    AGREGAR USUARIO
+                  </Button>
+                  <Button
+                    color="white"
+                    size="sm"
+                    onClick={() => exportToExcel(usuarios, 'usuarios')}
+                  >
+                    <i className="fas fa-file-excel mr-2"></i>
+                    EXPORTAR
+                  </Button>
+                </div>
               );
             }
-
-            return (
-              <p className="text-sm text-gray-600">
-                Solo administradores pueden gestionar usuarios.
-              </p>
-            );
+            return null;
           })()}
-        </div>
+        </CardHeader>
+        
+        <CardBody>
+          {/* Buscador */}
+          <div className="mb-8 flex justify-end">
+            <div className="relative max-w-md w-full">
+              <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input
+                type="text"
+                placeholder="Buscar usuarios..."
+                value={searchTerm}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 h-[52px] border-2 border-gray-200 rounded-lg bg-white font-medium shadow-sm hover:shadow-lg hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-all duration-200"
+                title="Buscar por: ID, Nombre de Usuario o Email"
+              />
+            </div>
+          </div>
 
-        <Search 
-          value={searchTerm} 
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
-          onClear={() => setSearchTerm('')} 
-          placeholder="Buscar por ID, Usuario o Correo"
-        />
-      </div>
+          {/* Tabla */}
+          <UserTable
+            usuarios={usuarios}
+            loading={loading}
+            searchTerm={searchTerm}
+            auth={auth}
+            attemptEdit={attemptEdit}
+            handleEliminar={handleEliminar}
+          />
+        </CardBody>
+      </Card>
 
       {/* Modal Agregar Usuario */}
       {showAddUser && (
@@ -226,16 +244,6 @@ export default function UsersPage() {
           />
         </div>
       )}
-
-      {/* Tabla de Usuarios */}
-      <UserTable
-        usuarios={usuarios}
-        loading={loading}
-        searchTerm={searchTerm}
-        auth={auth}
-        attemptEdit={attemptEdit}
-        handleEliminar={handleEliminar}
-      />
     </div>
   );
 }

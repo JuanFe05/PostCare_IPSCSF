@@ -5,8 +5,8 @@ import EstadoForm from '../components/EstadoForm';
 import { getEstados, createEstado, updateEstado, deleteEstado } from '../Estado.api';
 import type { EstadoAtencion } from '../types';
 import Swal from 'sweetalert2';
-import Search from '../../../components/search/Search';
-import { IoMdAddCircleOutline } from 'react-icons/io';
+import { exportToExcel } from '../../../utils/exportToExcel';
+import { Card, CardHeader, CardBody, Button } from '../../../components/notus';
 
 export default function EstadosPage() {
   const { auth } = useAuth();
@@ -45,23 +45,54 @@ export default function EstadosPage() {
   const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
 
   return (
-    <div className="py-6">
-      <h2 className="text-2xl font-bold mb-6">Gestión de Estados de Atención</h2>
-
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex-shrink-0 flex items-center gap-3">
-          {role === 'ADMINISTRADOR' ? (
-            <button onClick={() => setShowAdd(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer">
-              <IoMdAddCircleOutline />
-              Agregar estado
-            </button>
-          ) : (
-            <p className="text-sm text-gray-600">Solo administradores pueden gestionar estados.</p>
+    <div>
+      <Card>
+        <CardHeader color="lightBlue" className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <i className="fas fa-tasks text-2xl text-white"></i>
+            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Estados de Atención</h6>
+          </div>
+          {role === 'ADMINISTRADOR' && (
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => setShowAdd(true)}
+                color="white"
+                size="sm"
+              >
+                <i className="fas fa-plus mr-2"></i>
+                AGREGAR ESTADO
+              </Button>
+              <Button
+                color="white"
+                size="sm"
+                onClick={() => exportToExcel(estados, 'estados')}
+              >
+                <i className="fas fa-file-excel mr-2"></i>
+                EXPORTAR
+              </Button>
+            </div>
           )}
-        </div>
+        </CardHeader>
+        
+        <CardBody>
+          {/* Buscador */}
+          <div className="mb-8 flex justify-end">
+            <div className="relative max-w-md w-full">
+              <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input
+                type="text"
+                placeholder="Buscar estados..."
+                value={searchTerm}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 h-[52px] border-2 border-gray-200 rounded-lg bg-white font-medium shadow-sm hover:shadow-lg hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-all duration-200"
+                title="Buscar por: ID, Nombre o Descripción"
+              />
+            </div>
+          </div>
 
-        <Search value={searchTerm} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} onClear={() => setSearchTerm('')} placeholder="Buscar por ID, nombre o descripción" />
-      </div>
+          <EstadoTable estados={estados} loading={loading} searchTerm={searchTerm} auth={auth} attemptEdit={attemptEdit} handleEliminar={handleEliminar} />
+        </CardBody>
+      </Card>
 
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -97,8 +128,6 @@ export default function EstadosPage() {
           }} />
         </div>
       )}
-
-      <EstadoTable estados={estados} loading={loading} searchTerm={searchTerm} auth={auth} attemptEdit={attemptEdit} handleEliminar={handleEliminar} />
     </div>
   );
 }

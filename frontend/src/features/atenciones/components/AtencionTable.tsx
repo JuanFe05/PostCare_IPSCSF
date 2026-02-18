@@ -2,6 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import type { Atencion } from "../types";
 import AtencionRow from "./AtencionRow";
 import AtencionPagination from "./AtencionPagination";
+import { Table, VirtualizedTable } from '../../../components/notus';
+
+// Umbral para activar virtualización (performance con datasets grandes)
+const VIRTUALIZATION_THRESHOLD = 100;
 
 interface AtencionTableProps {
   atenciones: Atencion[];
@@ -25,8 +29,6 @@ export default function AtencionTable({
   handleEliminar 
 }: AtencionTableProps) {
   // ==================== Estado ====================
-  const [sortKey, setSortKey] = useState<string | null>('fecha_atencion');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>('desc');
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 10;
 
@@ -37,6 +39,7 @@ export default function AtencionTable({
 
   // ==================== Definición de Columnas ====================
   const columns = [
+    { Header: 'Acciones', accessor: 'acciones' },
     { Header: 'Estado', accessor: 'nombre_estado_atencion' },
     { Header: 'Seguimiento', accessor: 'nombre_seguimiento_atencion' },
     { Header: 'ID Atención', accessor: 'id_atencion' },
@@ -88,36 +91,26 @@ export default function AtencionTable({
       return true;
     });
 
-    // Ordenar
-    if (!sortKey || !sortDir) {
-      // Orden por defecto: fecha_atencion descendente
-      const sorted = [...byFilters].sort((a: any, b: any) => {
-        const dateA = new Date(a.fecha_atencion);
-        const dateB = new Date(b.fecha_atencion);
-        return dateB.getTime() - dateA.getTime();
-      });
-      return sorted;
-    }
+    // Ordenar por fecha_atencion descendente (más reciente primero)
     const sorted = [...byFilters].sort((a: any, b: any) => {
-      const va = (a as any)[sortKey];
-      const vb = (b as any)[sortKey];
-      if (va == null && vb == null) return 0;
-      if (va == null) return sortDir === 'asc' ? -1 : 1;
-      if (vb == null) return sortDir === 'asc' ? 1 : -1;
-      if (typeof va === 'number' && typeof vb === 'number') {
-        return sortDir === 'asc' ? va - vb : vb - va;
-      }
-      return sortDir === 'asc' ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+      const dateA = new Date(a.fecha_atencion);
+      const dateB = new Date(b.fecha_atencion);
+      return dateB.getTime() - dateA.getTime();
     });
+    
     return sorted;
-  }, [atenciones, searchTerm, sortKey, sortDir, selectedEstadoId, selectedSeguimientoId]);
+  }, [atenciones, searchTerm, selectedEstadoId, selectedSeguimientoId]);
 
-  // Calcular datos paginados
+  // Determinar si usar virtualización
+  const useVirtualization = displayed.length > VIRTUALIZATION_THRESHOLD;
+
+  // Calcular datos paginados (solo si no se usa virtualización)
   const pageCount = Math.ceil(displayed.length / pageSize);
   const paginatedData = useMemo(() => {
+    if (useVirtualization) return displayed; // Mostrar todos si se virtualiza
     const start = pageIndex * pageSize;
     return displayed.slice(start, start + pageSize);
-  }, [displayed, pageIndex, pageSize]);
+  }, [displayed, pageIndex, pageSize, useVirtualization]);
 
   // ==================== Efectos ====================
   // Reset page cuando cambia el filtro
@@ -125,82 +118,82 @@ export default function AtencionTable({
     setPageIndex(0);
   }, [searchTerm, selectedEstadoId, selectedSeguimientoId]);
 
-  // ==================== Handlers ====================
-  const toggleSort = (key: string) => {
-    if (sortKey !== key) {
-      setSortKey(key);
-      setSortDir('asc');
-      return;
-    }
-    if (sortDir === 'asc') setSortDir('desc');
-    else if (sortDir === 'desc') {
-      setSortKey(null);
-      setSortDir(null);
-    } else setSortDir('asc');
-  };
+  // ==================== Renderizado ====================
+  const headers = visibleColumns.map(c => c.Header);
 
-  return loading ? (
-    <div className="text-center py-8">Cargando atenciones...</div>
-  ) : (
-    <div className="bg-white rounded-lg shadow overflow-hidden w-full">
-      <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
-        <table className="text-xs divide-y border-collapse" style={{ minWidth: '2800px' }}>
-        {/* Header */}
-        <thead className="bg-blue-100 text-blue-900 select-none sticky top-0 z-10">
-          <tr>
-            <th className="p-3 font-semibold w-30 text-center whitespace-nowrap">Acciones</th>
-            {visibleColumns.map((col: any) => {
-              return (
-                <th 
-                  key={col.accessor} 
-                  className={`p-3 font-semibold text-center whitespace-nowrap ${
-                    (col.accessor === 'nombre_estado_atencion' || col.accessor === 'nombre_seguimiento_atencion') ? 'w-40' : (col.accessor === 'id_atencion' || col.accessor === 'id_paciente' || col.accessor === 'fecha_atencion') ? 'w-32' : (col.accessor === 'telefono_uno' || col.accessor === 'telefono_dos' ? 'w-32' : (col.accessor === 'nombre_paciente' || col.accessor === 'nombre_empresa' ? 'w-96' : (col.accessor === 'email' ? 'w-68' : (col.accessor === 'servicios' ? 'w-96' : (col.accessor === 'nombre_usuario_modificacion' ? 'w-64' : (col.accessor === 'fecha_modificacion' ? 'w-40' : ''))))))
-                  } ${
-                    col.accessor === 'servicios' || col.accessor === 'id_atencion' || col.accessor === 'observacion' ? '' : 'cursor-pointer'
-                  }`}
-                  style={col.accessor === 'observacion' ? { width: '320px', maxWidth: '320px', minWidth: '320px' } : undefined}
-                  onClick={() => col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && col.accessor !== 'observacion' && toggleSort(col.accessor)}
-                >
-                  <div className="flex items-center justify-center gap-1">
-                    <span>{col.Header}</span>
-                    {col.accessor !== 'servicios' && col.accessor !== 'id_atencion' && col.accessor !== 'observacion' && (
-                      <span className="inline-flex flex-col ml-1 text-[10px] leading-none">
-                        <span className={sortKey === col.accessor && sortDir === 'asc' ? 'text-blue-700' : 'text-gray-300'}>▲</span>
-                        <span className={sortKey === col.accessor && sortDir === 'desc' ? 'text-blue-700' : 'text-gray-300'}>▼</span>
-                      </span>
-                    )}
-                  </div>
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-
-        {/* Body */}
-        <tbody className="bg-white">
-          {paginatedData.length === 0 ? (
-            <tr>
-              <td colSpan={1 + visibleColumns.length} className="p-6 text-center text-gray-500">No se encontraron atenciones.</td>
-            </tr>
-          ) : (
-            paginatedData.map((atencion: Atencion, ridx: number) => {
-              const globalIdx = pageIndex * pageSize + ridx;
-              return (
-                <tr key={atencion.id_atencion} className={`${globalIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
-                  <AtencionRow
-                    atencion={atencion}
-                    idx={globalIdx}
-                    auth={auth}
-                    attemptEdit={attemptEdit}
-                    handleEliminar={handleEliminar}
-                  />
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <i className="fas fa-spinner fa-spin text-3xl text-blue-500" />
+        <p className="mt-2 text-gray-600">Cargando atenciones...</p>
       </div>
+    );
+  }
+
+  if (atenciones.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <i className="fas fa-inbox text-4xl mb-2" />
+        <p>No hay atenciones registradas.</p>
+      </div>
+    );
+  }
+
+  if (displayed.length === 0) {
+    return (
+      <Table headers={headers} color="light">
+        <tr>
+          <td colSpan={visibleColumns.length} className="p-6 text-center text-gray-500 text-xs">
+            No se encontraron atenciones con los filtros aplicados.
+          </td>
+        </tr>
+      </Table>
+    );
+  }
+
+  // Renderizar con virtualización para datasets grandes
+  if (useVirtualization) {
+    return (
+      <div>
+        <div className="mb-4 text-sm text-gray-600 text-center">
+          Mostrando {displayed.length} atenciones (virtualizado para mejor rendimiento)
+        </div>
+        <VirtualizedTable headers={headers} color="light" rowHeight={80} height={600}>
+          {displayed.map((atencion: Atencion, idx: number) => (
+            <tr key={atencion.id_atencion}>
+              <AtencionRow
+                atencion={atencion}
+                idx={idx}
+                auth={auth}
+                attemptEdit={attemptEdit}
+                handleEliminar={handleEliminar}
+              />
+            </tr>
+          ))}
+        </VirtualizedTable>
+      </div>
+    );
+  }
+
+  // Renderizar con paginación tradicional para datasets pequeños
+  return (
+    <div>
+      <Table headers={headers}>
+        {paginatedData.map((atencion: Atencion, ridx: number) => {
+          const globalIdx = pageIndex * pageSize + ridx;
+          return (
+            <tr key={atencion.id_atencion}>
+              <AtencionRow
+                atencion={atencion}
+                idx={globalIdx}
+                auth={auth}
+                attemptEdit={attemptEdit}
+                handleEliminar={handleEliminar}
+              />
+            </tr>
+          );
+        })}
+      </Table>
 
       <AtencionPagination
         pageIndex={pageIndex}

@@ -6,6 +6,7 @@ import { getEmpresas, getEstadosAtencion, getSeguimientosAtencion, getServicios,
 import { getPacienteById } from '../../pacientes/Paciente.api';
 import { MdError, MdCheckCircle } from 'react-icons/md';
 import { FiUser, FiMail, FiPhone, FiCalendar, FiFileText, FiCheckSquare, FiList } from 'react-icons/fi';
+import { logger } from '../../../utils/logger';
 
 type AtencionFormProps = {
   onCancel: () => void;
@@ -76,40 +77,45 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
 
   const observacion = watch('observacion') || '';
 
+  // Cargar cat\u00e1logos y paciente en paralelo (optimizado)
   useEffect(() => {
-    console.log('Iniciando carga de catálogos...');
-    Promise.all([
-      getTiposDocumento(),
-      getEmpresas(),
-      getEstadosAtencion(),
-      getSeguimientosAtencion(),
-      getServicios()
-    ])
-      .then(([tipos, emp, est, seg, serv]) => {
-        console.log('Tipos documento cargados:', tipos);
-        console.log('Empresas cargadas:', emp);
-        console.log('Estados cargados:', est);
-        console.log('Seguimientos cargados:', seg);
-        console.log('Servicios cargados:', serv);
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        logger.log('Iniciando carga de datos...');
         
+        // Crear array de promesas
+        const promises: Promise<any>[] = [
+          getTiposDocumento(),
+          getEmpresas(),
+          getEstadosAtencion(),
+          getSeguimientosAtencion(),
+          getServicios()
+        ];
+
+        // Agregar paciente si es modo edición
+        if (isEditMode && initialData?.id_paciente) {
+          promises.push(getPacienteById(initialData.id_paciente));
+        }
+
+        // Ejecutar todas las promesas en paralelo
+        const results = await Promise.all(promises);
+        
+        // Destructurar resultados
+        const [tipos, emp, est, seg, serv, paciente] = results;
+        
+        logger.log('Datos cargados:', { tipos, emp, est, seg, serv });
+        
+        // Actualizar catálogos
         setTiposDocumento(tipos);
         setEmpresas(emp);
         setEstados(est);
         setSeguimientos(seg);
         setServicios(serv);
-      })
-      .catch(err => console.error('Error cargando datos:', err))
-      .finally(() => setLoading(false));
-  }, []);
-
-  // Cargar datos del paciente en modo edición
-  useEffect(() => {
-    if (isEditMode && initialData?.id_paciente) {
-      console.log('Cargando datos del paciente:', initialData.id_paciente);
-      getPacienteById(initialData.id_paciente)
-        .then(paciente => {
-          console.log('Paciente cargado:', paciente);
-          // sync paciente data into the form
+        
+        // Si hay paciente, sincronizar datos
+        if (paciente) {
+          logger.log('Paciente cargado:', paciente);
           setValue('idTipoDocumento', paciente.id_tipo_documento);
           setValue('idPaciente', paciente.id);
           setValue('primerNombre', paciente.primer_nombre);
@@ -119,9 +125,15 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
           setValue('telefonoUno', paciente.telefono_uno || '');
           setValue('telefonoDos', paciente.telefono_dos || '');
           setValue('email', paciente.email || '');
-        })
-        .catch(err => console.error('Error cargando paciente:', err));
-    }
+        }
+      } catch (err) {
+        logger.error('Error cargando datos:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, [isEditMode, initialData?.id_paciente]);
 
   const onSubmit = rhfHandleSubmit(async (values) => {

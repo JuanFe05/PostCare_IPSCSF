@@ -1,6 +1,7 @@
 import { useState, createContext, useContext, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import type { User } from '../types/Auth.types';
+import { storage } from '../utils/storage';
 
 
 type AuthState = { token?: string | null; user?: User | null };
@@ -14,21 +15,18 @@ const INACTIVITY_TIMEOUT = 5 * 60 * 60 * 1000;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [auth, setAuth] = useState<AuthState>(() => {
-        const token = typeof globalThis.window !== 'undefined' ? localStorage.getItem('access_token') : null;
-        const user = typeof globalThis.window !== 'undefined' ? localStorage.getItem('user') : null;
-        return { token: token || null, user: user ? JSON.parse(user) : null };
+        const authData = storage.getAuth();
+        return { 
+          token: authData?.token || null, 
+          user: authData?.user || null 
+        };
     });
 
     const inactivityTimeoutRef = useRef<number | null>(null);
     const lastActivityRef = useRef<number>(Date.now());
 
     const logout = () => {
-        try {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('user');
-        } catch (e) {
-            // ignore
-        }
+        storage.clearAuth();
         setAuth({ token: null, user: null });
         // redirect to login
         if (typeof window !== 'undefined') {
@@ -59,8 +57,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         if (!auth?.token) return;
 
-        // Eventos que indican actividad del usuario
-        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        // Eventos que indican actividad del usuario con opciones passive
+        const events = [
+            { name: 'scroll', passive: true },
+            { name: 'touchstart', passive: true },
+            { name: 'touchmove', passive: true },
+            { name: 'mousedown', passive: false },
+            { name: 'keypress', passive: false },
+            { name: 'click', passive: false }
+        ];
         
         // Debounce para evitar resetear el timer con cada pequeño movimiento
         let debounceTimer: number | null = null;
@@ -73,9 +78,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }, 1000) as unknown as number; // Actualizar cada segundo como máximo
         };
 
-        // Agregar listeners
-        events.forEach(event => {
-            window.addEventListener(event, handleActivity);
+        // Agregar listeners con opciones passive donde corresponda
+        events.forEach(({ name, passive }) => {
+            window.addEventListener(name, handleActivity, { passive });
         });
 
         // Inicializar el timer
@@ -83,8 +88,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Cleanup
         return () => {
-            events.forEach(event => {
-                window.removeEventListener(event, handleActivity);
+            events.forEach(({ name }) => {
+                window.removeEventListener(name, handleActivity);
             });
             if (debounceTimer) {
                 window.clearTimeout(debounceTimer);
@@ -94,6 +99,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
         };
     }, [auth?.token]);
+
+    // Sincronizar con storage cuando cambia el auth
+    useEffect(() => {
+        if (auth?.token && auth?.user) {
+            storage.setAuth(auth.token, auth.user);
+        }
+    }, [auth?.token, auth?.user]);
 
     return <AuthContext.Provider value={{ auth, setAuth, logout }}>{children}</AuthContext.Provider>;
 };

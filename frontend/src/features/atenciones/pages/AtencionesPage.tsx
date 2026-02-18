@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import type { ChangeEvent } from "react";
-import { FaSyncAlt } from 'react-icons/fa';
 import { useAuth } from "../../../hooks/useAuth";
 import { useWebSocket } from "../../../hooks/useWebSocket";
 import type { Atencion, NewAtencionConPaciente, UpdateAtencion } from "../types";
@@ -11,10 +10,8 @@ import AtencionForm from "../components/AtencionForm";
 import SyncModal from "../components/SyncModal";
 import ExportDateRangeModal from "../components/ExportDateRangeModal";
 import AtencionTable from '../components/AtencionTable';
-import Search from "../../../components/search/Search";
-import { IoMdAddCircleOutline } from "react-icons/io";
+import { Card, CardHeader, CardBody, Button } from '../../../components/notus';
 import { prepareAtencionesPorServicio } from "../utils";
-import { PiMicrosoftExcelLogoFill } from "react-icons/pi";
 
 export default function AtencionesPage() {
   const [showAddAtencion, setShowAddAtencion] = useState(false);
@@ -289,123 +286,163 @@ export default function AtencionesPage() {
 
 
   return (
-    <div className="py-6 w-full max-w-[calc(100vw-290px)] mx-auto">
-      <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <span>Gestión de Atenciones</span>
-      </h2>
-
-      <div className="mb-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        <div className="flex-shrink-0 flex flex-wrap items-center gap-3">
+    <div>
+      <Card>
+        <CardHeader color="lightBlue" className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <i className="fas fa-clipboard-list text-2xl text-white"></i>
+            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Atenciones</h6>
+          </div>
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
             const isAdmin = role.includes('ADMINISTRADOR');
             const canAdd = isAdmin || role.includes('ASESOR') || role.includes('FACTURADOR');
 
             return (
-              <>
+              <div className="flex items-center gap-3">
                 {canAdd && (
-                  <button
+                  <Button
                     onClick={() => setShowAddAtencion(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 shadow flex items-center gap-2 cursor-pointer"
+                    color="white"
+                    size="sm"
                   >
-                    <IoMdAddCircleOutline />
-                    Agregar nueva atención
-                  </button>
+                    <i className="fas fa-plus mr-2"></i>
+                    AGREGAR ATENCIÓN
+                  </Button>
                 )}
 
                 {isAdmin && (
                   <>
-                    <button
+                    <Button
                       onClick={() => setShowSyncModal(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700 shadow cursor-pointer"
+                      color="white"
+                      size="sm"
                       title="Sincronizar desde Clínica Florida"
                     >
-                      <FaSyncAlt />
-                      Sincronizar
-                    </button>
+                      <i className="fas fa-sync-alt mr-2"></i>
+                      SINCRONIZAR
+                    </Button>
 
-                    <button
+                    <Button
                       onClick={() => setShowExportModal(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 shadow cursor-pointer"
+                      color="white"
+                      size="sm"
                       title="Exportar a Excel"
                     >
-                      <PiMicrosoftExcelLogoFill size={24} />
-                      Exportar
-                    </button>
+                      <i className="fas fa-file-excel mr-2"></i>
+                      EXPORTAR
+                    </Button>
                   </>
                 )}
-              </>
+              </div>
             );
           })()}
-        </div>
-
-        <div className="flex-shrink-0 min-w-[300px] lg:min-w-[400px]">
-          <div className="flex items-center gap-2">
-            <Search 
-              value={searchTerm} 
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)} 
-              onClear={() => setSearchTerm('')} 
-              placeholder="Buscar..." 
-              title="Buscar por Id Atención, Id Paciente, Paciente o Empresa."
-            />
-            <div className="relative">
-              <select
-                value={selectedFilter ?? ''}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setSelectedFilter(v || null);
-                  if (!v) {
-                    setSelectedEstadoId(null);
-                    setSelectedSeguimientoId(null);
-                  } else {
-                    const [type, id] = v.split(':');
-                    if (type === 'estado') {
-                      setSelectedEstadoId(Number(id));
-                      setSelectedSeguimientoId(null);
-                    } else if (type === 'seguimiento') {
-                      setSelectedSeguimientoId(Number(id));
+        </CardHeader>
+        
+        <CardBody>
+          {/* Filtros y búsqueda */}
+          <div className="mb-8 flex flex-col lg:flex-row gap-4 items-center justify-between">
+            {/* Filtros a la izquierda */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Select estado/seguimiento con diseño mejorado estilo Notus */}
+              <div className="relative">
+                <select
+                  value={selectedFilter ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setSelectedFilter(v || null);
+                    if (!v) {
                       setSelectedEstadoId(null);
+                      setSelectedSeguimientoId(null);
                     } else {
-                      setSelectedEstadoId(null);
-                      setSelectedSeguimientoId(null);
+                      const [type, id] = v.split(':');
+                      if (type === 'estado') {
+                        setSelectedEstadoId(Number(id));
+                        setSelectedSeguimientoId(null);
+                      } else if (type === 'seguimiento') {
+                        setSelectedSeguimientoId(Number(id));
+                        setSelectedEstadoId(null);
+                      } else {
+                        setSelectedEstadoId(null);
+                        setSelectedSeguimientoId(null);
+                      }
                     }
+                  }}
+                  className="h-[52px] pl-4 pr-10 bg-white border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-700 shadow-sm hover:shadow-lg hover:border-blue-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition-all duration-200 cursor-pointer appearance-none min-w-[260px]"
+                  title="Filtrar por estado o seguimiento"
+                >
+                  <option value="">Estado / Seguimiento</option>
+                  {estados.length > 0 && (
+                    <optgroup label="Estados" className="font-semibold">
+                      {estados.map((st: any) => (
+                        <option key={`estado-${st.id}`} value={`estado:${st.id}`}>{st.nombre}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {seguimientos.length > 0 && (
+                    <optgroup label="Seguimientos" className="font-semibold">
+                      {seguimientos.map((sg: any) => (
+                        <option key={`seguimiento-${sg.id}`} value={`seguimiento:${sg.id}`}>{sg.nombre}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                  <i className="fas fa-chevron-down text-blue-500 text-sm"></i>
+                </div>
+              </div>
+
+              {/* Date picker mejorado - wrapper clickeable */}
+              <div 
+                className="relative group cursor-pointer"
+                onClick={(e) => {
+                  const input = e.currentTarget.querySelector('input[type="date"]') as HTMLInputElement;
+                  if (input && e.target === e.currentTarget) {
+                    input.showPicker?.();
                   }
                 }}
-                className="h-10 px-3 pr-10 border border-gray-300 rounded-md bg-white text-sm shadow-sm hover:shadow-md transition-shadow duration-150 cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[260px]"
-                title="Filtrar por estado o seguimiento"
               >
-              <option value="">Estado / Seguimiento</option>
-              {estados.length > 0 && (
-                <optgroup label="Estados">
-                  {estados.map((st: any) => (
-                    <option key={`estado-${st.id}`} value={`estado:${st.id}`}>{st.nombre}</option>
-                  ))}
-                </optgroup>
-              )}
-              {seguimientos.length > 0 && (
-                <optgroup label="Seguimientos">
-                  {seguimientos.map((sg: any) => (
-                    <option key={`seguimiento-${sg.id}`} value={`seguimiento:${sg.id}`}>{sg.nombre}</option>
-                  ))}
-                </optgroup>
-              )}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center"> 
-                <svg className="w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M10 12a1 1 0 01-.707-.293l-3-3a1 1 0 011.414-1.414L10 9.586l2.293-2.293a1 1 0 011.414 1.414l-3 3A1 1 0 0110 12z" clipRule="evenodd" />
-                </svg>
+                <input
+                  type="date"
+                  value={selectedDate ?? ''}
+                  onChange={(e) => setSelectedDate(e.target.value ? e.target.value : null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    (e.target as HTMLInputElement).showPicker?.();
+                  }}
+                  className="h-[52px] w-full px-4 bg-white border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-700 shadow-sm hover:shadow-lg hover:border-blue-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition-all duration-200 cursor-pointer min-w-[200px]"
+                  style={{ colorScheme: 'light' }}
+                  title="Filtrar por fecha de atención"
+                />
               </div>
             </div>
-            <input
-              type="date"
-              value={selectedDate ?? ''}
-              onChange={(e) => setSelectedDate(e.target.value ? e.target.value : null)}
-              className="h-10 px-3 border border-gray-300 rounded-md bg-white text-sm shadow-sm hover:shadow-md transition-shadow duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              title="Filtrar por fecha"
-            />
+
+            {/* Buscador a la derecha */}
+            <div className="relative max-w-md w-full lg:w-auto lg:min-w-[350px]">
+              <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input
+                type="text"
+                placeholder="Buscar atenciones..."
+                value={searchTerm}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 h-[52px] border-2 border-gray-200 rounded-lg bg-white font-medium shadow-sm hover:shadow-lg hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-all duration-200"
+                title="Buscar por: ID Atención, ID Paciente, Nombre Paciente o Empresa"
+              />
+            </div>
           </div>
-        </div>
-      </div>
+
+          <AtencionTable 
+            atenciones={atenciones}
+            loading={loading}
+            searchTerm={searchTerm}
+            selectedEstadoId={selectedEstadoId}
+            selectedSeguimientoId={selectedSeguimientoId}
+            auth={auth}
+            attemptEdit={attemptEdit}
+            handleEliminar={handleEliminar}
+          />
+        </CardBody>
+      </Card>
 
       <SyncModal
         isOpen={showSyncModal}
@@ -487,17 +524,6 @@ export default function AtencionesPage() {
           />
         </div>
       )}
-
-      <AtencionTable 
-        atenciones={atenciones}
-        loading={loading}
-        searchTerm={searchTerm}
-        selectedEstadoId={selectedEstadoId}
-        selectedSeguimientoId={selectedSeguimientoId}
-        auth={auth}
-        attemptEdit={attemptEdit}
-        handleEliminar={handleEliminar}
-      />
     </div>
   );
 }
