@@ -1,4 +1,4 @@
-interface EmpresaPaginationProps {
+﻿interface EmpresaPaginationProps {
   pageIndex: number;
   pageOptions: any[];
   canPreviousPage: boolean;

@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react';
+﻿import { useMemo, useEffect } from 'react';
 import type { EstadoAtencion } from '../types';
 import EstadoRow from './EstadoRow';
 import EstadoPagination from './EstadoPagination';
@@ -35,7 +35,7 @@ export default function EstadoTable({ estados, loading, searchTerm, auth, attemp
 
   useEffect(() => {
     if (tableInstance.setPageSize) {
-      tableInstance.setPageSize(10);
+      tableInstance.setPageSize(7);
     }
   }, [tableInstance]);
 

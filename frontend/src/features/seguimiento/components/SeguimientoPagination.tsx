@@ -1,4 +1,4 @@
-﻿interface EstadoPaginationProps {
+interface SeguimientoPaginationProps {
   pageIndex: number;
   pageOptions: any[];
   canPreviousPage: boolean;
@@ -9,26 +9,18 @@
   previousPage: () => void;
 }
 
-export default function EstadoPagination({
-  pageIndex,
-  pageOptions,
-  canPreviousPage,
-  canNextPage,
-  dataLength,
-  gotoPage,
-  nextPage,
-  previousPage,
-}: EstadoPaginationProps) {
+export default function SeguimientoPagination({
+  pageIndex, pageOptions, canPreviousPage, canNextPage, dataLength, gotoPage, nextPage, previousPage,
+}: SeguimientoPaginationProps) {
   if (dataLength <= 7) return null;
 
   return (
     <div className="flex items-center justify-between mt-6 px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-700">
-          Mostrando <span className="font-semibold">{pageIndex * 7 + 1}</span> - <span className="font-semibold">{Math.min((pageIndex + 1) * 7, dataLength)}</span> de <span className="font-semibold">{dataLength}</span>
-        </span>
-      </div>
-
+      <span className="text-sm text-gray-700">
+        Mostrando <span className="font-semibold">{pageIndex * 7 + 1}</span> -{' '}
+        <span className="font-semibold">{Math.min((pageIndex + 1) * 7, dataLength)}</span> de{' '}
+        <span className="font-semibold">{dataLength}</span> tipos de seguimiento
+      </span>
       <div className="flex items-center gap-2">
         <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors ${!canPreviousPage ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 cursor-pointer'}`} title="Primera página">««</button>
         <button onClick={() => previousPage()} disabled={!canPreviousPage} className={`px-4 py-2 rounded-md border text-sm font-medium transition-colors ${!canPreviousPage ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 cursor-pointer'}`}>Anterior</button>

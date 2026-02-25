@@ -1,4 +1,4 @@
-import type { Paciente } from '../types';
+﻿import type { Paciente } from '../types';
 
 type Props = {
   paciente: Paciente;

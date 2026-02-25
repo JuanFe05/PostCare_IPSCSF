@@ -31,13 +31,13 @@ const Sidebar = () => {
   return (
     <>
       {/* Sidebar para móviles y desktop */}
-      <nav className="md:left-0 md:block md:fixed md:top-0 md:bottom-0 md:overflow-y-auto md:flex-row md:flex-nowrap md:overflow-hidden shadow-xl bg-gradient-to-br from-blue-600 to-sky-700 flex flex-wrap items-center justify-between relative md:w-64 z-10 py-4 px-6">
+      <nav className="md:left-0 md:block md:fixed md:top-0 md:bottom-0 md:overflow-y-auto md:flex-row md:flex-nowrap md:overflow-hidden shadow-xl flex flex-wrap items-center justify-between relative md:w-64 z-10 py-4 px-6" style={{ background: 'linear-gradient(to bottom right, #1a338e, #152156)' }}>
         <div className="md:flex-col md:items-stretch md:min-h-full md:flex-nowrap px-0 flex flex-wrap items-center justify-between w-full mx-auto">
           {/* Toggler para móviles */}
           <button
             className="cursor-pointer text-white opacity-80 md:hidden px-3 py-1 text-xl leading-none bg-transparent rounded border border-solid border-transparent"
             type="button"
-            onClick={() => setCollapseShow("bg-gradient-to-br from-blue-600 to-sky-700 m-2 py-3 px-6")}
+            onClick={() => setCollapseShow("m-2 py-3 px-6")}
           >
             <i className="fas fa-bars"></i>
           </button>
@@ -73,6 +73,7 @@ const Sidebar = () => {
           {/* Collapse */}
           <div
             className={`md:flex md:flex-col md:items-stretch md:opacity-100 md:relative md:mt-4 md:shadow-none shadow absolute top-0 left-0 right-0 z-40 overflow-y-auto overflow-x-hidden h-auto items-center flex-1 rounded ${collapseShow}`}
+            style={collapseShow !== 'hidden' ? { background: 'linear-gradient(to bottom right, #1a338e, #152156)' } : undefined}
           >
             {/* Botón cerrar en móviles */}
             <div className="md:min-w-full md:hidden block pb-4 mb-4 border-b border-solid border-blue-400">
@@ -109,7 +110,7 @@ const Sidebar = () => {
                 return (
                   <li key={item.path} className="items-center">
                     <Link
-                      className={`text-xs uppercase py-3 font-bold block transition-all ${
+                      className={`text-xs py-3 font-bold block transition-all ${
                         active
                           ? "text-white bg-blue-700 rounded-lg px-4"
                           : "text-blue-100 hover:text-white px-4"

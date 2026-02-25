@@ -94,7 +94,7 @@ export default function LoginForm() {
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-11 text-gray-400 hover:text-gray-600"
+          className="absolute right-3 top-11 text-gray-400 hover:text-gray-600 cursor-pointer"
         >
           <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
         </button>

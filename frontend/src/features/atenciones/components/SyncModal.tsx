@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FiCalendar } from 'react-icons/fi';
@@ -70,12 +70,12 @@ export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform transition-all">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-sky-700 px-6 py-5 rounded-t-2xl">
+        <div className="px-6 py-5 rounded-t-2xl" style={{ backgroundColor: '#1a338e' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div>
                 <h2 className="text-xl font-bold text-white">Sincronizar Datos</h2>
-                <p className="text-sky-100 text-sm">Desde la Base de Datos de la Clínica</p>
+                <p className="text-blue-200 text-sm">Desde la Base de Datos de la Clínica</p>
               </div>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function SyncModal({ isOpen, onClose, onSync }: SyncModalProps) {
             <button
               type="submit"
               disabled={loading || !startDate || !endDate}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
+              className="flex-1 px-6 py-3 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg" style={{ backgroundColor: '#1a338e' }} onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#152156')} onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1a338e')}
             >
               {loading ? (
                 <>

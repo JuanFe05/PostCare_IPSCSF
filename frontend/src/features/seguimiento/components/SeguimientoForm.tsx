@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { FiActivity } from 'react-icons/fi';
 import { MdError } from 'react-icons/md';
@@ -41,7 +41,7 @@ export default function SeguimientoForm({ onCancel, onSave, initial = null, isEd
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 transform transition-all">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-sky-700 px-6 py-5 rounded-t-2xl flex-shrink-0">
+        <div className="px-6 py-5 rounded-t-2xl flex-shrink-0" style={{ backgroundColor: '#1a338e' }}>
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-white">
@@ -58,9 +58,9 @@ export default function SeguimientoForm({ onCancel, onSave, initial = null, isEd
         <form onSubmit={handleSubmit(onSubmit, onError)} className="p-6">
           <div className="space-y-6">
             {/* Sección: Información del Seguimiento */}
-            <div className="bg-gradient-to-r from-blue-50 to-sky-50 rounded-lg p-4 border border-sky-200">
-              <h3 className="text-sm font-bold text-sky-900 mb-4 flex items-center gap-2">
-                <FiActivity className="text-sky-600" />
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <FiActivity className="text-blue-600" />
                 Información del Seguimiento
               </h3>
               <div className="space-y-4">
@@ -119,7 +119,7 @@ export default function SeguimientoForm({ onCancel, onSave, initial = null, isEd
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-sky-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
+              className="flex-1 px-6 py-3 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg" style={{ backgroundColor: '#1a338e' }} onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#152156')} onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1a338e')}
             >
               {isEdit ? 'Guardar cambios' : 'Guardar'}
             </button>

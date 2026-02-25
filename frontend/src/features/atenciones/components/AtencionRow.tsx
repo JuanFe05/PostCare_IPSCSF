@@ -1,4 +1,4 @@
-import type { Atencion } from '../types';
+﻿import type { Atencion } from '../types';
 
 type AtencionRowProps = {
   atencion: Atencion;

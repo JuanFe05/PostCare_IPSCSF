@@ -1,7 +1,9 @@
-import { useMemo } from "react";
+﻿import { useEffect, useMemo } from "react";
+import { useTable, usePagination } from 'react-table';
 import type { Service } from "../types";
 import ServiceRow from "./ServiceRow";
 import Table from "../../../components/notus/Table";
+import ServicePagination from './ServicePagination';
 
 interface ServiceTableProps {
   services: Service[];
@@ -20,9 +22,7 @@ export default function ServiceTable({
   attemptEdit,
   handleEliminar 
 }: ServiceTableProps) {
-
-  // displayed (filtered)
-  const displayed = useMemo(() => {
+  const data = useMemo(() => {
     return services.filter((s) => {
       if (!searchTerm) return true;
       const q = searchTerm.trim().toLowerCase();
@@ -32,6 +32,32 @@ export default function ServiceTable({
       return idMatch || nombreMatch || descMatch;
     });
   }, [services, searchTerm]);
+
+  const columns = useMemo(() => [
+    { Header: 'ID', accessor: 'id' as const },
+    { Header: 'Nombre', accessor: 'nombre' as const },
+    { Header: 'Descripción', accessor: 'descripcion' as const },
+    { Header: 'Acciones', accessor: 'id' as const },
+  ], []);
+
+  const tableInstance: any = useTable(
+    { columns, data, initialState: { pageIndex: 0 } as any },
+    usePagination
+  );
+  const {
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    state: { pageIndex },
+    gotoPage,
+    nextPage,
+    previousPage,
+  } = tableInstance;
+
+  useEffect(() => {
+    if (tableInstance.setPageSize) tableInstance.setPageSize(7);
+  }, [tableInstance]);
 
   return loading ? (
     <div className="text-center py-8">
@@ -44,25 +70,40 @@ export default function ServiceTable({
       <p>No hay servicios registrados.</p>
     </div>
   ) : (
-    <Table headers={['ID', 'Nombre', 'Descripción', 'Acciones']} color="light">
-      {displayed.length === 0 ? (
-        <tr>
-          <td colSpan={4} className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-center whitespace-nowrap p-4">
-            No se encontraron servicios que coincidan con "{searchTerm}".
-          </td>
-        </tr>
-      ) : (
-        displayed.map((s) => (
-          <tr key={s.id}>
-            <ServiceRow 
-              service={s} 
-              auth={auth} 
-              attemptEdit={attemptEdit} 
-              handleEliminar={handleEliminar} 
-            />
+    <div>
+      <Table headers={['ID', 'Nombre', 'Descripción', 'Acciones']} color="light">
+        {data.length === 0 ? (
+          <tr>
+            <td colSpan={4} className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-center whitespace-nowrap p-4">
+              No se encontraron servicios que coincidan con "{searchTerm}".
+            </td>
           </tr>
-        ))
-      )}
-    </Table>
+        ) : (
+          page.map((row: any) => {
+            const s: Service = row.original;
+            return (
+              <tr key={s.id} className="hover:bg-blue-50">
+                <ServiceRow
+                  service={s}
+                  auth={auth}
+                  attemptEdit={attemptEdit}
+                  handleEliminar={handleEliminar}
+                />
+              </tr>
+            );
+          })
+        )}
+      </Table>
+      <ServicePagination
+        pageIndex={pageIndex}
+        pageOptions={pageOptions}
+        canPreviousPage={canPreviousPage}
+        canNextPage={canNextPage}
+        dataLength={data.length}
+        gotoPage={gotoPage}
+        nextPage={nextPage}
+        previousPage={previousPage}
+      />
+    </div>
   );
 }

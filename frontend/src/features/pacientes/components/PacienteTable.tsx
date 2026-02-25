@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import type { Paciente } from '../types';
 import PacienteRow from './PacienteRow';
 import PacientePagination from './PacientePagination';
@@ -23,7 +23,7 @@ export default function PacienteTable({
   handleEliminar,
 }: PacienteTableProps) {
   const [pageIndex, setPageIndex] = useState(0);
-  const pageSize = 10;
+  const pageSize = 7;
   const VIRTUALIZATION_THRESHOLD = 100; // Usar virtualización si hay más de 100 registros
 
   // Filtrar pacientes por término de búsqueda

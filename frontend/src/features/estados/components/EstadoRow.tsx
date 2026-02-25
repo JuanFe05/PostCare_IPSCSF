@@ -1,4 +1,4 @@
-import type { EstadoAtencion } from '../types';
+﻿import type { EstadoAtencion } from '../types';
 import Swal from 'sweetalert2';
 
 interface EstadoRowProps {

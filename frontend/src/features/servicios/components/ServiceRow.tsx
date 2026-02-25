@@ -1,4 +1,4 @@
-import { memo } from 'react';
+﻿import { memo } from 'react';
 import type { Service } from "../types";
 
 type Props = {

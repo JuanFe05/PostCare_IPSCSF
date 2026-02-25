@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useForm } from 'react-hook-form';
 import type { NewAtencionConPaciente, UpdateAtencion, Atencion, TipoDocumento, Empresa, EstadoAtencion, SeguimientoAtencion, ServicioOption } from '../types';
@@ -216,7 +216,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 transform transition-all max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-sky-700 px-6 py-5 rounded-t-2xl flex-shrink-0">
+        <div className="px-6 py-5 rounded-t-2xl flex-shrink-0" style={{ backgroundColor: '#1a338e' }}>
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-white">
@@ -245,9 +245,9 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
             <div className="overflow-y-auto flex-1 p-6">
               <form onSubmit={onSubmit} className="space-y-6" id="atencion-form">
                 {/* Sección: Datos de la Atención */}
-                <div className="bg-gradient-to-r from-blue-50 to-sky-50 rounded-lg p-4 border border-sky-200">
-                  <h3 className="text-sm font-bold text-sky-900 mb-4 flex items-center gap-2">
-                    <FiFileText className="text-sky-600" />
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <FiFileText className="text-blue-600" />
                     Datos de la Atención
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
@@ -336,9 +336,9 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                 </div>
 
                 {/* Sección: Datos del Paciente */}
-                <div className="bg-gradient-to-r from-blue-50 to-sky-50 rounded-lg p-4 border border-sky-200">
-                  <h3 className="text-sm font-bold text-sky-900 mb-4 flex items-center gap-2">
-                    <FiUser className="text-sky-600" />
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <FiUser className="text-blue-600" />
                     Datos del Paciente
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
@@ -578,9 +578,9 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                 </div>
 
                 {/* Sección: Estado y Seguimiento */}
-                <div className="bg-gradient-to-r from-blue-50 to-sky-50 rounded-lg p-4 border border-sky-200">
-                  <h3 className="text-sm font-bold text-sky-900 mb-4 flex items-center gap-2">
-                    <FiCheckSquare className="text-sky-600" />
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <FiCheckSquare className="text-blue-600" />
                     Estado y Seguimiento
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
@@ -639,9 +639,9 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                 </div>
 
                 {/* Sección: Servicios */}
-                <div className="bg-gradient-to-r from-blue-50 to-sky-50 rounded-lg p-4 border border-sky-200">
-                  <h3 className="text-sm font-bold text-sky-900 mb-3 flex items-center gap-2">
-                    <FiList className="text-sky-600" />
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <FiList className="text-blue-600" />
                     Servicios
                   </h3>
                   <div className="border border-sky-200 rounded-lg p-4 max-h-48 overflow-y-auto bg-white shadow-sm">
@@ -656,7 +656,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                               checked={selectedServicios.includes(serv.id)}
                               onChange={() => toggleServicio(serv.id)}
                               disabled={!canEditFields}
-                              className="w-4 h-4 text-sky-600 focus:ring-sky-500 rounded"
+                              className="w-4 h-4 text-blue-600 focus:ring-sky-500 rounded"
                             />
                             <span className="text-sm">{serv.nombre}</span>
                           </label>
@@ -709,7 +709,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                 type="submit"
                 form="atencion-form"
                 disabled={loading}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-sky-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
+                className="flex-1 px-6 py-3 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg" style={{ backgroundColor: '#1a338e' }} onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#152156')} onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1a338e')}
               >
                 {loading ? (
                   <>

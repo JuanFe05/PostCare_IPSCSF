@@ -27,20 +27,25 @@ interface CardHeaderProps {
 }
 
 export function CardHeader({ children, className = '', color = 'lightBlue' }: CardHeaderProps) {
-  const colorClasses = {
+  const colorClasses: Record<string, string> = {
     red: 'bg-red-500',
     orange: 'bg-orange-500',
     amber: 'bg-amber-500',
     emerald: 'bg-emerald-500',
     teal: 'bg-teal-500',
-    lightBlue: 'bg-blue-500',
+    lightBlue: '',
     indigo: 'bg-indigo-500',
     purple: 'bg-purple-500',
     pink: 'bg-pink-500'
   };
 
+  const isLightBlue = color === 'lightBlue';
+
   return (
-    <div className={`rounded-t mb-0 px-4 py-3 border-0 ${colorClasses[color]} ${className}`}>
+    <div
+      className={`rounded-t mb-0 px-4 py-3 border-0 ${colorClasses[color]} ${className}`}
+      style={isLightBlue ? { background: 'linear-gradient(to bottom right, #1a338e, #152156)' } : undefined}
+    >
       {children}
     </div>
   );

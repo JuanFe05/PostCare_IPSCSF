@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import type { Atencion } from "../types";
 import AtencionRow from "./AtencionRow";
 import AtencionPagination from "./AtencionPagination";
@@ -30,7 +30,7 @@ export default function AtencionTable({
 }: AtencionTableProps) {
   // ==================== Estado ====================
   const [pageIndex, setPageIndex] = useState(0);
-  const pageSize = 10;
+  const pageSize = 7;
 
   // ==================== Verificación de Roles ====================
   const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
