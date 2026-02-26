@@ -1,4 +1,4 @@
-import type { Empresa } from "../types";
+﻿import type { Empresa } from "../types";
 
 type Props = {
   empresa: Empresa;

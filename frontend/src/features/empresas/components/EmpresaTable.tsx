@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import type { Empresa } from "../types";
 import EmpresaRow from "./EmpresaRow";
 import EmpresaPagination from "./EmpresaPagination";

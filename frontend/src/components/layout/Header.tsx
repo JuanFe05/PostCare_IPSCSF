@@ -77,10 +77,13 @@ const Header = () => {
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer"
+              style={{ backgroundColor: '#1a338e' }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#152156')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1a338e')}
             >
               <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-                <i className="fas fa-user text-blue-500 text-sm"></i>
+                <i className="fas fa-user text-sm" style={{ color: '#1a338e' }}></i>
               </div>
               <span className="font-medium hidden md:block">{username || 'Usuario'}</span>
               <i className={`fas fa-chevron-down text-xs transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}></i>
@@ -89,7 +92,7 @@ const Header = () => {
             {isMenuOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
                 {/* Welcome Header */}
-                <div className="bg-blue-500 px-4 py-3">
+                <div className="px-4 py-3" style={{ background: 'linear-gradient(to bottom right, #1a338e, #152156)' }}>
                   <p className="text-white text-xs font-semibold uppercase tracking-wide">Bienvenido</p>
                 </div>
 

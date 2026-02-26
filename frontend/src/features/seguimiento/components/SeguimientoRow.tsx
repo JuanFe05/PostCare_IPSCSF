@@ -1,4 +1,4 @@
-import type { TipoSeguimiento } from "./SeguimientoTable";
+﻿import type { TipoSeguimiento } from "./SeguimientoTable";
 
 type Props = {
   tipo: TipoSeguimiento;

@@ -1,4 +1,4 @@
-type AtencionPaginationProps = {
+﻿type AtencionPaginationProps = {
   pageIndex: number;
   pageOptions: any[];
   canPreviousPage: boolean;

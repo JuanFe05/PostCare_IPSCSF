@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
@@ -9,6 +9,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: string;
 }
 
+const PRIMARY = '#1a338e';
+const SECONDARY = '#152156';
+
 export default function Button({
   children,
   color = 'lightBlue',
@@ -18,10 +21,13 @@ export default function Button({
   icon,
   className = '',
   disabled = false,
+  onMouseEnter,
+  onMouseLeave,
+  style,
   ...props
 }: ButtonProps) {
   const baseClasses = 'font-semibold uppercase transition-all duration-200 ease-in-out focus:outline-none focus:ring-4 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
-  
+
   const sizeClasses = {
     sm: 'text-xs px-4 py-2 rounded-md',
     md: 'text-sm px-6 py-3 rounded-lg',
@@ -29,7 +35,7 @@ export default function Button({
   };
 
   const solidColors = {
-    lightBlue: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-300 shadow-md hover:shadow-lg',
+    lightBlue: 'text-white focus:ring-blue-300 shadow-md hover:shadow-lg',
     red: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-300 shadow-md hover:shadow-lg',
     emerald: 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-300 shadow-md hover:shadow-lg',
     gray: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-300 shadow-md hover:shadow-lg',
@@ -38,7 +44,7 @@ export default function Button({
   };
 
   const outlineColors = {
-    lightBlue: 'bg-transparent border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white focus:ring-blue-300',
+    lightBlue: 'bg-transparent border-2 text-white focus:ring-blue-300',
     red: 'bg-transparent border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white focus:ring-red-300',
     emerald: 'bg-transparent border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white focus:ring-emerald-300',
     gray: 'bg-transparent border-2 border-gray-600 text-gray-600 hover:bg-gray-600 hover:text-white focus:ring-gray-300',
@@ -49,10 +55,33 @@ export default function Button({
   const colorClass = outline ? outlineColors[color] : solidColors[color];
   const widthClass = fullWidth ? 'w-full' : '';
 
+  // Inline styles para el color primario/secundario
+  const isLightBlue = color === 'lightBlue';
+  const inlineStyle: CSSProperties = isLightBlue
+    ? { backgroundColor: outline ? 'transparent' : PRIMARY, borderColor: PRIMARY, ...style }
+    : { ...style };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (isLightBlue && !disabled) {
+      e.currentTarget.style.backgroundColor = outline ? PRIMARY : SECONDARY;
+    }
+    onMouseEnter?.(e);
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (isLightBlue && !disabled) {
+      e.currentTarget.style.backgroundColor = outline ? 'transparent' : PRIMARY;
+    }
+    onMouseLeave?.(e);
+  };
+
   return (
     <button
       className={`${baseClasses} ${sizeClasses[size]} ${colorClass} ${widthClass} ${className}`}
       disabled={disabled}
+      style={inlineStyle}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       {...props}
     >
       {icon && <i className={`${icon} mr-2`} />}
