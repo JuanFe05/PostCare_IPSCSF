@@ -1,13 +1,36 @@
+import React from 'react';
 import logoIPS from "../../assets/IPS.png";
-import { Link, useLocation } from "react-router-dom";
-import { useState } from 'react';
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useSidebar } from './SidebarContext';
 import { useAuth } from '../../hooks/useAuth';
+import Swal from 'sweetalert2';
 
 const Sidebar = () => {
   const location = useLocation();
-  const { auth } = useAuth();
+  const navigate = useNavigate();
+  const { auth, setAuth } = useAuth();
+  const { collapsed } = useSidebar();
   const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
-  const [collapseShow, setCollapseShow] = useState("hidden");
+  const [logoutHover, setLogoutHover] = React.useState(false);
+
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: 'Confirmar cierre de sesión',
+      text: '¿Estás seguro que deseas cerrar la sesión?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Cerrar sesión',
+      cancelButtonText: 'Cancelar',
+    });
+    if (result.isConfirmed) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('access_token');
+      if (setAuth) setAuth({ token: null, user: null });
+      navigate('/login');
+    }
+  };
 
   const navItems =
     role === 'ASESOR' || role === 'FACTURADOR'
@@ -29,105 +52,176 @@ const Sidebar = () => {
         ];
 
   return (
-    <>
-      {/* Sidebar para móviles y desktop */}
-      <nav className="md:left-0 md:block md:fixed md:top-0 md:bottom-0 md:overflow-y-auto md:flex-row md:flex-nowrap md:overflow-hidden shadow-xl flex flex-wrap items-center justify-between relative md:w-64 z-10 py-4 px-6" style={{ background: 'linear-gradient(to bottom right, #1a338e, #152156)' }}>
-        <div className="md:flex-col md:items-stretch md:min-h-full md:flex-nowrap px-0 flex flex-wrap items-center justify-between w-full mx-auto">
-          {/* Toggler para móviles */}
-          <button
-            className="cursor-pointer text-white opacity-80 md:hidden px-3 py-1 text-xl leading-none bg-transparent rounded border border-solid border-transparent"
-            type="button"
-            onClick={() => setCollapseShow("m-2 py-3 px-6")}
-          >
-            <i className="fas fa-bars"></i>
-          </button>
-
-          {/* Brand */}
-          <Link
-            className="md:block text-center md:pb-2 text-white mr-0 inline-block whitespace-nowrap text-sm uppercase font-bold p-4 px-0 w-full"
-            to="/dashboard"
-          >
-            <div className="flex flex-col items-center gap-2">
-              <div className="bg-white rounded-2xl p-2 shadow-md">
-                <img src={logoIPS} alt="Logo" className="h-12 w-12" />
-              </div>
-              <div className="text-center">
-                <h1 className="text-white font-bold text-sm leading-tight">
-                  IPS Clínica
-                </h1>
-                <p className="text-blue-100 text-xs">Salud Florida</p>
-              </div>
-            </div>
-          </Link>
-
-          {/* User para móviles */}
-          <ul className="md:hidden items-center flex flex-wrap list-none">
-            <li className="inline-block relative">
-              <span className="text-sm text-white block">
-                <i className="fas fa-user mr-2"></i>
-                {auth?.user?.username}
-              </span>
-            </li>
-          </ul>
-
-          {/* Collapse */}
-          <div
-            className={`md:flex md:flex-col md:items-stretch md:opacity-100 md:relative md:mt-4 md:shadow-none shadow absolute top-0 left-0 right-0 z-40 overflow-y-auto overflow-x-hidden h-auto items-center flex-1 rounded ${collapseShow}`}
-            style={collapseShow !== 'hidden' ? { background: 'linear-gradient(to bottom right, #1a338e, #152156)' } : undefined}
-          >
-            {/* Botón cerrar en móviles */}
-            <div className="md:min-w-full md:hidden block pb-4 mb-4 border-b border-solid border-blue-400">
-              <div className="flex flex-wrap">
-                <div className="w-6/12">
-                  <Link
-                    className="md:block text-left md:pb-2 text-white mr-0 inline-block whitespace-nowrap text-sm uppercase font-bold p-4 px-0"
-                    to="/dashboard"
-                  >
-                    PostCare
-                  </Link>
-                </div>
-                <div className="w-6/12 flex justify-end">
-                  <button
-                    type="button"
-                    className="cursor-pointer text-white opacity-80 md:hidden px-3 py-1 text-xl leading-none bg-transparent rounded border border-solid border-transparent"
-                    onClick={() => setCollapseShow("hidden")}
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Heading */}
-            <h6 className="md:min-w-full text-blue-100 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
-              Menú Principal
-            </h6>
-
-            {/* Navigation */}
-            <ul className="md:flex-col md:min-w-full flex flex-col list-none">
-              {navItems.map((item) => {
-                const active = location.pathname === item.path;
-                return (
-                  <li key={item.path} className="items-center">
-                    <Link
-                      className={`text-xs py-3 font-bold block transition-all ${
-                        active
-                          ? "text-white bg-blue-700 rounded-lg px-4"
-                          : "text-blue-100 hover:text-white px-4"
-                      }`}
-                      to={item.path}
-                    >
-                      <i className={`${item.icon} mr-2 text-sm`}></i>
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+    <aside
+      className="fixed top-0 left-0 bottom-0 z-30 flex flex-col overflow-hidden shadow-2xl"
+      style={{
+        width: collapsed ? '72px' : '240px',
+        transition: 'width 280ms cubic-bezier(0.4, 0, 0.2, 1)',
+        background: 'linear-gradient(165deg, #1a338e 0%, #152156 60%, #0e1640 100%)',
+      }}
+    >
+      {/* Logo / Brand */}
+      <Link
+        to="/dashboard"
+        className="flex items-center justify-center py-5 flex-shrink-0"
+        style={{ minHeight: '80px' }}
+        title="IPS Clínica Salud Florida"
+      >
+        <div
+          className="flex-shrink-0 bg-white rounded-xl flex items-center justify-center shadow-lg"
+          style={{ width: '40px', height: '40px' }}
+        >
+          <img src={logoIPS} alt="Logo" className="h-7 w-7 object-contain" />
         </div>
+        <div
+          className="overflow-hidden"
+          style={{
+            opacity: collapsed ? 0 : 1,
+            maxWidth: collapsed ? '0px' : '160px',
+            marginLeft: collapsed ? '0px' : '12px',
+            transition: 'opacity 200ms ease, max-width 280ms cubic-bezier(0.4,0,0.2,1), margin-left 280ms cubic-bezier(0.4,0,0.2,1)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <p className="text-white font-bold text-sm leading-tight">IPS Clínica</p>
+          <p className="text-blue-200 text-xs">Salud Florida</p>
+        </div>
+      </Link>
+
+      {/* Divider */}
+      <div className="mx-4 border-t border-white/10 flex-shrink-0" />
+
+      {/* Section label */}
+      <div
+        className="px-4 pt-4 pb-2 flex-shrink-0 overflow-hidden"
+        style={{
+          opacity: collapsed ? 0 : 1,
+          transition: 'opacity 180ms ease',
+          height: collapsed ? '0px' : 'auto',
+        }}
+      >
+        <span className="text-blue-300 text-[10px] font-bold uppercase tracking-widest">
+          Menú Principal
+        </span>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex flex-col gap-1 flex-1 overflow-y-auto overflow-x-hidden py-2" style={{ padding: '8px 4px' }}>
+        {navItems.map((item) => {
+          const active = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              title={collapsed ? item.label : undefined}
+              className="flex items-center rounded-xl transition-all duration-150 relative overflow-hidden"
+              style={{
+                background: active ? 'rgba(255,255,255,0.15)' : 'transparent',
+                boxShadow: active ? 'inset 0 0 0 1px rgba(255,255,255,0.12)' : 'none',
+                minHeight: '44px',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                gap: collapsed ? 0 : '12px',
+                padding: collapsed ? '10px 0' : '10px 12px',
+                transition: 'background 150ms, box-shadow 150ms, padding 280ms cubic-bezier(0.4,0,0.2,1), gap 280ms cubic-bezier(0.4,0,0.2,1)',
+              }}
+              onMouseEnter={e => {
+                if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+              }}
+              onMouseLeave={e => {
+                if (!active) e.currentTarget.style.background = active ? 'rgba(255,255,255,0.15)' : 'transparent';
+              }}
+            >
+              {/* Active indicator bar */}
+              {active && !collapsed && (
+                <span
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-r-full"
+                  style={{ height: '24px', background: '#60a5fa' }}
+                />
+              )}
+              <i
+                className={`${item.icon} flex-shrink-0 text-sm`}
+                style={{
+                  color: active ? '#ffffff' : '#93c5fd',
+                  width: '18px',
+                  textAlign: 'center',
+                  transition: 'color 150ms ease',
+                }}
+              />
+              <span
+                className="text-sm font-medium overflow-hidden whitespace-nowrap"
+                style={{
+                  color: active ? '#ffffff' : '#bfdbfe',
+                  opacity: collapsed ? 0 : 1,
+                  maxWidth: collapsed ? '0px' : '160px',
+                  transition: 'opacity 200ms ease, max-width 280ms cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
       </nav>
-    </>
+
+      {/* Bottom divider */}
+      <div className="mx-4 border-t border-white/10 flex-shrink-0" />
+
+      {/* User info footer + logout */}
+      <div
+        className="flex items-center flex-shrink-0 cursor-pointer"
+        style={{
+          minHeight: '64px',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          gap: collapsed ? 0 : '12px',
+          padding: collapsed ? '12px 0' : '12px 16px',
+          transition: 'padding 280ms cubic-bezier(0.4,0,0.2,1), gap 280ms cubic-bezier(0.4,0,0.2,1)',
+        }}
+        onClick={handleLogout}
+        title="Cerrar sesión"
+        onMouseEnter={() => setLogoutHover(true)}
+        onMouseLeave={() => setLogoutHover(false)}
+      >
+        <div
+          className="flex-shrink-0 rounded-full flex items-center justify-center"
+          style={{
+            width: '36px',
+            height: '36px',
+            background: logoutHover ? 'rgba(239,68,68,0.22)' : 'rgba(255,255,255,0.1)',
+            transition: 'background 200ms ease',
+          }}
+        >
+          <i
+            className="fas fa-sign-out-alt text-sm"
+            style={{
+              color: logoutHover ? '#fca5a5' : '#f87171',
+              transition: 'color 200ms ease',
+            }}
+          />
+        </div>
+        <div
+          className="overflow-hidden"
+          style={{
+            opacity: collapsed ? 0 : 1,
+            maxWidth: collapsed ? '0px' : '160px',
+            transition: 'opacity 200ms ease, max-width 280ms cubic-bezier(0.4, 0, 0.2, 1)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <p
+            className="text-xs font-semibold leading-tight"
+            style={{ color: logoutHover ? '#ffffff' : '#e2e8f0', transition: 'color 200ms' }}
+          >
+            {auth?.user?.username ?? 'Usuario'}
+          </p>
+          <p
+            className="text-[10px] font-medium"
+            style={{ color: logoutHover ? '#fca5a5' : '#fda4af', transition: 'color 200ms' }}
+          >
+            Cerrar sesión
+          </p>
+        </div>
+      </div>
+    </aside>
   );
 };
 
