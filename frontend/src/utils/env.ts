@@ -6,4 +6,4 @@ export const BACKEND_URL = runtimeBackendUrl || buildTimeBackendUrl || 'http://l
 const runtimeApiPrefix = (window as any).APP_CONFIG?.API_PREFIX;
 const buildTimeApiPrefix = import.meta.env.VITE_API_PREFIX;
 
-export const API_PREFIX = runtimeApiPrefix || buildTimeApiPrefix || '/api/v1';
+export const API_PREFIX = runtimeApiPrefix || buildTimeApiPrefix || '/api/v2';

@@ -308,3 +308,5 @@ sketch
 .claude/
 .github/
 skills-lock.json
+.env.production
+docker-compose.prod.yml
