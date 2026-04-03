@@ -43,6 +43,7 @@ services:
       JWT_ALGORITHM: ${JWT_ALGORITHM}
       JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES}
       CORS_ORIGINS: ${CORS_ORIGINS}
+      API_PREFIX: ${API_PREFIX:-/api/v1}
       # External Database (SQL Server)
       EXTERNAL_DB_HOST: ${EXTERNAL_DB_HOST}
       EXTERNAL_DB_PORT: ${EXTERNAL_DB_PORT}
@@ -61,12 +62,14 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_BACKEND_URL: ${VITE_BACKEND_URL}
+        VITE_API_PREFIX: ${API_PREFIX:-/api/v1}
     container_name: postcare_frontend
     restart: unless-stopped
     ports:
       - "41777:80"
     environment:
-      VITE_BACKEND_URL: ${FRONTEND_BACKEND_URL}
+      FRONTEND_BACKEND_URL: ${FRONTEND_BACKEND_URL}
+      API_PREFIX: ${API_PREFIX:-/api/v1}
     depends_on:
       - backend
     networks:

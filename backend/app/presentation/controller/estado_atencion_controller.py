@@ -7,7 +7,7 @@ from app.presentation.dto.estado_atencion_dto import (
 from app.service.implementation.estado_atencion_service_impl import EstadoAtencionServiceImpl
 from app.configuration.security.security_dependencies import get_current_admin, get_current_user_with_roles
 
-router = APIRouter(prefix="/estados_atenciones", tags=["EstadosAtenciones"])
+router = APIRouter(prefix="/estados-atenciones", tags=["EstadosAtenciones"])
 service = EstadoAtencionServiceImpl()
 
 

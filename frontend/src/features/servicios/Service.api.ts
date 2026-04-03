@@ -40,7 +40,7 @@ export const deleteService = async (id: number): Promise<void> => {
 
 export const acquireServiceLock = async (id: number): Promise<any> => {
   try {
-    const resp = await client.post(`/servicios/${id}/lock/acquire`);
+    const resp = await client.post(`/servicios/${id}/lock`);
     return resp.data;
   } catch (err: any) {
     // devolver objeto que indique fallo pero permitir editar en fallback
@@ -50,7 +50,7 @@ export const acquireServiceLock = async (id: number): Promise<any> => {
 
 export const releaseServiceLock = async (id: number): Promise<any> => {
   try {
-    const resp = await client.post(`/servicios/${id}/lock/release`);
+    const resp = await client.delete(`/servicios/${id}/lock`);
     return resp.data;
   } catch (err: any) {
     return { ok: false, error: err, unsupported: true };

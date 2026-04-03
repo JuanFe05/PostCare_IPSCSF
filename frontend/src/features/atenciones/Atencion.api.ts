@@ -109,7 +109,7 @@ export const getEmpresas = async (): Promise<Empresa[]> => {
 
 export const getEstadosAtencion = async (): Promise<EstadoAtencion[]> => {
   try {
-    const resp = await client.get("/estados_atenciones");
+    const resp = await client.get("/estados-atenciones");
     return Array.isArray(resp.data) ? resp.data : [];
   } catch (err) {
     console.error("Error cargando estados de atención:", err);
@@ -119,7 +119,7 @@ export const getEstadosAtencion = async (): Promise<EstadoAtencion[]> => {
 
 export const getSeguimientosAtencion = async (): Promise<SeguimientoAtencion[]> => {
   try {
-    const resp = await client.get("/seguimientos_atenciones");
+    const resp = await client.get("/seguimientos-atenciones");
     return Array.isArray(resp.data) ? resp.data : [];
   } catch (err) {
     console.error("Error cargando seguimientos de atención:", err);

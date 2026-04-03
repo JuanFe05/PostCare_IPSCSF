@@ -1,14 +1,13 @@
 import axios from 'axios';
 import { storage } from '../utils/storage';
-
-const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || 'http://localhost:48555';
+import { BACKEND_URL, API_PREFIX } from '../utils/env';
 
 // Cache para deduplicación de requests GET
 const pendingRequests = new Map<string, Promise<any>>();
 
 // Crear instancia centralizada de axios
 const axiosInstance = axios.create({
-  baseURL: API_URL,
+  baseURL: `${BACKEND_URL}${API_PREFIX}`,
   headers: {
     'Content-Type': 'application/json',
   },
