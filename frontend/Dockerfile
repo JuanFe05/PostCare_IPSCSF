@@ -1,5 +1,5 @@
 # ── Stage 1: builder ────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:20 AS builder
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY --from=builder /app/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/docker-entrypoint.sh /docker-entrypoint.sh
 
-# Normalizar fin de línea (disponible sin paquetes extra en Alpine)
+# Normalizar fin de línea
 RUN sed -i 's/\r$//' /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh
 
 EXPOSE 80

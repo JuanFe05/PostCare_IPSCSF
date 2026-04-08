@@ -23,7 +23,11 @@ export default function AtencionesPage() {
   const [atenciones, setAtenciones] = useState<Atencion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(() => {
+    const ayer = new Date();
+    ayer.setDate(ayer.getDate() - 1);
+    return ayer.toLocaleDateString('en-CA'); // YYYY-MM-DD en zona local
+  });
   const [estados, setEstados] = useState<any[]>([]);
   const [seguimientos, setSeguimientos] = useState<any[]>([]);
   const [selectedEstadoId, setSelectedEstadoId] = useState<number | null>(null);

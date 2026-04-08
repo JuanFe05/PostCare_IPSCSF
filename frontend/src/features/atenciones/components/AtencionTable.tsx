@@ -2,10 +2,7 @@
 import type { Atencion } from "../types";
 import AtencionRow from "./AtencionRow";
 import AtencionPagination from "./AtencionPagination";
-import { Table, VirtualizedTable } from '../../../components/notus';
-
-// Umbral para activar virtualización (performance con datasets grandes)
-const VIRTUALIZATION_THRESHOLD = 100;
+import { Table } from '../../../components/notus';
 
 interface AtencionTableProps {
   atenciones: Atencion[];
@@ -101,16 +98,12 @@ export default function AtencionTable({
     return sorted;
   }, [atenciones, searchTerm, selectedEstadoId, selectedSeguimientoId]);
 
-  // Determinar si usar virtualización
-  const useVirtualization = displayed.length > VIRTUALIZATION_THRESHOLD;
-
-  // Calcular datos paginados (solo si no se usa virtualización)
+  // Calcular datos paginados
   const pageCount = Math.ceil(displayed.length / pageSize);
   const paginatedData = useMemo(() => {
-    if (useVirtualization) return displayed; // Mostrar todos si se virtualiza
     const start = pageIndex * pageSize;
     return displayed.slice(start, start + pageSize);
-  }, [displayed, pageIndex, pageSize, useVirtualization]);
+  }, [displayed, pageIndex, pageSize]);
 
   // ==================== Efectos ====================
   // Reset page cuando cambia el filtro
@@ -151,31 +144,7 @@ export default function AtencionTable({
     );
   }
 
-  // Renderizar con virtualización para datasets grandes
-  if (useVirtualization) {
-    return (
-      <div>
-        <div className="mb-4 text-sm text-gray-600 text-center">
-          Mostrando {displayed.length} atenciones (virtualizado para mejor rendimiento)
-        </div>
-        <VirtualizedTable headers={headers} color="light" rowHeight={80} height={600}>
-          {displayed.map((atencion: Atencion, idx: number) => (
-            <tr key={atencion.id_atencion}>
-              <AtencionRow
-                atencion={atencion}
-                idx={idx}
-                auth={auth}
-                attemptEdit={attemptEdit}
-                handleEliminar={handleEliminar}
-              />
-            </tr>
-          ))}
-        </VirtualizedTable>
-      </div>
-    );
-  }
-
-  // Renderizar con paginación tradicional para datasets pequeños
+  // Renderizar con paginación
   return (
     <div>
       <Table headers={headers}>
