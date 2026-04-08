@@ -3,7 +3,6 @@ import type { Paciente } from '../types';
 import PacienteRow from './PacienteRow';
 import PacientePagination from './PacientePagination';
 import { Table } from '../../../components/notus';
-import VirtualizedTable from '../../../components/notus/VirtualizedTable';
 
 interface PacienteTableProps {
   pacientes: Paciente[];
@@ -24,7 +23,6 @@ export default function PacienteTable({
 }: PacienteTableProps) {
   const [pageIndex, setPageIndex] = useState(0);
   const pageSize = 7;
-  const VIRTUALIZATION_THRESHOLD = 100; // Usar virtualización si hay más de 100 registros
 
   // Filtrar pacientes por término de búsqueda
   const displayed = useMemo(() => {
@@ -42,15 +40,12 @@ export default function PacienteTable({
     );
   }, [pacientes, searchTerm]);
 
-  const useVirtualization = displayed.length > VIRTUALIZATION_THRESHOLD;
-
-  // Calcular datos paginados (solo si no se usa virtualización)
+  // Calcular datos paginados
   const pageCount = Math.ceil(displayed.length / pageSize);
   const paginatedData = useMemo(() => {
-    if (useVirtualization) return displayed; // Mostrar todos si se virtualiza
     const start = pageIndex * pageSize;
     return displayed.slice(start, start + pageSize);
-  }, [displayed, pageIndex, pageSize, useVirtualization]);
+  }, [displayed, pageIndex, pageSize]);
 
   // Reset page cuando cambia el filtro
   useEffect(() => {
@@ -100,31 +95,7 @@ export default function PacienteTable({
     );
   }
 
-  // Renderizar con virtualización para datasets grandes
-  if (useVirtualization) {
-    return (
-      <div>
-        <div className="mb-4 text-sm text-gray-600 text-center">
-          Mostrando {displayed.length} pacientes (virtualizado para mejor rendimiento)
-        </div>
-        <VirtualizedTable headers={headers} color="light" rowHeight={60} height={600}>
-          {displayed.map((paciente, idx) => (
-            <tr key={paciente.id}>
-              <PacienteRow
-                paciente={paciente}
-                idx={idx}
-                auth={auth}
-                attemptEdit={attemptEdit}
-                handleEliminar={handleEliminar}
-              />
-            </tr>
-          ))}
-        </VirtualizedTable>
-      </div>
-    );
-  }
-
-  // Renderizar con paginación tradicional para datasets pequeños
+  // Renderizar con paginación
   return (
     <div>
       <Table headers={headers} color="light">
