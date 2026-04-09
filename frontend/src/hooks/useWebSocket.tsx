@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { BACKEND_URL } from '../utils/env';
+import { BACKEND_URL, API_PREFIX } from '../utils/env';
 
 interface WebSocketMessage {
   event: 'create' | 'update' | 'delete';
@@ -28,7 +28,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
   const connect = useCallback(() => {
     // Convertir http/https a ws/wss
-    const wsUrl = BACKEND_URL.replace(/^http/, 'ws') + '/ws/updates';
+    const wsUrl = BACKEND_URL.replace(/^http/, 'ws') + API_PREFIX + '/ws/updates';
     
     console.log('[WebSocket] Conectando a:', wsUrl);
     

@@ -44,13 +44,13 @@ export default function StatsGrid({ stats, loading }: StatsGridProps) {
         iconBgClass="bg-emerald-400"
       />
       <StatCard
-        label="Porcentaje Atenciones Urgencias"
+        label="Atenciones Urgencias"
         value={`${stats.pctAdm}%`}
         iconClass="fas fa-percent"
         iconBgClass="bg-pink-400"
       />
       <StatCard
-        label="Porcentaje Atenciones Externas"
+        label="Atenciones Externas"
         value={`${stats.pctT}%`}
         iconClass="fas fa-chart-pie"
         iconBgClass="bg-purple-400"

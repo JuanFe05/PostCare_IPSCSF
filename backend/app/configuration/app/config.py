@@ -35,6 +35,9 @@ class Settings(BaseSettings):
 
     # Entorno de la aplicación
     APP_ENV: str = Field("development", env="APP_ENV")
+
+    # Prefijo global de la API (e.g. /api/v1)
+    API_PREFIX: str = Field("/api/v2", env="API_PREFIX")
     
     # Configuración de la base de datos externa (SQL Server)
     EXTERNAL_DB_HOST: Optional[str] = Field(None, env="EXTERNAL_DB_HOST")
