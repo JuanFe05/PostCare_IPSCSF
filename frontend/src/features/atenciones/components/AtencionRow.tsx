@@ -140,9 +140,18 @@ export default function AtencionRow({
         <div className="min-w-[250px] max-w-lg break-words mx-auto">{formatServicios(atencion.servicios)}</div>
       </td>
 
-      {/** Observación - ancho máximo para hasta 255 caracteres */}
+      {/** Observación — truncada a 80 caracteres en la vista de tabla */}
       <td className="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs p-4 text-center">
-        <div className="min-w-[300px] max-w-2xl break-words mx-auto leading-relaxed">{atencion.observacion || '-'}</div>
+        <div
+          className="min-w-[300px] max-w-2xl break-words mx-auto leading-relaxed"
+          title={atencion.observacion || ''}
+        >
+          {atencion.observacion
+            ? atencion.observacion.length > 80
+              ? `${atencion.observacion.slice(0, 80)}...`
+              : atencion.observacion
+            : '-'}
+        </div>
       </td>
 
       {/** Columnas de auditoría solo para ADMINISTRADOR */}

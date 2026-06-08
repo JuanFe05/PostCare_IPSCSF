@@ -13,7 +13,7 @@ import {
   releaseServiceLock,
   checkServiceLock,
 } from "../Service.api";
-import { Card, CardHeader, CardBody, Button } from '../../../components/notus';
+
 
 // Lazy loading del formulario pesado
 const ServiceForm = lazy(() => import("../components/ServiceForm"));
@@ -140,48 +140,100 @@ export default function ServiciosPage() {
   }, [heldLockId]);
 
   return (
-    <div>
-      <Card>
-        <CardHeader color="lightBlue" className="flex justify-between items-center">
+    <div className="animate-fade-in-up">
+      {/* Header de la página */}
+      <div
+        className="rounded-2xl mb-6 overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #0d1f6b 0%, #1a338e 55%, #2248b3 100%)',
+          boxShadow: '0 4px 20px rgba(13,31,107,0.2)',
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: 'radial-gradient(circle at 90% 50%, rgba(14,165,233,0.15) 0%, transparent 50%)',
+            borderRadius: 'inherit',
+            pointerEvents: 'none',
+          }}
+        />
+        <div className="relative flex items-center justify-between px-6 py-4 gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <i className="fas fa-medkit text-2xl text-white"></i>
-            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Servicios</h6>
+            <div
+              className="flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ width: '42px', height: '42px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
+            >
+              <i className="fas fa-medkit" style={{ color: 'white', fontSize: '1.1rem' }} />
+            </div>
+            <div>
+              <h2 style={{ fontFamily: "'Sora', sans-serif", color: 'white', fontSize: '1.05rem', fontWeight: 700, margin: 0, lineHeight: 1.3 }}>
+                Gestión de Servicios
+              </h2>
+              <p style={{ color: 'rgba(147,174,245,0.8)', fontSize: '0.78rem', margin: 0 }}>
+                {services.length > 0 ? `${services.length} registro${services.length !== 1 ? 's' : ''} cargados` : 'Cargando...'}
+              </p>
+            </div>
           </div>
           {(() => {
             const role = String(auth?.user?.role_name ?? "").trim().toUpperCase();
             if (role === "ADMINISTRADOR") {
               return (
-                <Button
-                  color="white"
-                  size="sm"
-                  onClick={() => setShowAdd(true)}
-                >
-                  <i className="fas fa-plus mr-2"></i>
-                  Agregar Servicio
-                </Button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => setShowAdd(true)}
+                    className="ui-btn ui-btn-ghost"
+                    style={{ height: '38px' }}
+                  >
+                    <i className="fas fa-plus" style={{ fontSize: '0.8rem' }} />
+                    Agregar Servicio
+                  </button>
+                </div>
               );
             }
             return null;
           })()}
-        </CardHeader>
+        </div>
+      </div>
 
-        <CardBody>
-          {/* Search bar */}
-          <div className="mb-8 flex justify-end">
-            <div className="relative max-w-md w-full">
-              <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              <input
-                type="text"
-                placeholder="Buscar servicios..."
-                value={searchTerm}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 h-[52px] border-2 border-gray-200 rounded-lg bg-white font-medium shadow-sm hover:shadow-lg hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-all duration-200"
-                title="Buscar por: ID, Nombre o Descripción"
-              />
-            </div>
+      {/* Tarjeta principal */}
+      <div className="ui-card animate-fade-in-up stagger-1">
+        {/* Barra de búsqueda */}
+        <div
+          style={{
+            padding: '1rem 1.5rem',
+            borderBottom: '1px solid var(--surface-border)',
+            background: 'var(--brand-50)',
+          }}
+        >
+          <div className="relative ml-auto" style={{ minWidth: '280px', flex: '1 1 280px', maxWidth: '400px' }}>
+            <i
+              className="fas fa-search"
+              style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--text-muted)',
+                fontSize: '0.78rem',
+                pointerEvents: 'none',
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Buscar servicios..."
+              value={searchTerm}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+              className="ui-input"
+              style={{ paddingLeft: '2.2rem', height: '40px', fontSize: '0.875rem' }}
+              title="Buscar por: ID, Nombre o Descripción"
+            />
           </div>
+        </div>
 
-          {/* Tabla de Servicios */}
+        {/* Tabla de Servicios */}
+        <div style={{ padding: '1.25rem 1.5rem' }}>
           <ServiceTable
             services={services}
             loading={loading}
@@ -190,13 +242,12 @@ export default function ServiciosPage() {
             attemptEdit={attemptEdit}
             handleEliminar={handleEliminar}
           />
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       {/* ADD MODAL */}
       {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <Suspense fallback={<div className="bg-white p-8 rounded-lg shadow-xl"><p className="text-gray-600">Cargando formulario...</p></div>}>
+        <Suspense fallback={<div className="bg-white p-8 rounded-lg shadow-xl"><p className="text-gray-600">Cargando formulario...</p></div>}>
             <ServiceForm
               onCancel={() => setShowAdd(false)}
               onSave={async ({ nombre }) => {
@@ -218,14 +269,12 @@ export default function ServiciosPage() {
               }
             }}
           />
-          </Suspense>
-        </div>
+        </Suspense>
       )}
 
       {/* EDIT MODAL */}
       {showEdit && editService && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <Suspense fallback={<div className="bg-white p-8 rounded-lg shadow-xl"><p className="text-gray-600">Cargando formulario...</p></div>}>
+        <Suspense fallback={<div className="bg-white p-8 rounded-lg shadow-xl"><p className="text-gray-600">Cargando formulario...</p></div>}>
             <ServiceForm
               isEdit
               initial={{ nombre: editService.nombre, descripcion: editService.descripcion }}
@@ -251,8 +300,7 @@ export default function ServiciosPage() {
               }
             }}
           />
-          </Suspense>
-        </div>
+        </Suspense>
       )}
     </div>
   );

@@ -5,7 +5,6 @@ import RoleForm from "../components/RoleForm";
 import RoleTable from "../components/RoleTable";
 import Swal from 'sweetalert2';
 import { exportToExcel } from '../../../utils/exportToExcel';
-import { Card, CardHeader, CardBody, Button } from '../../../components/notus';
 
 export interface Role {
   id: number;
@@ -96,44 +95,77 @@ export default function RolesPage() {
   }, [heldLockId]);
 
   return (
-    <div>
-      <Card>
-        <CardHeader color="lightBlue" className="flex justify-between items-center">
+    <div className="animate-fade-in-up">
+      {/* Header de la página */}
+      <div
+        className="rounded-2xl mb-6 overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #0d1f6b 0%, #1a338e 55%, #2248b3 100%)',
+          boxShadow: '0 4px 20px rgba(13,31,107,0.2)',
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: 'radial-gradient(circle at 90% 50%, rgba(14,165,233,0.15) 0%, transparent 50%)',
+            borderRadius: 'inherit',
+            pointerEvents: 'none',
+          }}
+        />
+        <div className="relative flex items-center justify-between px-6 py-4 gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <i className="fas fa-user-shield text-2xl text-white"></i>
-            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Roles</h6>
+            <div
+              className="flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ width: '42px', height: '42px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
+            >
+              <i className="fas fa-user-shield" style={{ color: 'white', fontSize: '1.1rem' }} />
+            </div>
+            <div>
+              <h2 style={{ fontFamily: "'Sora', sans-serif", color: 'white', fontSize: '1.05rem', fontWeight: 700, margin: 0, lineHeight: 1.3 }}>
+                Gestión de Roles
+              </h2>
+              <p style={{ color: 'rgba(147,174,245,0.8)', fontSize: '0.78rem', margin: 0 }}>
+                {roles.length > 0 ? `${roles.length} registro${roles.length !== 1 ? 's' : ''} cargados` : 'Cargando...'}
+              </p>
+            </div>
           </div>
           {(() => {
             const roleName = String(auth?.user?.role_name ?? '').trim().toUpperCase();
             if (roleName === 'ADMINISTRADOR') {
               return (
-                <Button
-                  color="white"
-                  size="sm"
-                  onClick={() => exportToExcel(roles, 'roles')}
-                >
-                  <i className="fas fa-file-excel mr-2"></i>
-                  EXPORTAR
-                </Button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => exportToExcel(roles, 'roles')}
+                    className="ui-btn ui-btn-ghost"
+                    style={{ height: '38px' }}
+                  >
+                    <i className="fas fa-file-excel" style={{ fontSize: '0.8rem' }} />
+                    Exportar
+                  </button>
+                </div>
               );
             }
             return null;
           })()}
-        </CardHeader>
-        
-        <CardBody>
+        </div>
+      </div>
+
+      {/* Tarjeta principal */}
+      <div className="ui-card animate-fade-in-up stagger-1">
+        <div style={{ padding: '1.25rem 1.5rem' }}>
           <RoleTable
             roles={roles}
             loading={loading}
             auth={auth}
             attemptEdit={attemptEdit}
           />
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       {/* EDIT MODAL */}
       {showEdit && editRole && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <RoleForm
             initial={editRole}
             isEdit={true}
@@ -156,7 +188,6 @@ export default function RolesPage() {
               }
             }}
           />
-        </div>
       )}
     </div>
   );

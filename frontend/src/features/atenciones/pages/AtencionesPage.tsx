@@ -1,5 +1,8 @@
-﻿import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback, useRef } from "react";
 import type { ChangeEvent } from "react";
+import React from "react";
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from "../../../hooks/useAuth";
 import { useWebSocket } from "../../../hooks/useWebSocket";
 import type { Atencion, NewAtencionConPaciente, UpdateAtencion, EstadoAtencion, SeguimientoAtencion } from "../types";
@@ -12,6 +15,22 @@ import ExportDateRangeModal from "../components/ExportDateRangeModal";
 import AtencionTable from '../components/AtencionTable';
 import { prepareAtencionesPorServicio } from "../utils";
 
+// Input personalizado para el DatePicker de fecha de atención
+const DateFilterInput = React.forwardRef<HTMLButtonElement, { value?: string; onClick?: () => void; isActive?: boolean }>(
+  ({ value, onClick, isActive }, ref) => (
+    <button
+      type="button"
+      ref={ref}
+      onClick={onClick}
+      className={`atf-filter-btn${isActive ? ' atf-filter-btn--active' : ''}`}
+    >
+      <i className="fas fa-calendar-alt" style={{ fontSize: '0.8rem', flexShrink: 0 }} />
+      <span className="atf-filter-btn-label">{value || 'Fecha atención'}</span>
+      {!isActive && <i className="fas fa-chevron-down atf-chevron" />}
+    </button>
+  )
+);
+
 export default function AtencionesPage() {
   const [showAddAtencion, setShowAddAtencion] = useState(false);
   const [showEditAtencion, setShowEditAtencion] = useState(false);
@@ -22,13 +41,15 @@ export default function AtencionesPage() {
   const [atenciones, setAtenciones] = useState<Atencion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [estados, setEstados] = useState<EstadoAtencion[]>([]);
   const [seguimientos, setSeguimientos] = useState<SeguimientoAtencion[]>([]);
   const [selectedEstadoId, setSelectedEstadoId] = useState<number | null>(null);
   const [selectedSeguimientoId, setSelectedSeguimientoId] = useState<number | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [heldLockId, setHeldLockId] = useState<string | null>(null);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
 
   const { auth } = useAuth();
   const { subscribe } = useWebSocket();
@@ -36,7 +57,7 @@ export default function AtencionesPage() {
   const loadAtenciones = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAtenciones(0, 500, selectedDate ?? undefined);
+      const data = await getAtenciones(0, 500, selectedDate ? selectedDate.toISOString().split('T')[0] : undefined);
       console.log("Atenciones recibidas:", data);
       console.log("Total de atenciones:", data.length);
       setAtenciones(data);
@@ -50,6 +71,17 @@ export default function AtencionesPage() {
   useEffect(() => {
     loadAtenciones();
   }, [loadAtenciones]);
+
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target as Node)) {
+        setShowFilterDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   // cargar listas para filtros
   useEffect(() => {
@@ -376,93 +408,124 @@ export default function AtencionesPage() {
           }}
         >
           <div className="flex flex-col sm:flex-row gap-3 items-center flex-wrap">
-            {/* Filtro estado/seguimiento */}
-            <div className="relative" style={{ minWidth: '240px', flex: '0 0 auto' }}>
-              <i
-                className="fas fa-filter"
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--brand-400)',
-                  fontSize: '0.78rem',
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                }}
-              />
-              <select
-                value={selectedFilter ?? ''}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setSelectedFilter(v || null);
-                  if (!v) {
-                    setSelectedEstadoId(null);
-                    setSelectedSeguimientoId(null);
-                  } else {
-                    const [type, id] = v.split(':');
-                    if (type === 'estado') {
-                      setSelectedEstadoId(Number(id));
-                      setSelectedSeguimientoId(null);
-                    } else if (type === 'seguimiento') {
-                      setSelectedSeguimientoId(Number(id));
-                      setSelectedEstadoId(null);
-                    } else {
-                      setSelectedEstadoId(null);
-                      setSelectedSeguimientoId(null);
-                    }
-                  }
-                }}
-                className="ui-input"
-                style={{ paddingLeft: '2rem', height: '40px', fontSize: '0.875rem' }}
-                title="Filtrar por estado o seguimiento"
+
+            {/* ── Filtro unificado Estado / Seguimiento ── */}
+            <div className="atf-filter-wrap" ref={filterDropdownRef}>
+              <button
+                type="button"
+                className={`atf-filter-btn${(selectedEstadoId !== null || selectedSeguimientoId !== null) ? ' atf-filter-btn--active' : ''}`}
+                onClick={() => setShowFilterDropdown(v => !v)}
               >
-                <option value="">Estado / Seguimiento</option>
-                {estados.length > 0 && (
-                  <optgroup label="Estados">
-                    {estados.map((st) => (
-                      <option key={`estado-${st.id}`} value={`estado:${st.id}`}>{st.nombre}</option>
-                    ))}
-                  </optgroup>
+                <i className="fas fa-layer-group" style={{ fontSize: '0.78rem', flexShrink: 0 }} />
+                <span className="atf-filter-btn-label">
+                  {selectedEstadoId !== null
+                    ? (estados.find(s => s.id === selectedEstadoId)?.nombre ?? 'Estado')
+                    : selectedSeguimientoId !== null
+                    ? (seguimientos.find(s => s.id === selectedSeguimientoId)?.nombre ?? 'Seguimiento')
+                    : 'Estado / Seguimiento'}
+                </span>
+                {(selectedEstadoId !== null || selectedSeguimientoId !== null) ? (
+                  <button
+                    type="button"
+                    className="atf-active-clear"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedEstadoId(null);
+                      setSelectedSeguimientoId(null);
+                      setSelectedFilter(null);
+                      setShowFilterDropdown(false);
+                    }}
+                    title="Quitar filtro"
+                  >
+                    <i className="fas fa-times" />
+                  </button>
+                ) : (
+                  <i className={`fas fa-chevron-down atf-chevron${showFilterDropdown ? ' atf-chevron--open' : ''}`} />
                 )}
-                {seguimientos.length > 0 && (
-                  <optgroup label="Seguimientos">
-                    {seguimientos.map((sg) => (
-                      <option key={`seguimiento-${sg.id}`} value={`seguimiento:${sg.id}`}>{sg.nombre}</option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
+              </button>
+
+              {showFilterDropdown && (
+                <div className="atf-panel">
+                  {/* Estados */}
+                  {estados.length > 0 && (
+                    <div className="atf-section">
+                      <div className="atf-section-header">
+                        <span className="atf-section-dot" style={{ background: '#3b82f6' }} />
+                        Estados
+                      </div>
+                      {estados.map((st) => (
+                        <button
+                          key={st.id}
+                          type="button"
+                          className={`atf-option${selectedEstadoId === st.id ? ' atf-option--selected' : ''}`}
+                          onClick={() => {
+                            setSelectedEstadoId(st.id);
+                            setSelectedSeguimientoId(null);
+                            setSelectedFilter(`estado:${st.id}`);
+                            setShowFilterDropdown(false);
+                          }}
+                        >
+                          <i className="fas fa-check atf-option-check" style={{ opacity: selectedEstadoId === st.id ? 1 : 0, color: '#3b82f6' }} />
+                          {st.nombre}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {/* Seguimientos */}
+                  {seguimientos.length > 0 && (
+                    <div className="atf-section">
+                      <div className="atf-section-header">
+                        <span className="atf-section-dot" style={{ background: '#10b981' }} />
+                        Seguimientos
+                      </div>
+                      {seguimientos.map((sg) => (
+                        <button
+                          key={sg.id}
+                          type="button"
+                          className={`atf-option${selectedSeguimientoId === sg.id ? ' atf-option--selected' : ''}`}
+                          onClick={() => {
+                            setSelectedSeguimientoId(sg.id);
+                            setSelectedEstadoId(null);
+                            setSelectedFilter(`seguimiento:${sg.id}`);
+                            setShowFilterDropdown(false);
+                          }}
+                        >
+                          <i className="fas fa-check atf-option-check" style={{ opacity: selectedSeguimientoId === sg.id ? 1 : 0, color: '#10b981' }} />
+                          {sg.nombre}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Filtro por fecha */}
-            <div className="relative" style={{ minWidth: '190px', flex: '0 0 auto' }}>
-              <i
-                className="fas fa-calendar-alt"
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--brand-400)',
-                  fontSize: '0.78rem',
-                  pointerEvents: 'none',
-                  zIndex: 1,
-                }}
+            {/* ── Filtro de fecha con trigger personalizado ── */}
+            <div className="atf-filter-wrap">
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date: Date | null) => setSelectedDate(date)}
+                dateFormat="dd/MM/yyyy"
+                maxDate={new Date()}
+                popperClassName="atf-datepicker-popper"
+                customInput={<DateFilterInput isActive={!!selectedDate} />}
               />
-              <input
-                type="date"
-                value={selectedDate ?? ''}
-                onChange={(e) => setSelectedDate(e.target.value || null)}
-                className="ui-input"
-                style={{ paddingLeft: '2rem', height: '40px', fontSize: '0.875rem', colorScheme: 'light' }}
-                title="Filtrar por fecha de atención"
-              />
+              {selectedDate && (
+                <button
+                  type="button"
+                  className="atf-clear-standalone"
+                  onClick={() => setSelectedDate(null)}
+                  title="Quitar filtro de fecha"
+                >
+                  <i className="fas fa-times" />
+                </button>
+              )}
             </div>
 
-            {/* Limpiar filtros */}
+            {/* ── Limpiar todos ── */}
             {(selectedFilter || selectedDate) && (
               <button
+                type="button"
                 onClick={() => {
                   setSelectedFilter(null);
                   setSelectedEstadoId(null);
@@ -470,11 +533,11 @@ export default function AtencionesPage() {
                   setSelectedDate(null);
                 }}
                 className="ui-btn ui-btn-outline"
-                style={{ height: '40px', fontSize: '0.8rem', gap: '6px' }}
-                title="Limpiar filtros"
+                style={{ height: '38px', fontSize: '0.78rem', gap: '5px' }}
+                title="Limpiar todos los filtros"
               >
-                <i className="fas fa-times" style={{ fontSize: '0.75rem' }} />
-                Limpiar
+                <i className="fas fa-times" style={{ fontSize: '0.7rem' }} />
+                Limpiar todo
               </button>
             )}
 
@@ -554,7 +617,6 @@ export default function AtencionesPage() {
       />
 
       {showAddAtencion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <AtencionForm
             onCancel={() => setShowAddAtencion(false)}
             onSave={async (data: NewAtencionConPaciente) => {
@@ -585,11 +647,9 @@ export default function AtencionesPage() {
             }}
             userId={auth?.user?.id}
           />
-        </div>
       )}
 
       {showEditAtencion && editAtencion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <AtencionForm
             onCancel={closeEditor}
             onSave={async () => {}}
@@ -618,7 +678,6 @@ export default function AtencionesPage() {
             isEditMode={true}
             userId={auth?.user?.id}
           />
-        </div>
       )}
     </div>
   );

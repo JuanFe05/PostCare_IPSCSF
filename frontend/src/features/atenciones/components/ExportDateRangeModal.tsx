@@ -1,4 +1,5 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FiCalendar } from 'react-icons/fi';
@@ -39,27 +40,38 @@ const ExportDateRangeModal = ({
     onExport(startDate, endDate);
   };
 
+  const [isClosing, setIsClosing] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setIsClosing(false);
+  }, [isOpen]);
+
   const handleClose = () => {
     if (!isLoading) {
-      setStartDate(null);
-      setEndDate(null);
-      setError('');
-      onClose();
+      setIsClosing(true);
+      setTimeout(() => {
+        setStartDate(null);
+        setEndDate(null);
+        setError('');
+        onClose();
+      }, 200);
     }
   };
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  return createPortal(
+    <div
+      className={`fixed inset-0 z-[9999] flex items-center justify-center ${isClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'}`}
+    >
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={handleClose}
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform transition-all">
+      <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 ${isClosing ? 'modal-content-exit' : 'modal-content-enter'}`}>
         {/* Header */}
         <div className="px-6 py-5 rounded-t-2xl" style={{ backgroundColor: '#1a338e' }}>
           <div className="flex items-center justify-between">
@@ -184,7 +196,8 @@ const ExportDateRangeModal = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

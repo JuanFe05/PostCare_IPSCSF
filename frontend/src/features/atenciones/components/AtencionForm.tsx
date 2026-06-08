@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { useForm } from 'react-hook-form';
 import type { NewAtencionConPaciente, UpdateAtencion, Atencion, TipoDocumento, Empresa, EstadoAtencion, SeguimientoAtencion, ServicioOption } from '../types';
@@ -197,6 +198,14 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
     await onSave(data);
   });
 
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = () => {
+    if (loading) return;
+    setIsClosing(true);
+    setTimeout(() => onCancel(), 200);
+  };
+
   const toggleServicio = (servicioId: number) => {
     setSelectedServicios(prev => 
       prev.includes(servicioId)
@@ -205,16 +214,18 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
     );
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  return createPortal(
+    <div
+      className={`fixed inset-0 z-[9999] flex items-center justify-center ${isClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'}`}
+    >
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
-        onClick={!loading ? onCancel : undefined}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={!loading ? handleClose : undefined}
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 transform transition-all max-h-[90vh] overflow-hidden flex flex-col">
+      <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col ${isClosing ? 'modal-content-exit' : 'modal-content-enter'}`}>
         {/* Header */}
         <div className="px-6 py-5 rounded-t-2xl flex-shrink-0" style={{ backgroundColor: '#1a338e' }}>
           <div className="flex items-center justify-between">
@@ -699,7 +710,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
             <div className="flex gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-2xl flex-shrink-0">
               <button
                 type="button"
-                onClick={onCancel}
+                onClick={handleClose}
                 disabled={loading}
                 className="flex-1 px-6 py-3 bg-red-400 hover:bg-red-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
               >
@@ -727,6 +738,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

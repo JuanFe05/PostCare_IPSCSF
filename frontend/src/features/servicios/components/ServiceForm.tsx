@@ -1,4 +1,5 @@
-﻿import { useEffect } from "react";
+﻿import { useEffect, useState } from "react";
+import { createPortal } from 'react-dom';
 import { useForm } from "react-hook-form";
 import { FiList } from 'react-icons/fi';
 import { MdError } from 'react-icons/md';
@@ -33,16 +34,23 @@ export default function ServiceForm({ onCancel, onSave, initial = null, isEdit =
     if (first) setFocus(first as any);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => onCancel(), 200);
+  };
+
+  return createPortal(
+    <div className={`fixed inset-0 z-[9999] flex items-center justify-center ${isClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'}`}>
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
-        onClick={onCancel}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={handleClose}
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 transform transition-all">
+      <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 ${isClosing ? 'modal-content-exit' : 'modal-content-enter'}`}>
         {/* Header */}
         <div className="px-6 py-5 rounded-t-2xl flex-shrink-0" style={{ backgroundColor: '#1a338e' }}>
           <div className="flex items-center justify-between">
@@ -115,7 +123,7 @@ export default function ServiceForm({ onCancel, onSave, initial = null, isEdit =
           <div className="flex gap-3 mt-8">
             <button
               type="button"
-              onClick={onCancel}
+              onClick={handleClose}
               className="flex-1 px-6 py-3 bg-red-400 hover:bg-red-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
             >
               Cancelar
@@ -129,6 +137,7 @@ export default function ServiceForm({ onCancel, onSave, initial = null, isEdit =
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
