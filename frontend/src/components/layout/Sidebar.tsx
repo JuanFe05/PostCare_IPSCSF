@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import logoIPS from "../../assets/IPS.png";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from './SidebarContext';
@@ -52,11 +53,11 @@ const Sidebar = () => {
         ];
 
   return (
-    <aside
+    <motion.aside
       className="fixed top-0 left-0 bottom-0 z-30 flex flex-col overflow-hidden"
+      animate={{ width: collapsed ? 72 : 240 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       style={{
-        width: collapsed ? '72px' : '240px',
-        transition: 'width 280ms cubic-bezier(0.4, 0, 0.2, 1)',
         background: 'linear-gradient(180deg, #0d1f6b 0%, #1a338e 40%, #122480 100%)',
         boxShadow: '4px 0 24px 0 rgba(13,31,107,0.22)',
         borderRight: '1px solid rgba(255,255,255,0.06)',
@@ -91,15 +92,11 @@ const Sidebar = () => {
         >
           <img src={logoIPS} alt="Logo" className="h-7 w-7 object-contain" />
         </div>
-        <div
+        <motion.div
           className="overflow-hidden"
-          style={{
-            opacity: collapsed ? 0 : 1,
-            maxWidth: collapsed ? '0px' : '160px',
-            marginLeft: collapsed ? '0px' : '12px',
-            transition: 'opacity 200ms ease, max-width 280ms cubic-bezier(0.4,0,0.2,1), margin-left 280ms cubic-bezier(0.4,0,0.2,1)',
-            whiteSpace: 'nowrap',
-          }}
+          animate={{ opacity: collapsed ? 0 : 1, maxWidth: collapsed ? 0 : 160, marginLeft: collapsed ? 0 : 12 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          style={{ whiteSpace: 'nowrap' }}
         >
           <p style={{ fontFamily: "'Sora', sans-serif", color: 'white', fontSize: '0.85rem', fontWeight: 700, lineHeight: 1.2, margin: 0 }}>
             IPS Clínica
@@ -107,25 +104,22 @@ const Sidebar = () => {
           <p style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(147,174,245,0.9)', fontSize: '0.72rem', margin: 0 }}>
             Salud Florida
           </p>
-        </div>
+        </motion.div>
       </Link>
 
       {/* Divider */}
       <div className="mx-4 flex-shrink-0" style={{ height: '1px', background: 'rgba(255,255,255,0.08)' }} />
 
       {/* Section label */}
-      <div
+      <motion.div
         className="px-4 pt-4 pb-1 flex-shrink-0 overflow-hidden"
-        style={{
-          opacity: collapsed ? 0 : 1,
-          height: collapsed ? '0px' : 'auto',
-          transition: 'opacity 180ms ease, height 280ms ease',
-        }}
+        animate={{ opacity: collapsed ? 0 : 1, height: collapsed ? 0 : 'auto' }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
         <span style={{ fontFamily: "'Sora', sans-serif", color: 'rgba(147,174,245,0.7)', fontSize: '0.64rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           Menú Principal
         </span>
-      </div>
+      </motion.div>
 
       {/* Navigation */}
       <nav className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden relative" style={{ padding: '6px 8px', gap: '2px' }}>
@@ -178,20 +172,19 @@ const Sidebar = () => {
                   transition: 'color 160ms',
                 }}
               />
-              <span
+              <motion.span
                 className="overflow-hidden whitespace-nowrap"
+                animate={{ opacity: collapsed ? 0 : 1, maxWidth: collapsed ? 0 : 160 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 style={{
                   fontFamily: "'DM Sans', sans-serif",
                   fontSize: '0.875rem',
                   fontWeight: active ? 600 : 500,
                   color: active ? '#ffffff' : 'rgba(203,213,250,0.85)',
-                  opacity: collapsed ? 0 : 1,
-                  maxWidth: collapsed ? '0px' : '160px',
-                  transition: 'opacity 200ms ease, max-width 280ms cubic-bezier(0.4,0,0.2,1), color 160ms',
                 }}
               >
                 {item.label}
-              </span>
+              </motion.span>
             </Link>
           );
         })}
@@ -233,14 +226,11 @@ const Sidebar = () => {
             }}
           />
         </div>
-        <div
+        <motion.div
           className="overflow-hidden"
-          style={{
-            opacity: collapsed ? 0 : 1,
-            maxWidth: collapsed ? '0px' : '160px',
-            transition: 'opacity 200ms ease, max-width 280ms cubic-bezier(0.4,0,0.2,1)',
-            whiteSpace: 'nowrap',
-          }}
+          animate={{ opacity: collapsed ? 0 : 1, maxWidth: collapsed ? 0 : 160 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          style={{ whiteSpace: 'nowrap' }}
         >
           <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.8rem', fontWeight: 600, color: logoutHover ? '#ffffff' : '#e2e8f0', margin: 0, transition: 'color 200ms', lineHeight: 1.3 }}>
             {auth?.user?.username ?? 'Usuario'}
@@ -248,9 +238,9 @@ const Sidebar = () => {
           <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.68rem', color: logoutHover ? '#fca5a5' : '#f87171', margin: 0, transition: 'color 200ms' }}>
             Cerrar sesión
           </p>
-        </div>
+        </motion.div>
       </div>
-    </aside>
+    </motion.aside>
   );
 };
 

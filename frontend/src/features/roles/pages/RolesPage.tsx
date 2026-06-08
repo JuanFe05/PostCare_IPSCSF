@@ -165,30 +165,29 @@ export default function RolesPage() {
       </div>
 
       {/* EDIT MODAL */}
-      {showEdit && editRole && (
-          <RoleForm
-            initial={editRole}
-            isEdit={true}
-            onCancel={async () => { await closeEditor(); }}
-            onSave={async (payload) => {
-              try {
-                const updated = await updateRol({ id: editRole.id, nombre: payload.nombre ?? '', descripcion: payload.descripcion ?? '' });
-                setRoles((prev: Role[]) => prev.map((rr: Role) => (rr.id === updated.id ? updated : rr)));
-                // release lock if held
-                if (heldLockId) {
-                  try { await releaseRoleLock(heldLockId); } catch (e) { /* best-effort */ }
-                  setHeldLockId(null);
-                }
-                setShowEdit(false);
-                setEditRole(null);
-                await Swal.fire({ icon: 'success', title: 'Rol actualizado', text: `Rol ${updated.nombre} actualizado.` });
-              } catch (err) {
-                console.error('Error actualizando rol:', err);
-                await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el rol.' });
-              }
-            }}
-          />
-      )}
+      <RoleForm
+        isOpen={showEdit}
+        initial={editRole ?? undefined}
+        isEdit={true}
+        onCancel={async () => { await closeEditor(); }}
+        onSave={async (payload) => {
+          if (!editRole) return;
+          try {
+            const updated = await updateRol({ id: editRole.id, nombre: payload.nombre ?? '', descripcion: payload.descripcion ?? '' });
+            setRoles((prev: Role[]) => prev.map((rr: Role) => (rr.id === updated.id ? updated : rr)));
+            if (heldLockId) {
+              try { await releaseRoleLock(heldLockId); } catch (e) { /* best-effort */ }
+              setHeldLockId(null);
+            }
+            setShowEdit(false);
+            setEditRole(null);
+            await Swal.fire({ icon: 'success', title: 'Rol actualizado', text: `Rol ${updated.nombre} actualizado.` });
+          } catch (err) {
+            console.error('Error actualizando rol:', err);
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el rol.' });
+          }
+        }}
+      />
     </div>
   );
 }

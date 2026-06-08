@@ -262,33 +262,31 @@ export default function PacientesPage() {
         </div>
       </div>
 
-      {showEditPaciente && editPaciente && (
-          <PacienteForm
-            isEditMode
-            initialData={editPaciente}
-            onCancel={closeEditor}
-            onUpdate={async (id: string, data: any) => {
-              setLoading(true);
-              try {
-                await updatePaciente(id, data);
-                await loadPacientes();
-                // release lock if held
-                if (heldLockId) {
-                  try { await releasePacienteLock(heldLockId); } catch (e) { /* best-effort */ }
-                  setHeldLockId(null);
-                }
-                setShowEditPaciente(false);
-                setEditPaciente(null);
-                await Swal.fire('Actualizado', 'Paciente actualizado correctamente', 'success');
-              } catch (err: any) {
-                const errorMsg = err.response?.data?.detail || 'No se pudo actualizar el paciente';
-                await Swal.fire('Error', errorMsg, 'error');
-              } finally {
-                setLoading(false);
-              }
-            }}
-          />
-      )}
+      <PacienteForm
+        isOpen={showEditPaciente}
+        isEditMode
+        initialData={editPaciente ?? undefined}
+        onCancel={closeEditor}
+        onUpdate={async (id: string, data: any) => {
+          setLoading(true);
+          try {
+            await updatePaciente(id, data);
+            await loadPacientes();
+            if (heldLockId) {
+              try { await releasePacienteLock(heldLockId); } catch (e) { /* best-effort */ }
+              setHeldLockId(null);
+            }
+            setShowEditPaciente(false);
+            setEditPaciente(null);
+            await Swal.fire('Actualizado', 'Paciente actualizado correctamente', 'success');
+          } catch (err: any) {
+            const errorMsg = err.response?.data?.detail || 'No se pudo actualizar el paciente';
+            await Swal.fire('Error', errorMsg, 'error');
+          } finally {
+            setLoading(false);
+          }
+        }}
+      />
     </div>
   );
 }

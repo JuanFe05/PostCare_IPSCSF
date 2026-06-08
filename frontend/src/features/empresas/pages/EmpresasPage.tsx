@@ -174,48 +174,47 @@ export default function EmpresasPage() {
       </div>
 
       {/* ADD MODAL */}
-      {showAddEmpresa && (
-          <EmpresaForm 
-            onCancel={() => setShowAddEmpresa(false)} 
-            onSave={async ({ id_tipo_empresa, nombre }) => {
-              setLoading(true);
-              try {
-                const nueva = await createEmpresa({ id_tipo_empresa, nombre });
-                setEmpresas((prev: Empresa[]) => [nueva, ...prev]);
-                setShowAddEmpresa(false);
-                await Swal.fire({ icon: 'success', title: 'Empresa creada', text: `Empresa ${nombre} creada correctamente.` });
-              } catch (err) {
-                console.error("Error creando empresa:", err);
-                await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear la empresa.' });
-              } finally { 
-                setLoading(false); 
-              }
-            }} 
-          />
-      )}
+      <EmpresaForm
+        isOpen={showAddEmpresa}
+        onCancel={() => setShowAddEmpresa(false)}
+        onSave={async ({ id_tipo_empresa, nombre }) => {
+          setLoading(true);
+          try {
+            const nueva = await createEmpresa({ id_tipo_empresa, nombre });
+            setEmpresas((prev: Empresa[]) => [nueva, ...prev]);
+            setShowAddEmpresa(false);
+            await Swal.fire({ icon: 'success', title: 'Empresa creada', text: `Empresa ${nombre} creada correctamente.` });
+          } catch (err) {
+            console.error("Error creando empresa:", err);
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear la empresa.' });
+          } finally {
+            setLoading(false);
+          }
+        }}
+      />
 
       {/* EDIT MODAL */}
-      {showEditEmpresa && editEmpresa && (
-          <EmpresaForm
-            isEdit
-            initial={{ id_tipo_empresa: editEmpresa.id_tipo_empresa, nombre: editEmpresa.nombre }}
-            onCancel={closeEditor}
-            onSave={async ({ id_tipo_empresa, nombre }) => {
-              setLoading(true);
-              try {
-                const updated = await updateEmpresa({ ...editEmpresa, id_tipo_empresa, nombre });
-                setEmpresas((prev: Empresa[]) => prev.map((e: Empresa) => (e.id === updated.id ? updated : e)));
-                closeEditor();
-                await Swal.fire({ icon: 'success', title: 'Empresa actualizada', text: `Empresa ${nombre} actualizada correctamente.` });
-              } catch (err) {
-                console.error("Error actualizando empresa:", err);
-                await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar la empresa.' });
-              } finally { 
-                setLoading(false); 
-              }
-            }}
-          />
-      )}
+      <EmpresaForm
+        isOpen={showEditEmpresa}
+        isEdit
+        initial={editEmpresa ? { id_tipo_empresa: editEmpresa.id_tipo_empresa, nombre: editEmpresa.nombre } : undefined}
+        onCancel={closeEditor}
+        onSave={async ({ id_tipo_empresa, nombre }) => {
+          if (!editEmpresa) return;
+          setLoading(true);
+          try {
+            const updated = await updateEmpresa({ ...editEmpresa, id_tipo_empresa, nombre });
+            setEmpresas((prev: Empresa[]) => prev.map((e: Empresa) => (e.id === updated.id ? updated : e)));
+            closeEditor();
+            await Swal.fire({ icon: 'success', title: 'Empresa actualizada', text: `Empresa ${nombre} actualizada correctamente.` });
+          } catch (err) {
+            console.error("Error actualizando empresa:", err);
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar la empresa.' });
+          } finally {
+            setLoading(false);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -246,62 +246,60 @@ export default function ServiciosPage() {
       </div>
 
       {/* ADD MODAL */}
-      {showAdd && (
-        <Suspense fallback={<div className="bg-white p-8 rounded-lg shadow-xl"><p className="text-gray-600">Cargando formulario...</p></div>}>
-            <ServiceForm
-              onCancel={() => setShowAdd(false)}
-              onSave={async ({ nombre }) => {
-              if (!nombre) {
-                await Swal.fire({ icon: "warning", title: "Datos incompletos", text: "El nombre es obligatorio." });
-                return;
-              }
-              setLoading(true);
-              try {
-                const nuevo = await createService({ nombre });
-                setServices((prev) => [nuevo, ...prev]);
-                setShowAdd(false);
-                await Swal.fire({ icon: "success", title: "Servicio creado", text: `Servicio "${nombre}" creado correctamente.` });
-              } catch (err) {
-                console.error("Error creando servicio:", err);
-                await Swal.fire({ icon: "error", title: "Error", text: "No se pudo crear el servicio." });
-              } finally {
-                setLoading(false);
-              }
-            }}
-          />
-        </Suspense>
-      )}
+      <Suspense fallback={null}>
+        <ServiceForm
+          isOpen={showAdd}
+          onCancel={() => setShowAdd(false)}
+          onSave={async ({ nombre }) => {
+            if (!nombre) {
+              await Swal.fire({ icon: "warning", title: "Datos incompletos", text: "El nombre es obligatorio." });
+              return;
+            }
+            setLoading(true);
+            try {
+              const nuevo = await createService({ nombre });
+              setServices((prev) => [nuevo, ...prev]);
+              setShowAdd(false);
+              await Swal.fire({ icon: "success", title: "Servicio creado", text: `Servicio "${nombre}" creado correctamente.` });
+            } catch (err) {
+              console.error("Error creando servicio:", err);
+              await Swal.fire({ icon: "error", title: "Error", text: "No se pudo crear el servicio." });
+            } finally {
+              setLoading(false);
+            }
+          }}
+        />
+      </Suspense>
 
       {/* EDIT MODAL */}
-      {showEdit && editService && (
-        <Suspense fallback={<div className="bg-white p-8 rounded-lg shadow-xl"><p className="text-gray-600">Cargando formulario...</p></div>}>
-            <ServiceForm
-              isEdit
-              initial={{ nombre: editService.nombre, descripcion: editService.descripcion }}
-              onCancel={closeEditor}
-            onSave={async ({ nombre }) => {
-              if (!editService) return;
-              setLoading(true);
-              try {
-                const actualizado = await updateService({ id: editService.id, nombre });
-                setServices((prev) => prev.map((s) => (s.id === actualizado.id ? actualizado : s)));
-                if (heldLockId) {
-                  try { await releaseServiceLock(heldLockId); } catch (e) { }
-                  setHeldLockId(null);
-                }
-                setShowEdit(false);
-                setEditService(null);
-                await Swal.fire({ icon: "success", title: "Servicio actualizado", text: `Servicio "${nombre}" actualizado correctamente.` });
-              } catch (err) {
-                console.error("Error actualizando servicio:", err);
-                await Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar el servicio." });
-              } finally {
-                setLoading(false);
+      <Suspense fallback={null}>
+        <ServiceForm
+          isOpen={showEdit}
+          isEdit
+          initial={editService ? { nombre: editService.nombre, descripcion: editService.descripcion } : undefined}
+          onCancel={closeEditor}
+          onSave={async ({ nombre }) => {
+            if (!editService) return;
+            setLoading(true);
+            try {
+              const actualizado = await updateService({ id: editService.id, nombre });
+              setServices((prev) => prev.map((s) => (s.id === actualizado.id ? actualizado : s)));
+              if (heldLockId) {
+                try { await releaseServiceLock(heldLockId); } catch (e) { }
+                setHeldLockId(null);
               }
-            }}
-          />
-        </Suspense>
-      )}
+              setShowEdit(false);
+              setEditService(null);
+              await Swal.fire({ icon: "success", title: "Servicio actualizado", text: `Servicio "${nombre}" actualizado correctamente.` });
+            } catch (err) {
+              console.error("Error actualizando servicio:", err);
+              await Swal.fire({ icon: "error", title: "Error", text: "No se pudo actualizar el servicio." });
+            } finally {
+              setLoading(false);
+            }
+          }}
+        />
+      </Suspense>
     </div>
   );
 }

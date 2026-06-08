@@ -144,36 +144,43 @@ export default function EstadosPage() {
         </div>
       </div>
 
-      {showAdd && (
-          <EstadoForm onCancel={() => setShowAdd(false)} onSave={async (payload) => {
-            setLoading(true);
-            try {
-              const created = await createEstado(payload);
-              setEstados(prev => [created, ...prev]);
-              setShowAdd(false);
-              await Swal.fire('Creado', 'Estado creado correctamente', 'success');
-            } catch (err) {
-              console.error('Error creando estado:', err);
-              await Swal.fire('Error', 'No se pudo crear el estado', 'error');
-            } finally { setLoading(false); }
-          }} />
-      )}
+      <EstadoForm
+        isOpen={showAdd}
+        onCancel={() => setShowAdd(false)}
+        onSave={async (payload) => {
+          setLoading(true);
+          try {
+            const created = await createEstado(payload);
+            setEstados(prev => [created, ...prev]);
+            setShowAdd(false);
+            await Swal.fire('Creado', 'Estado creado correctamente', 'success');
+          } catch (err) {
+            console.error('Error creando estado:', err);
+            await Swal.fire('Error', 'No se pudo crear el estado', 'error');
+          } finally { setLoading(false); }
+        }}
+      />
 
-      {showEdit && editEstado && (
-          <EstadoForm isEdit initial={editEstado} onCancel={() => { setShowEdit(false); setEditEstado(null); }} onSave={async (payload) => {
-            setLoading(true);
-            try {
-              const updated = await updateEstado(editEstado.id, payload);
-              setEstados(prev => prev.map(e => e.id === updated.id ? updated : e));
-              setShowEdit(false);
-              setEditEstado(null);
-              await Swal.fire('Actualizado', 'Estado actualizado correctamente', 'success');
-            } catch (err) {
-              console.error('Error actualizando estado:', err);
-              await Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
-            } finally { setLoading(false); }
-          }} />
-      )}
+      <EstadoForm
+        isOpen={showEdit}
+        isEdit
+        initial={editEstado ?? undefined}
+        onCancel={() => { setShowEdit(false); setEditEstado(null); }}
+        onSave={async (payload) => {
+          if (!editEstado) return;
+          setLoading(true);
+          try {
+            const updated = await updateEstado(editEstado.id, payload);
+            setEstados(prev => prev.map(e => e.id === updated.id ? updated : e));
+            setShowEdit(false);
+            setEditEstado(null);
+            await Swal.fire('Actualizado', 'Estado actualizado correctamente', 'success');
+          } catch (err) {
+            console.error('Error actualizando estado:', err);
+            await Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
+          } finally { setLoading(false); }
+        }}
+      />
     </div>
   );
 }

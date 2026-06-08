@@ -175,54 +175,49 @@ export default function TiposSeguimientoPage() {
       </div>
 
       {/* ADD MODAL */}
-      {showAdd && (
-          <SeguimientoForm 
-            isEdit={false} 
-            onCancel={() => setShowAdd(false)} 
-            onSave={async (payload) => {
-              setLoading(true);
-              try {
-                const created = await createTipoSeguimiento(payload);
-                setTipos((prev: TipoSeguimiento[]) => [created, ...prev]);
-                setShowAdd(false);
-                await Swal.fire({ icon: 'success', title: 'Creado', text: `Tipo ${created.nombre} creado.` });
-              } catch (err) {
-                console.error('Error creando tipo seguimiento:', err);
-                await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear.' });
-              } finally { 
-                setLoading(false); 
-              }
-            }} 
-          />
-      )}
+      <SeguimientoForm
+        isOpen={showAdd}
+        isEdit={false}
+        onCancel={() => setShowAdd(false)}
+        onSave={async (payload) => {
+          setLoading(true);
+          try {
+            const created = await createTipoSeguimiento(payload);
+            setTipos((prev: TipoSeguimiento[]) => [created, ...prev]);
+            setShowAdd(false);
+            await Swal.fire({ icon: 'success', title: 'Creado', text: `Tipo ${created.nombre} creado.` });
+          } catch (err) {
+            console.error('Error creando tipo seguimiento:', err);
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear.' });
+          } finally {
+            setLoading(false);
+          }
+        }}
+      />
 
       {/* EDIT MODAL */}
-      {showEdit && editTipo && (
-          <SeguimientoForm 
-            isEdit 
-            initial={{ nombre: editTipo.nombre, descripcion: editTipo.descripcion }} 
-            onCancel={() => { 
-              setShowEdit(false); 
-              setEditTipo(null); 
-            }} 
-            onSave={async (payload) => {
-              if (!editTipo) return;
-              setLoading(true);
-              try {
-                const updated = await updateTipoSeguimiento(editTipo.id, payload);
-                setTipos((prev: TipoSeguimiento[]) => prev.map((p: TipoSeguimiento) => p.id === updated.id ? updated : p));
-                setShowEdit(false);
-                setEditTipo(null);
-                await Swal.fire({ icon: 'success', title: 'Actualizado', text: `Tipo ${updated.nombre} actualizado.` });
-              } catch (err) {
-                console.error('Error actualizando tipo seguimiento:', err);
-                await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar.' });
-              } finally { 
-                setLoading(false); 
-              }
-            }} 
-          />
-      )}
+      <SeguimientoForm
+        isOpen={showEdit}
+        isEdit
+        initial={editTipo ? { nombre: editTipo.nombre, descripcion: editTipo.descripcion } : undefined}
+        onCancel={() => { setShowEdit(false); setEditTipo(null); }}
+        onSave={async (payload) => {
+          if (!editTipo) return;
+          setLoading(true);
+          try {
+            const updated = await updateTipoSeguimiento(editTipo.id, payload);
+            setTipos((prev: TipoSeguimiento[]) => prev.map((p: TipoSeguimiento) => p.id === updated.id ? updated : p));
+            setShowEdit(false);
+            setEditTipo(null);
+            await Swal.fire({ icon: 'success', title: 'Actualizado', text: `Tipo ${updated.nombre} actualizado.` });
+          } catch (err) {
+            console.error('Error actualizando tipo seguimiento:', err);
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar.' });
+          } finally {
+            setLoading(false);
+          }
+        }}
+      />
     </div>
   );
 }

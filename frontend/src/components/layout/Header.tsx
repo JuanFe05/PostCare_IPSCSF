@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { useSidebar } from './SidebarContext';
+import { motion } from 'motion/react';
 
 const Header = () => {
   const { collapsed, toggle } = useSidebar();
@@ -20,11 +21,11 @@ const Header = () => {
   }, []);
 
   return (
-    <nav
+    <motion.nav
       className="fixed top-0 right-0 z-40"
+      animate={{ left: collapsed ? 72 : 240 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       style={{
-        left: collapsed ? '72px' : '240px',
-        transition: 'left 280ms cubic-bezier(0.4, 0, 0.2, 1)',
         background: 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(12px)',
         borderBottom: '1px solid rgba(226,232,240,0.8)',
@@ -97,7 +98,7 @@ const Header = () => {
           </div>
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 

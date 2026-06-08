@@ -1,19 +1,19 @@
 ﻿import { useEffect, useState } from "react";
-import { createPortal } from 'react-dom';
 import { useForm } from "react-hook-form";
 import { getTiposEmpresas } from "../Empresa.api";
 import type { TipoEmpresa } from "../types";
 import { FiBriefcase } from 'react-icons/fi';
-import { MdError } from 'react-icons/md';
+import { FormModal, SectionCard, FieldGroup, FormInput, FormSelect, ModalFooter } from '../../../components/animate-ui/form-modal';
 
 interface EmpresaFormProps {
   onCancel: () => void;
   onSave: (data: { id_tipo_empresa: number; nombre: string }) => void;
   initial?: { id_tipo_empresa?: number; nombre?: string } | null;
   isEdit?: boolean;
+  isOpen: boolean;
 }
 
-export default function EmpresaForm({ onCancel, onSave, initial = null, isEdit = false }: EmpresaFormProps) {
+export default function EmpresaForm({ onCancel, onSave, initial = null, isEdit = false, isOpen }: EmpresaFormProps) {
   const { register, handleSubmit, reset, setFocus, formState: { errors } } = useForm<any>();
   const [tiposEmpresas, setTiposEmpresas] = useState<TipoEmpresa[]>([]);
   const [loadingTipos, setLoadingTipos] = useState(true);
@@ -53,119 +53,41 @@ export default function EmpresaForm({ onCancel, onSave, initial = null, isEdit =
     if (first) setFocus(first as any);
   };
 
-  const [isClosing, setIsClosing] = useState(false);
-
-  const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => onCancel(), 200);
-  };
-
-  return createPortal(
-    <div className={`fixed inset-0 z-[9999] flex items-center justify-center ${isClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'}`}>
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={handleClose}
-      />
-      
-      {/* Modal */}
-      <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 ${isClosing ? 'modal-content-exit' : 'modal-content-enter'}`}>
-        {/* Header */}
-        <div className="px-6 py-5 rounded-t-2xl flex-shrink-0" style={{ backgroundColor: '#1a338e' }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-white">
-                {isEdit ? 'Editar Empresa' : 'Nueva Empresa'}
-              </h2>
-              <p className="text-white text-sm">
-                {isEdit ? 'Actualice los datos de la empresa' : 'Registre una nueva empresa'}
-              </p>
-            </div>
+  return (
+    <FormModal
+      isOpen={isOpen}
+      onClose={onCancel}
+      title={isEdit ? 'Editar Empresa' : 'Nueva Empresa'}
+      subtitle={isEdit ? 'Actualice los datos de la empresa' : 'Registre una nueva empresa'}
+      icon={<FiBriefcase size={16} />}
+      maxWidth="max-w-lg"
+    >
+      <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-5">
+        <SectionCard title="Información General" icon={<FiBriefcase size={13} />} index={0}>
+          <div className="space-y-4">
+            <FieldGroup label="Nombre de la empresa" required error={errors.nombre ? String((errors.nombre as any).message) : undefined}>
+              <FormInput
+                {...register('nombre', { required: 'El nombre es obligatorio', minLength: { value: 2, message: 'Mínimo 2 caracteres' } })}
+                placeholder="Ej: Salud Total EPS"
+                hasError={!!errors.nombre}
+              />
+            </FieldGroup>
+            <FieldGroup label="Tipo de empresa" required error={errors.id_tipo_empresa ? String((errors.id_tipo_empresa as any).message) : undefined}>
+              <FormSelect
+                {...register('id_tipo_empresa', { required: 'El tipo es obligatorio', validate: (val) => val !== '' || 'Debe seleccionar un tipo' })}
+                disabled={loadingTipos}
+                hasError={!!errors.id_tipo_empresa}
+              >
+                <option value="">Seleccione un tipo</option>
+                {tiposEmpresas.map((tipo) => (
+                  <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
+                ))}
+              </FormSelect>
+            </FieldGroup>
           </div>
-        </div>
-
-        {/* Body */}
-        <form onSubmit={handleSubmit(onSubmit, onError)} className="p-6">
-          <div className="space-y-6">
-            {/* Sección: Información General */}
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-              <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <FiBriefcase className="text-blue-600" />
-                Información General
-              </h3>
-              <div className="space-y-4">
-                {/* Nombre */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Nombre de la empresa <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    {...register("nombre", {
-                      required: "El nombre es obligatorio",
-                      minLength: { value: 2, message: "Mínimo 2 caracteres" },
-                    })}
-                    type="text"
-                    placeholder="Ej: Salud Total EPS"
-                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                  {errors.nombre && (
-                    <div className="flex items-center gap-1 mt-2 text-red-600">
-                      <MdError size={16} />
-                      <p className="text-xs">{String((errors.nombre as any).message)}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Tipo de empresa */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Tipo de empresa <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    {...register("id_tipo_empresa", {
-                      required: "El tipo de empresa es obligatorio",
-                      validate: (val) => val !== '' || "Debe seleccionar un tipo",
-                    })}
-                    disabled={loadingTipos}
-                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  >
-                    <option value="">Seleccione un tipo</option>
-                    {tiposEmpresas.map((tipo) => (
-                      <option key={tipo.id} value={tipo.id}>
-                        {tipo.nombre}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.id_tipo_empresa && (
-                    <div className="flex items-center gap-1 mt-2 text-red-600">
-                      <MdError size={16} />
-                      <p className="text-xs">{String((errors.id_tipo_empresa as any).message)}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex gap-3 mt-8">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="flex-1 px-6 py-3 bg-red-400 hover:bg-red-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-6 py-3 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg" style={{ backgroundColor: '#1a338e' }} onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#152156')} onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1a338e')}
-            >
-              {isEdit ? "Guardar cambios" : "Guardar"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>,
-    document.body
+        </SectionCard>
+        <ModalFooter onCancel={onCancel} submitLabel={isEdit ? 'Guardar cambios' : 'Guardar'} />
+      </form>
+    </FormModal>
   );
 }

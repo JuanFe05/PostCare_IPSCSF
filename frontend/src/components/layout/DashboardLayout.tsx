@@ -2,18 +2,17 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { SidebarProvider, useSidebar } from './SidebarContext';
 import { Outlet } from 'react-router-dom';
+import { motion } from 'motion/react';
 
 function DashboardContent() {
   const { collapsed } = useSidebar();
   return (
     <div className="flex min-h-screen overflow-hidden" style={{ background: 'var(--surface-bg, #f0f4f9)' }}>
       <Sidebar />
-      <div
+      <motion.div
         className="flex flex-col flex-1 max-w-full overflow-hidden"
-        style={{
-          marginLeft: collapsed ? '72px' : '240px',
-          transition: 'margin-left 280ms cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
+        animate={{ marginLeft: collapsed ? 72 : 240 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
         <Header />
         <main className="flex-1 overflow-y-auto" style={{ padding: '1.5rem', marginTop: '60px' }}>
@@ -26,7 +25,7 @@ function DashboardContent() {
             © {new Date().getFullYear()} IPS Clínica Salud Florida · Todos los derechos reservados
           </p>
         </footer>
-      </div>
+      </motion.div>
     </div>
   );
 }

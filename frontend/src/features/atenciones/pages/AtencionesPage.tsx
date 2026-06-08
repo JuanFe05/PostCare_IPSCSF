@@ -616,69 +616,67 @@ export default function AtencionesPage() {
         isLoading={isExporting}
       />
 
-      {showAddAtencion && (
-          <AtencionForm
-            onCancel={() => setShowAddAtencion(false)}
-            onSave={async (data: NewAtencionConPaciente) => {
-              setLoading(true);
-              try {
-                const nueva = await createAtencionConPaciente(data);
-                setAtenciones((prev: Atencion[]) => {
-                  const exists = prev.some(a => a.id_atencion === nueva.id_atencion);
-                  if (exists) return prev;
-                  return [nueva, ...prev];
-                });
-                setShowAddAtencion(false);
-                await Swal.fire({ icon: 'success', title: 'Atención creada', text: `Atención creada correctamente.` });
-              } catch (err) {
-                console.error("Error creando atención:", err);
-                const axiosErr = err as { response?: { data?: { detail?: string }; status?: number }; message?: string };
-                const detail = axiosErr.response?.data?.detail || axiosErr.message || '';
-                let userMsg = 'No se pudo crear la atención.';
-                if (axiosErr?.response?.status === 409) {
-                  userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
-                } else if (typeof detail === 'string' && /duplicate|already exists|unique|integrityerror|duplicate entry/i.test(detail)) {
-                  userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
-                } else if (detail) {
-                  userMsg = detail;
-                }
-                await Swal.fire({ icon: 'error', title: 'Error', text: userMsg });
-              } finally { setLoading(false); }
-            }}
-            userId={auth?.user?.id}
-          />
-      )}
+      <AtencionForm
+        isOpen={showAddAtencion}
+        onCancel={() => setShowAddAtencion(false)}
+        onSave={async (data: NewAtencionConPaciente) => {
+          setLoading(true);
+          try {
+            const nueva = await createAtencionConPaciente(data);
+            setAtenciones((prev: Atencion[]) => {
+              const exists = prev.some(a => a.id_atencion === nueva.id_atencion);
+              if (exists) return prev;
+              return [nueva, ...prev];
+            });
+            setShowAddAtencion(false);
+            await Swal.fire({ icon: 'success', title: 'Atención creada', text: `Atención creada correctamente.` });
+          } catch (err) {
+            console.error("Error creando atención:", err);
+            const axiosErr = err as { response?: { data?: { detail?: string }; status?: number }; message?: string };
+            const detail = axiosErr.response?.data?.detail || axiosErr.message || '';
+            let userMsg = 'No se pudo crear la atención.';
+            if (axiosErr?.response?.status === 409) {
+              userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
+            } else if (typeof detail === 'string' && /duplicate|already exists|unique|integrityerror|duplicate entry/i.test(detail)) {
+              userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
+            } else if (detail) {
+              userMsg = detail;
+            }
+            await Swal.fire({ icon: 'error', title: 'Error', text: userMsg });
+          } finally { setLoading(false); }
+        }}
+        userId={auth?.user?.id}
+      />
 
-      {showEditAtencion && editAtencion && (
-          <AtencionForm
-            onCancel={closeEditor}
-            onSave={async () => {}}
-            onUpdate={async (id: string, data: UpdateAtencion) => {
-              setLoading(true);
-              try {
-                const actualizada = await updateAtencion(id, data);
-                setAtenciones((prev: Atencion[]) =>
-                  prev.map((a: Atencion) => a.id_atencion === id ? actualizada : a)
-                );
-                if (heldLockId) {
-                  try { await releaseAtencionLock(heldLockId); } catch { /* best-effort */ }
-                  setHeldLockId(null);
-                }
-                setShowEditAtencion(false);
-                setEditAtencion(null);
-                await Swal.fire({ icon: 'success', title: 'Atención actualizada', text: `Atención actualizada correctamente.` });
-              } catch (err) {
-                console.error("Error actualizando atención:", err);
-                const axiosErr = err as { response?: { data?: { detail?: string } } };
-                const errorMsg = axiosErr.response?.data?.detail || 'No se pudo actualizar la atención.';
-                await Swal.fire({ icon: 'error', title: 'Error', text: errorMsg });
-              } finally { setLoading(false); }
-            }}
-            initialData={editAtencion}
-            isEditMode={true}
-            userId={auth?.user?.id}
-          />
-      )}
+      <AtencionForm
+        isOpen={showEditAtencion}
+        onCancel={closeEditor}
+        onSave={async () => {}}
+        onUpdate={async (id: string, data: UpdateAtencion) => {
+          setLoading(true);
+          try {
+            const actualizada = await updateAtencion(id, data);
+            setAtenciones((prev: Atencion[]) =>
+              prev.map((a: Atencion) => a.id_atencion === id ? actualizada : a)
+            );
+            if (heldLockId) {
+              try { await releaseAtencionLock(heldLockId); } catch { /* best-effort */ }
+              setHeldLockId(null);
+            }
+            setShowEditAtencion(false);
+            setEditAtencion(null);
+            await Swal.fire({ icon: 'success', title: 'Atención actualizada', text: `Atención actualizada correctamente.` });
+          } catch (err) {
+            console.error("Error actualizando atención:", err);
+            const axiosErr = err as { response?: { data?: { detail?: string } } };
+            const errorMsg = axiosErr.response?.data?.detail || 'No se pudo actualizar la atención.';
+            await Swal.fire({ icon: 'error', title: 'Error', text: errorMsg });
+          } finally { setLoading(false); }
+        }}
+        initialData={editAtencion ?? undefined}
+        isEditMode={true}
+        userId={auth?.user?.id}
+      />
     </div>
   );
 }

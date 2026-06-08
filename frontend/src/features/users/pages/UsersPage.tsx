@@ -238,57 +238,54 @@ export default function UsersPage() {
       </div>
 
       {/* Modal Agregar Usuario */}
-      {showAddUser && (
-          <UserForm 
-            onCancel={() => setShowAddUser(false)} 
-            onSave={async ({ username, email, role_id, password, estado }) => {
-              setLoading(true);
-              try {
-                const nuevo = await createUsuario({ username, email, password, estado, role_id });
-                setUsuarios((prev: Usuario[]) => [nuevo, ...prev]);
-                setShowAddUser(false);
-                await Swal.fire({ icon: 'success', title: 'Usuario creado', text: `Usuario ${username} creado correctamente.` });
-              } catch (err) {
-                console.error("Error creando usuario:", err);
-                await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear el usuario.' });
-              } finally { 
-                setLoading(false); 
-              }
-            }} 
-          />
-      )}
+      <UserForm
+        isOpen={showAddUser}
+        onCancel={() => setShowAddUser(false)}
+        onSave={async ({ username, email, role_id, password, estado }) => {
+          setLoading(true);
+          try {
+            const nuevo = await createUsuario({ username, email, password, estado, role_id });
+            setUsuarios((prev: Usuario[]) => [nuevo, ...prev]);
+            setShowAddUser(false);
+            await Swal.fire({ icon: 'success', title: 'Usuario creado', text: `Usuario ${username} creado correctamente.` });
+          } catch (err) {
+            console.error("Error creando usuario:", err);
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear el usuario.' });
+          } finally {
+            setLoading(false);
+          }
+        }}
+      />
 
       {/* Modal Editar Usuario */}
-      {showEditUser && editUser && (
-          <UserForm 
-            onCancel={closeEditor} 
-            onSave={async ({ username, email, role_id, estado }) => {
-              if (!editUser) return;
-              let new_role_id = editUser.role_id ?? 2;
-              if (typeof role_id === 'number') new_role_id = role_id;
-              setLoading(true);
-              try {
-                const actualizado = await updateUsuario({ ...editUser, username, email, role_id: new_role_id, estado });
-                setUsuarios((prev: Usuario[]) => prev.map((u: Usuario) => (u.id === actualizado.id ? actualizado : u)));
-                // release lock if held
-                if (heldLockId) {
-                  await releaseUserLock(heldLockId);
-                  setHeldLockId(null);
-                }
-                setShowEditUser(false);
-                setEditUser(null);
-                await Swal.fire({ icon: 'success', title: 'Usuario actualizado', text: `Usuario ${username} actualizado.` });
-              } catch (err) {
-                console.error("Error actualizando usuario:", err);
-                await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el usuario.' });
-              } finally { 
-                setLoading(false); 
-              }
-            }} 
-            initial={editUser} 
-            isEdit={true} 
-          />
-      )}
+      <UserForm
+        isOpen={showEditUser}
+        isEdit={true}
+        initial={editUser ?? undefined}
+        onCancel={closeEditor}
+        onSave={async ({ username, email, role_id, estado }) => {
+          if (!editUser) return;
+          let new_role_id = editUser.role_id ?? 2;
+          if (typeof role_id === 'number') new_role_id = role_id;
+          setLoading(true);
+          try {
+            const actualizado = await updateUsuario({ ...editUser, username, email, role_id: new_role_id, estado });
+            setUsuarios((prev: Usuario[]) => prev.map((u: Usuario) => (u.id === actualizado.id ? actualizado : u)));
+            if (heldLockId) {
+              await releaseUserLock(heldLockId);
+              setHeldLockId(null);
+            }
+            setShowEditUser(false);
+            setEditUser(null);
+            await Swal.fire({ icon: 'success', title: 'Usuario actualizado', text: `Usuario ${username} actualizado.` });
+          } catch (err) {
+            console.error("Error actualizando usuario:", err);
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el usuario.' });
+          } finally {
+            setLoading(false);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -26,9 +26,9 @@ export default function Login() {
         />
 
         {/* Contenido encima del overlay */}
-        <div className="relative z-10 flex flex-col h-full p-12 justify-between">
+        <div className="relative z-10 flex flex-col h-full p-10">
           {/* Logo top-left */}
-          <div className="flex items-center gap-3 animate-fade-in">
+          <div className="flex items-center gap-3 animate-fade-in flex-shrink-0">
             <div
               className="flex items-center justify-center rounded-2xl"
               style={{ width: '48px', height: '48px', background: 'rgba(255,255,255,0.95)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)' }}
@@ -45,8 +45,8 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Texto central */}
-          <div className="animate-fade-in-up stagger-2">
+          {/* Texto central — centrado vertical y horizontal */}
+          <div className="flex-1 flex flex-col items-center justify-center text-center animate-fade-in-up stagger-2">
             <div
               className="inline-block mb-5 px-4 py-2 rounded-full"
               style={{ background: 'rgba(14,165,233,0.18)', border: '1px solid rgba(14,165,233,0.3)' }}
@@ -66,7 +66,7 @@ export default function Login() {
                 letterSpacing: '-0.02em',
               }}
             >
-              Bienvenido al<br />
+              Bienvenido a<br />
               <span style={{ color: '#7dd3fc' }}>PostCare</span> IPSCSF
             </h1>
             <p style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(203,213,250,0.8)', fontSize: '1rem', lineHeight: 1.7, maxWidth: '380px', margin: 0 }}>
@@ -74,8 +74,8 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Footer izquierdo */}
-          <div className="animate-fade-in stagger-4">
+          {/* Footer izquierdo — centrado */}
+          <div className="text-center animate-fade-in stagger-4 flex-shrink-0">
             <p style={{ fontFamily: "'DM Sans', sans-serif", color: 'rgba(147,174,245,0.55)', fontSize: '0.75rem', margin: 0 }}>
               © {new Date().getFullYear()} IPS Clínica Salud Florida · Todos los derechos reservados
             </p>

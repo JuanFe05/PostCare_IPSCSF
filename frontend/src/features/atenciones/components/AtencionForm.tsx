@@ -1,14 +1,249 @@
-﻿import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import { motion, AnimatePresence } from 'motion/react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import type { NewAtencionConPaciente, UpdateAtencion, Atencion, TipoDocumento, Empresa, EstadoAtencion, SeguimientoAtencion, ServicioOption } from '../types';
 import { getEmpresas, getEstadosAtencion, getSeguimientosAtencion, getServicios, getTiposDocumento } from '../Atencion.api';
 import { getPacienteById } from '../../pacientes/Paciente.api';
-import { MdError, MdCheckCircle } from 'react-icons/md';
-import { FiUser, FiMail, FiPhone, FiCalendar, FiFileText, FiCheckSquare, FiList } from 'react-icons/fi';
+import { MdCheckCircle } from 'react-icons/md';
+import { FiUser, FiMail, FiPhone, FiCalendar, FiFileText, FiCheckSquare, FiList, FiActivity, FiSearch, FiChevronDown } from 'react-icons/fi';
 import { logger } from '../../../utils/logger';
+import { FormModal, SectionCard, FieldGroup, FormInput, FormTextarea, ModalFooter } from '../../../components/animate-ui/form-modal';
 
+// ── SearchableSelect ─────────────────────────────────────────────────────────
+interface SearchableSelectOption { value: number; label: string; }
+interface SearchableSelectProps {
+  value: number;
+  onChange: (value: number) => void;
+  options: SearchableSelectOption[];
+  placeholder?: string;
+  disabled?: boolean;
+  hasError?: boolean;
+}
+
+function SearchableSelect({ value, onChange, options, placeholder = 'Seleccione...', disabled = false, hasError = false }: SearchableSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const selected = options.find(o => o.value === value);
+  const filtered = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()));
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && searchRef.current) searchRef.current.focus();
+  }, [isOpen]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setIsOpen(o => !o)}
+        className={`w-full flex items-center justify-between px-3.5 py-2.5 bg-white border rounded-lg text-sm transition-all outline-none text-left
+          ${hasError ? 'border-red-300 bg-red-50/40' : 'border-gray-200'}
+          ${isOpen ? 'ring-2 ring-blue-100 border-blue-400' : ''}
+          ${disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'cursor-pointer hover:border-blue-300'}
+        `}
+      >
+        <span className={selected ? 'text-gray-900' : 'text-gray-400'}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <FiChevronDown size={14} style={{ color: 'var(--brand-400)' }} />
+        </motion.span>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 overflow-hidden"
+            style={{ boxShadow: '0 8px 24px rgba(13,31,107,0.14), 0 2px 8px rgba(0,0,0,0.08)' }}
+          >
+            <div className="p-2 border-b border-gray-100">
+              <div className="relative">
+                <FiSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={13} />
+                <input
+                  ref={searchRef}
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Buscar empresa..."
+                  className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                />
+              </div>
+            </div>
+            <div className="max-h-48 overflow-y-auto">
+              {filtered.length === 0 ? (
+                <div className="px-4 py-3 text-sm text-gray-400 text-center">Sin resultados</div>
+              ) : (
+                filtered.map(opt => (
+                  <motion.button
+                    key={opt.value}
+                    type="button"
+                    whileHover={{ backgroundColor: 'var(--brand-50)' }}
+                    onClick={() => { onChange(opt.value); setIsOpen(false); setSearch(''); }}
+                    className="w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer"
+                    style={opt.value === value ? { background: 'var(--brand-100)', color: 'var(--brand-700)', fontWeight: 600 } : { color: '#374151' }}
+                  >
+                    {opt.label}
+                  </motion.button>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── StyledSelect (dropdown estilizado sin búsqueda) ─────────────────────────
+interface StyledSelectOption { value: number; label: string; }
+interface StyledSelectProps {
+  value: number;
+  onChange: (value: number) => void;
+  options: StyledSelectOption[];
+  placeholder?: string;
+  disabled?: boolean;
+  hasError?: boolean;
+}
+
+function StyledSelect({ value, onChange, options, placeholder = 'Seleccione...', disabled = false, hasError = false }: StyledSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const selected = options.find(o => o.value === value);
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setIsOpen(o => !o)}
+        className={`w-full flex items-center justify-between px-3.5 py-2.5 bg-white border rounded-lg text-sm transition-all outline-none text-left
+          ${hasError ? 'border-red-300 bg-red-50/40' : 'border-gray-200'}
+          ${isOpen ? 'ring-2 ring-blue-100 border-blue-400' : ''}
+          ${disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'cursor-pointer hover:border-blue-300'}
+        `}
+      >
+        <span className={selected ? 'text-gray-900' : 'text-gray-400'}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <FiChevronDown size={14} style={{ color: 'var(--brand-400)' }} />
+        </motion.span>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl border border-gray-200 overflow-hidden"
+            style={{ boxShadow: '0 8px 24px rgba(13,31,107,0.14), 0 2px 8px rgba(0,0,0,0.08)' }}
+          >
+            <div className="max-h-52 overflow-y-auto">
+              {options.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer hover:bg-[#f4f6ff]"
+                  style={opt.value === value
+                    ? { background: 'var(--brand-100)', color: 'var(--brand-700)', fontWeight: 600 }
+                    : { color: '#374151' }
+                  }
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── AnimatedCheckbox ─────────────────────────────────────────────────────────
+interface AnimatedCheckboxProps {
+  checked: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+  label: string;
+}
+
+function AnimatedCheckbox({ checked, onChange, disabled = false, label }: AnimatedCheckboxProps) {
+  return (
+    <div
+      className={`flex items-center gap-2.5 p-2 rounded-lg select-none transition-colors duration-150
+        ${disabled ? 'cursor-not-allowed opacity-55' : 'cursor-pointer hover:bg-[#f4f6ff]'}`}
+      onClick={() => !disabled && onChange()}
+    >
+      <motion.div
+        className="relative flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center"
+        initial={false}
+        animate={{
+          borderColor: checked ? '#2e5fd4' : '#d1d5db',
+          backgroundColor: checked ? '#2e5fd4' : '#ffffff',
+        }}
+        style={{ border: '2px solid' }}
+        transition={{ duration: 0.18 }}
+        whileTap={!disabled ? { scale: 0.82 } : {}}
+      >
+        <AnimatePresence>
+          {checked && (
+            <motion.svg
+              key="check"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+              width="11" height="11" viewBox="0 0 12 12" fill="none"
+            >
+              <polyline points="2,6 5,9 10,3" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </motion.svg>
+          )}
+        </AnimatePresence>
+      </motion.div>
+      <span
+        className="text-sm leading-tight transition-colors duration-150"
+        style={{ color: checked ? '#1a338e' : '#374151' }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 type AtencionFormProps = {
   onCancel: () => void;
   onSave: (data: NewAtencionConPaciente) => Promise<void>;
@@ -16,9 +251,10 @@ type AtencionFormProps = {
   initialData?: Atencion;
   isEditMode?: boolean;
   userId?: number;
+  isOpen: boolean;
 };
 
-export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, isEditMode = false, userId }: AtencionFormProps) {
+export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, isEditMode = false, userId, isOpen }: AtencionFormProps) {
   // Form-managed fields are handled by react-hook-form (see below)
   const [selectedServicios, setSelectedServicios] = useState<number[]>(initialData?.servicios.map(s => s.id_servicio) || []);
   
@@ -57,7 +293,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
     observacion?: string;
   };
 
-  const { register, handleSubmit: rhfHandleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit: rhfHandleSubmit, setValue, watch, control, formState: { errors } } = useForm<FormValues>({
     mode: 'onChange',
     defaultValues: {
       idTipoDocumento: 0,
@@ -198,14 +434,6 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
     await onSave(data);
   });
 
-  const [isClosing, setIsClosing] = useState(false);
-
-  const handleClose = () => {
-    if (loading) return;
-    setIsClosing(true);
-    setTimeout(() => onCancel(), 200);
-  };
-
   const toggleServicio = (servicioId: number) => {
     setSelectedServicios(prev => 
       prev.includes(servicioId)
@@ -214,531 +442,352 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
     );
   };
 
-  return createPortal(
-    <div
-      className={`fixed inset-0 z-[9999] flex items-center justify-center ${isClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'}`}
+  return (
+    <FormModal
+      isOpen={isOpen}
+      onClose={onCancel}
+      title={isEditMode ? 'Editar Atención' : 'Nueva Atención'}
+      subtitle={isEditMode ? 'Actualice los datos de la atención' : 'Registre una nueva atención con paciente'}
+      icon={<FiActivity size={20} />}
+      maxWidth="max-w-3xl"
+      scrollable
     >
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={!loading ? handleClose : undefined}
-      />
-      
-      {/* Modal */}
-      <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col ${isClosing ? 'modal-content-exit' : 'modal-content-enter'}`}>
-        {/* Header */}
-        <div className="px-6 py-5 rounded-t-2xl flex-shrink-0" style={{ backgroundColor: '#1a338e' }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-white">
-                {isEditMode ? 'Editar Atención' : 'Nueva Atención'}
-              </h2>
-              <p className="text-white text-sm">
-                {isEditMode ? 'Actualice los datos de la atención' : 'Registre una nueva atención con paciente'}
-              </p>
-            </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <svg className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-gray-600">Cargando datos...</p>
           </div>
         </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <svg className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <p className="text-gray-600">Cargando datos...</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Body */}
-            <div className="overflow-y-auto flex-1 p-6">
-              <form onSubmit={onSubmit} className="space-y-6" id="atencion-form">
-                {/* Sección: Datos de la Atención */}
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <FiFileText className="text-blue-600" />
-                    Datos de la Atención
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* ID Atención */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Id Atención <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        {!isEditMode && (
-                          <span className="px-3 py-2.5 bg-blue-100 border border-blue-300 rounded-lg text-blue-700 font-bold text-sm">T</span>
-                        )}
-                        <div className="relative flex-1">
-                          <input
-                            {...register('idAtencion', !isEditMode ? {
-                              required: 'El ID de la atención es obligatorio',
-                              pattern: { value: /^\d+$/, message: 'El ID debe contener solo números' },
-                              maxLength: { value: 10, message: 'El ID no debe superar 10 dígitos' }
-                            } : {})}
-                            type="text"
-                            inputMode="numeric"
-                            className="w-full px-4 py-2.5 pl-10 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            placeholder="Ej: 12345"
-                            disabled={isEditMode}
-                            aria-invalid={errors.idAtencion ? 'true' : 'false'}
-                          />
-                          <FiFileText className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                        </div>
-                      </div>
-                      {errors.idAtencion && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.idAtencion.message)}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Fecha Atención */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Fecha Atención <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          {...register('fechaIngreso', { required: 'La fecha de atención es obligatoria' })}
-                          type="date"
-                          className="w-full px-4 py-2.5 pl-10 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          aria-invalid={errors.fechaIngreso ? 'true' : 'false'}
-                        />
-                        <FiCalendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                      </div>
-                      {errors.fechaIngreso && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.fechaIngreso.message)}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Empresa */}
-                    <div className="col-span-2">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Empresa <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        {...register('idEmpresa', { required: 'La empresa es obligatoria', validate: v => v !== 0 || 'Debe seleccionar una empresa' })}
-                        disabled={!canEditFields}
-                        className={`w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditFields ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                        aria-invalid={errors.idEmpresa ? 'true' : 'false'}
-                      >
-                        <option value={0}>-- Seleccione Empresa --</option>
-                        {empresas.map((e) => (
-                          <option key={e.id} value={e.id}>
-                            {e.nombre}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.idEmpresa && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.idEmpresa.message)}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sección: Datos del Paciente */}
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <FiUser className="text-blue-600" />
-                    Datos del Paciente
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Tipo de Documento */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Tipo de Documento <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        {...register('idTipoDocumento', { valueAsNumber: true, validate: (v) => v !== 0 || 'Seleccione un tipo de documento' })}
-                        className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        aria-invalid={errors.idTipoDocumento ? 'true' : 'false'}
-                      >
-                        <option value={0}>-- Seleccione Tipo --</option>
-                        {tiposDocumento.map(tipo => (
-                          <option key={tipo.id} value={tipo.id}>
-                            {tipo.descripcion}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.idTipoDocumento && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.idTipoDocumento.message)}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Número de Documento */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Número de Documento <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          {...register('idPaciente', { required: 'El número de documento es obligatorio' })}
-                          type="text"
-                          onBlur={(e) => { const v = e.target.value.trim(); setValue('idPaciente', v); }}
-                          className="w-full px-4 py-2.5 pl-10 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="Ej: 1234567890"
-                          aria-invalid={errors.idPaciente ? 'true' : 'false'}
-                        />
-                        <FiFileText className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                      </div>
-                      {errors.idPaciente && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.idPaciente.message)}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Email */}
-                    <div className="col-span-2">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Email <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          {...register('email', { required: 'El email es obligatorio', pattern: { value: /^\S+@\S+\.\S+$/, message: 'El email no tiene un formato válido' } })}
-                          type="email"
-                          onBlur={(e) => { const v = e.target.value.trim().toLowerCase(); setValue('email', v); }}
-                          className="w-full px-4 py-2.5 pl-10 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="ejemplo@correo.com"
-                          aria-invalid={errors.email ? 'true' : 'false'}
-                        />
-                        <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                      </div>
-                      {errors.email && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.email.message)}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Teléfono 1 */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Teléfono 1 <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          {...register('telefonoUno', {
-                            required: 'El teléfono 1 es obligatorio',
-                            pattern: { value: /^\d{7,10}$/, message: 'El teléfono debe contener solo números (7-10 dígitos)' }
-                          })}
-                          type="tel"
-                          inputMode="numeric"
-                          onBlur={(e) => { const v = e.target.value.trim(); setValue('telefonoUno', v); }}
-                          className="w-full px-4 py-2.5 pl-10 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="3001234567"
-                          aria-invalid={errors.telefonoUno ? 'true' : 'false'}
-                        />
-                        <FiPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                      </div>
-                      {errors.telefonoUno && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.telefonoUno.message)}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Teléfono 2 */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Teléfono 2
-                      </label>
-                      <div className="relative">
-                        <input
-                          {...register('telefonoDos', {
-                            validate: (v) => !v || /^\d{7,10}$/.test(v) || 'El teléfono debe contener solo números (7-10 dígitos)'
-                          })}
-                          type="tel"
-                          inputMode="numeric"
-                          onBlur={(e) => { const v = e.target.value.trim(); setValue('telefonoDos', v); }}
-                          className="w-full px-4 py-2.5 pl-10 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="3001234567"
-                        />
-                        <FiPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                      </div>
-                      {errors.telefonoDos && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.telefonoDos.message)}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Nombre 1 */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Nombre 1 <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          {...register('primerNombre', {
-                            required: 'El primer nombre es obligatorio',
-                            validate: (v) => (v && v.length <= 20) || 'Máximo 20 caracteres',
-                            pattern: { value: /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, message: 'Solo se permiten letras' }
-                          })}
-                          type="text"
-                          onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('primerNombre', v); }}
-                          className="w-full px-4 py-2.5 pl-10 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="JUAN"
-                          aria-invalid={errors.primerNombre ? 'true' : 'false'}
-                        />
-                        <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                      </div>
-                      {errors.primerNombre && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.primerNombre.message)}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Nombre 2 */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Nombre 2
-                      </label>
-                      <div className="relative">
-                        <input
-                          {...register('segundoNombre', {
-                            validate: (v) => !v || ((v.length <= 20) && /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(v)) || 'Solo letras y máximo 20 caracteres'
-                          })}
-                          type="text"
-                          onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('segundoNombre', v); }}
-                          className="w-full px-4 py-2.5 pl-10 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="CARLOS"
-                        />
-                        <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                      </div>
-                      {errors.segundoNombre && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.segundoNombre.message)}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Apellido 1 */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Apellido 1 <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          {...register('primerApellido', {
-                            required: 'El primer apellido es obligatorio',
-                            validate: (v) => (v && v.length <= 20) || 'Máximo 20 caracteres',
-                            pattern: { value: /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, message: 'Solo se permiten letras' }
-                          })}
-                          type="text"
-                          onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('primerApellido', v); }}
-                          className="w-full px-4 py-2.5 pl-10 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="PÉREZ"
-                          aria-invalid={errors.primerApellido ? 'true' : 'false'}
-                        />
-                        <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                      </div>
-                      {errors.primerApellido && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.primerApellido.message)}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Apellido 2 */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Apellido 2
-                      </label>
-                      <div className="relative">
-                        <input
-                          {...register('segundoApellido', {
-                            validate: (v) => !v || ((v.length <= 20) && /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(v)) || 'Solo letras y máximo 20 caracteres'
-                          })}
-                          type="text"
-                          onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('segundoApellido', v); }}
-                          className="w-full px-4 py-2.5 pl-10 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="GARCÍA"
-                        />
-                        <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                      </div>
-                      {errors.segundoApellido && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.segundoApellido.message)}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sección: Estado y Seguimiento */}
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <FiCheckSquare className="text-blue-600" />
-                    Estado y Seguimiento
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Estado */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Estado <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        {...register('idEstado', { valueAsNumber: true, validate: (v) => v !== 0 || 'Seleccione un estado' })}
-                        disabled={!canEditFields}
-                        className={`w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditFields ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                        aria-invalid={errors.idEstado ? 'true' : 'false'}
-                      >
-                        <option value={0}>-- Seleccione Estado --</option>
-                        {estados.map(est => (
-                          <option key={est.id} value={est.id}>
-                            {est.nombre}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.idEstado && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.idEstado.message)}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Seguimiento */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Seguimiento <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        {...register('idSeguimiento', { valueAsNumber: true, validate: (v) => v !== 0 || 'Seleccione un seguimiento' })}
-                        disabled={!canEditFields}
-                        className={`w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${!canEditFields ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                        aria-invalid={errors.idSeguimiento ? 'true' : 'false'}
-                      >
-                        <option value={0}>-- Seleccione Seguimiento --</option>
-                        {seguimientos.map(seg => (
-                          <option key={seg.id} value={seg.id}>
-                            {seg.nombre}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.idSeguimiento && (
-                        <div className="flex items-center gap-1 mt-2 text-red-600">
-                          <MdError size={16} />
-                          <p className="text-xs">{String(errors.idSeguimiento.message)}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sección: Servicios */}
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <FiList className="text-blue-600" />
-                    Servicios
-                  </h3>
-                  <div className="border border-sky-200 rounded-lg p-4 max-h-48 overflow-y-auto bg-white shadow-sm">
-                    {servicios.length === 0 ? (
-                      <p className="text-gray-500 text-sm text-center py-4">No hay servicios disponibles</p>
-                    ) : (
-                      <div className="grid grid-cols-3 gap-2">
-                        {servicios.map(serv => (
-                          <label key={serv.id} className={`flex items-center gap-2 ${!canEditFields ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-sky-50'} p-2 rounded transition-colors`}>
-                            <input
-                              type="checkbox"
-                              checked={selectedServicios.includes(serv.id)}
-                              onChange={() => toggleServicio(serv.id)}
-                              disabled={!canEditFields}
-                              className="w-4 h-4 text-blue-600 focus:ring-sky-500 rounded"
-                            />
-                            <span className="text-sm">{serv.nombre}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {selectedServicios.length > 0 && (
-                    <div className="flex items-center gap-2 mt-3 text-sky-700 bg-sky-100 px-3 py-2 rounded-lg">
-                      <MdCheckCircle size={18} />
-                      <p className="text-xs font-semibold">
-                        {selectedServicios.length} servicio(s) seleccionado(s)
-                      </p>
-                    </div>
+      ) : (
+        <form onSubmit={onSubmit} id="atencion-form" className="space-y-4">
+          {/* Sección: Datos de la Atención */}
+          <SectionCard index={0} icon={<FiFileText />} title="Datos de la Atención">
+            <div className="grid grid-cols-2 gap-4">
+              {/* ID Atención */}
+              <FieldGroup label="Id Atención" required error={errors.idAtencion?.message}>
+                <div className="flex items-center gap-2">
+                  {!isEditMode && (
+                    <span
+                      className="px-3 py-2.5 rounded-lg text-sm font-bold flex-shrink-0"
+                      style={{ background: 'var(--brand-100)', border: '1px solid var(--brand-200)', color: 'var(--brand-700)' }}
+                    >
+                      T
+                    </span>
                   )}
+                  <FormInput
+                    {...register('idAtencion', !isEditMode ? {
+                      required: 'El ID de la atención es obligatorio',
+                      pattern: { value: /^\d+$/, message: 'El ID debe contener solo números' },
+                      maxLength: { value: 10, message: 'El ID no debe superar 10 dígitos' }
+                    } : {})}
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Ej: 12345"
+                    disabled={isEditMode}
+                    hasError={!!errors.idAtencion}
+                    icon={<FiFileText size={14} />}
+                  />
                 </div>
+              </FieldGroup>
 
-                {/* Sección: Observación */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Observación
-                  </label>
-                  <div className="relative">
-                    <textarea
-                      {...register('observacion')}
-                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                      rows={6}
-                      placeholder="Escriba observaciones adicionales aquí..."
-                      maxLength={255}
+              {/* Fecha Atención */}
+              <FieldGroup label="Fecha Atención" required error={errors.fechaIngreso?.message}>
+                <div className="relative">
+                  <Controller
+                    name="fechaIngreso"
+                    control={control}
+                    rules={{ required: 'La fecha de atención es obligatoria' }}
+                    render={({ field }) => (
+                      <DatePicker
+                        selected={field.value ? new Date(field.value + 'T00:00:00') : null}
+                        onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                        dateFormat="dd/MM/yyyy"
+                        placeholderText="Seleccione una fecha"
+                        className={`w-full px-4 py-2.5 pl-10 border rounded-lg text-sm transition-all outline-none focus:ring-2 focus:ring-offset-0 ${errors.fechaIngreso ? 'border-red-300 bg-red-50/40 focus:ring-red-200 focus:border-red-400' : 'border-gray-200 focus:ring-blue-100 focus:border-blue-400'}`}
+                        popperClassName="atf-datepicker-popper"
+                        calendarClassName="shadow-xl"
+                        wrapperClassName="w-full"
+                      />
+                    )}
+                  />
+                  <FiCalendar
+                    className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                    style={{ color: 'var(--brand-400)' }}
+                    size={16}
+                  />
+                </div>
+              </FieldGroup>
+
+              {/* Empresa */}
+              <div className="col-span-2">
+                <FieldGroup label="Empresa" required error={errors.idEmpresa?.message}>
+                  <Controller
+                    name="idEmpresa"
+                    control={control}
+                    rules={{ validate: v => (v !== undefined && v !== 0) || 'Debe seleccionar una empresa' }}
+                    render={({ field }) => (
+                      <SearchableSelect
+                        value={field.value ?? 0}
+                        onChange={(val) => field.onChange(val)}
+                        options={empresas.map(e => ({ value: e.id, label: e.nombre }))}
+                        placeholder="-- Seleccione Empresa --"
+                        disabled={!canEditFields}
+                        hasError={!!errors.idEmpresa}
+                      />
+                    )}
+                  />
+                </FieldGroup>
+              </div>
+            </div>
+          </SectionCard>
+
+          {/* Sección: Datos del Paciente */}
+          <SectionCard index={1} icon={<FiUser />} title="Datos del Paciente">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Tipo de Documento */}
+              <FieldGroup label="Tipo de Documento" required error={errors.idTipoDocumento?.message}>
+                <Controller
+                  name="idTipoDocumento"
+                  control={control}
+                  rules={{ validate: (v) => v !== 0 || 'Seleccione un tipo de documento' }}
+                  render={({ field }) => (
+                    <StyledSelect
+                      value={field.value ?? 0}
+                      onChange={field.onChange}
+                      options={tiposDocumento.map(t => ({ value: t.id, label: t.descripcion }))}
+                      placeholder="-- Seleccione Tipo --"
+                      hasError={!!errors.idTipoDocumento}
                     />
-                    <p className="text-xs text-gray-500 mt-2 text-right font-medium">
-                      {observacion.length}/255 caracteres
-                    </p>
-                  </div>
-                </div>
-              </form>
-            </div>
+                  )}
+                />
+              </FieldGroup>
 
-            {/* Footer */}
-            <div className="flex gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-2xl flex-shrink-0">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={loading}
-                className="flex-1 px-6 py-3 bg-red-400 hover:bg-red-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                form="atencion-form"
-                disabled={loading}
-                className="flex-1 px-6 py-3 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg" style={{ backgroundColor: '#1a338e' }} onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#152156')} onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1a338e')}
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Guardando...
-                  </>
-                ) : (
-                  'Guardar'
-                )}
-              </button>
+              {/* Número de Documento */}
+              <FieldGroup label="Número de Documento" required error={errors.idPaciente?.message}>
+                <FormInput
+                  {...register('idPaciente', { required: 'El número de documento es obligatorio' })}
+                  type="text"
+                  onBlur={(e) => { const v = e.target.value.trim(); setValue('idPaciente', v); }}
+                  placeholder="Ej: 1234567890"
+                  hasError={!!errors.idPaciente}
+                  icon={<FiFileText size={14} />}
+                />
+              </FieldGroup>
+
+              {/* Email */}
+              <div className="col-span-2">
+                <FieldGroup label="Email" required error={errors.email?.message}>
+                  <FormInput
+                    {...register('email', { required: 'El email es obligatorio', pattern: { value: /^\S+@\S+\.\S+$/, message: 'El email no tiene un formato válido' } })}
+                    type="email"
+                    onBlur={(e) => { const v = e.target.value.trim().toLowerCase(); setValue('email', v); }}
+                    placeholder="ejemplo@correo.com"
+                    hasError={!!errors.email}
+                    icon={<FiMail size={14} />}
+                  />
+                </FieldGroup>
+              </div>
+
+              {/* Teléfono 1 */}
+              <FieldGroup label="Teléfono 1" required error={errors.telefonoUno?.message}>
+                <FormInput
+                  {...register('telefonoUno', {
+                    required: 'El teléfono 1 es obligatorio',
+                    pattern: { value: /^\d{7,10}$/, message: 'El teléfono debe contener solo números (7-10 dígitos)' }
+                  })}
+                  type="tel"
+                  inputMode="numeric"
+                  onBlur={(e) => { const v = e.target.value.trim(); setValue('telefonoUno', v); }}
+                  placeholder="3001234567"
+                  hasError={!!errors.telefonoUno}
+                  icon={<FiPhone size={14} />}
+                />
+              </FieldGroup>
+
+              {/* Teléfono 2 */}
+              <FieldGroup label="Teléfono 2" error={errors.telefonoDos?.message}>
+                <FormInput
+                  {...register('telefonoDos', {
+                    validate: (v) => !v || /^\d{7,10}$/.test(v) || 'El teléfono debe contener solo números (7-10 dígitos)'
+                  })}
+                  type="tel"
+                  inputMode="numeric"
+                  onBlur={(e) => { const v = e.target.value.trim(); setValue('telefonoDos', v); }}
+                  placeholder="3001234567"
+                  hasError={!!errors.telefonoDos}
+                  icon={<FiPhone size={14} />}
+                />
+              </FieldGroup>
+
+              {/* Nombre 1 */}
+              <FieldGroup label="Nombre 1" required error={errors.primerNombre?.message}>
+                <FormInput
+                  {...register('primerNombre', {
+                    required: 'El primer nombre es obligatorio',
+                    validate: (v) => (v && v.length <= 20) || 'Máximo 20 caracteres',
+                    pattern: { value: /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, message: 'Solo se permiten letras' }
+                  })}
+                  type="text"
+                  onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('primerNombre', v); }}
+                  placeholder="JUAN"
+                  hasError={!!errors.primerNombre}
+                  icon={<FiUser size={14} />}
+                />
+              </FieldGroup>
+
+              {/* Nombre 2 */}
+              <FieldGroup label="Nombre 2" error={errors.segundoNombre?.message}>
+                <FormInput
+                  {...register('segundoNombre', {
+                    validate: (v) => !v || ((v.length <= 20) && /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(v)) || 'Solo letras y máximo 20 caracteres'
+                  })}
+                  type="text"
+                  onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('segundoNombre', v); }}
+                  placeholder="CARLOS"
+                  hasError={!!errors.segundoNombre}
+                  icon={<FiUser size={14} />}
+                />
+              </FieldGroup>
+
+              {/* Apellido 1 */}
+              <FieldGroup label="Apellido 1" required error={errors.primerApellido?.message}>
+                <FormInput
+                  {...register('primerApellido', {
+                    required: 'El primer apellido es obligatorio',
+                    validate: (v) => (v && v.length <= 20) || 'Máximo 20 caracteres',
+                    pattern: { value: /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/, message: 'Solo se permiten letras' }
+                  })}
+                  type="text"
+                  onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('primerApellido', v); }}
+                  placeholder="PÉREZ"
+                  hasError={!!errors.primerApellido}
+                  icon={<FiUser size={14} />}
+                />
+              </FieldGroup>
+
+              {/* Apellido 2 */}
+              <FieldGroup label="Apellido 2" error={errors.segundoApellido?.message}>
+                <FormInput
+                  {...register('segundoApellido', {
+                    validate: (v) => !v || ((v.length <= 20) && /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(v)) || 'Solo letras y máximo 20 caracteres'
+                  })}
+                  type="text"
+                  onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('segundoApellido', v); }}
+                  placeholder="GARCÍA"
+                  hasError={!!errors.segundoApellido}
+                  icon={<FiUser size={14} />}
+                />
+              </FieldGroup>
             </div>
-          </>
-        )}
-      </div>
-    </div>,
-    document.body
+          </SectionCard>
+
+          {/* Sección: Estado y Seguimiento */}
+          <SectionCard index={2} icon={<FiCheckSquare />} title="Estado y Seguimiento">
+            <div className="grid grid-cols-2 gap-4">
+              <FieldGroup label="Estado" required error={errors.idEstado?.message}>
+                <Controller
+                  name="idEstado"
+                  control={control}
+                  rules={{ validate: (v) => v !== 0 || 'Seleccione un estado' }}
+                  render={({ field }) => (
+                    <StyledSelect
+                      value={field.value ?? 0}
+                      onChange={field.onChange}
+                      options={estados.map(e => ({ value: e.id, label: e.nombre }))}
+                      placeholder="-- Seleccione Estado --"
+                      disabled={!canEditFields}
+                      hasError={!!errors.idEstado}
+                    />
+                  )}
+                />
+              </FieldGroup>
+
+              <FieldGroup label="Seguimiento" required error={errors.idSeguimiento?.message}>
+                <Controller
+                  name="idSeguimiento"
+                  control={control}
+                  rules={{ validate: (v) => v !== 0 || 'Seleccione un seguimiento' }}
+                  render={({ field }) => (
+                    <StyledSelect
+                      value={field.value ?? 0}
+                      onChange={field.onChange}
+                      options={seguimientos.map(s => ({ value: s.id, label: s.nombre }))}
+                      placeholder="-- Seleccione Seguimiento --"
+                      disabled={!canEditFields}
+                      hasError={!!errors.idSeguimiento}
+                    />
+                  )}
+                />
+              </FieldGroup>
+            </div>
+          </SectionCard>
+
+          {/* Sección: Servicios */}
+          <SectionCard index={3} icon={<FiList />} title="Servicios">
+            <div
+              className="rounded-xl p-4 max-h-52 overflow-y-auto"
+              style={{ background: 'var(--brand-50)', border: '1px solid var(--brand-100)' }}
+            >
+              {servicios.length === 0 ? (
+                <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>No hay servicios disponibles</p>
+              ) : (
+                <div className="grid grid-cols-3 gap-1">
+                  {servicios.map(serv => (
+                    <AnimatedCheckbox
+                      key={serv.id}
+                      checked={selectedServicios.includes(serv.id)}
+                      onChange={() => toggleServicio(serv.id)}
+                      disabled={!canEditFields}
+                      label={serv.nombre}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            <AnimatePresence>
+              {selectedServicios.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-2 mt-3 px-3 py-2 rounded-lg"
+                  style={{ background: 'var(--brand-100)', color: 'var(--brand-700)' }}
+                >
+                  <MdCheckCircle size={18} />
+                  <p className="text-xs font-semibold">
+                    {selectedServicios.length} servicio(s) seleccionado(s)
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </SectionCard>
+
+          {/* Sección: Observación */}
+          <SectionCard index={4} title="Observación">
+            <FormTextarea
+              {...register('observacion')}
+              rows={4}
+              placeholder="Escriba observaciones adicionales aquí..."
+              maxLength={255}
+            />
+            <p className="text-xs mt-1 text-right font-medium" style={{ color: 'var(--text-muted)' }}>
+              {observacion.length}/255 caracteres
+            </p>
+          </SectionCard>
+
+          <ModalFooter
+            onCancel={onCancel}
+            isLoading={loading}
+            submitLabel={isEditMode ? 'Actualizar' : 'Guardar'}
+            formId="atencion-form"
+          />
+        </form>
+      )}
+    </FormModal>
   );
 }
