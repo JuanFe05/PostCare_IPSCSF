@@ -6,7 +6,7 @@ import { Outlet } from 'react-router-dom';
 function DashboardContent() {
   const { collapsed } = useSidebar();
   return (
-    <div className="flex min-h-screen bg-gray-100 overflow-hidden">
+    <div className="flex min-h-screen overflow-hidden" style={{ background: 'var(--surface-bg, #f0f4f9)' }}>
       <Sidebar />
       <div
         className="flex flex-col flex-1 max-w-full overflow-hidden"
@@ -16,17 +16,15 @@ function DashboardContent() {
         }}
       >
         <Header />
-        <main className="flex-1 p-6 mt-16 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto" style={{ padding: '1.5rem', marginTop: '60px' }}>
           <Outlet />
         </main>
 
         {/* Footer */}
-        <footer className="bg-white border-t border-gray-200 py-4 px-6">
-          <div className="text-center">
-            <span className="text-sm text-gray-600">
-              © {new Date().getFullYear()} IPS Clínica Salud Florida. Todos los derechos reservados.
-            </span>
-          </div>
+        <footer style={{ background: 'white', borderTop: '1px solid var(--surface-border)', padding: '0.875rem 1.5rem' }}>
+          <p style={{ textAlign: 'center', fontFamily: "'DM Sans', sans-serif", fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+            © {new Date().getFullYear()} IPS Clínica Salud Florida · Todos los derechos reservados
+          </p>
         </footer>
       </div>
     </div>

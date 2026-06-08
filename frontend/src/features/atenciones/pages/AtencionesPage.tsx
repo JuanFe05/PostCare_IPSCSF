@@ -1,8 +1,8 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import type { ChangeEvent } from "react";
 import { useAuth } from "../../../hooks/useAuth";
 import { useWebSocket } from "../../../hooks/useWebSocket";
-import type { Atencion, NewAtencionConPaciente, UpdateAtencion } from "../types";
+import type { Atencion, NewAtencionConPaciente, UpdateAtencion, EstadoAtencion, SeguimientoAtencion } from "../types";
 import { getAtenciones, getAtencionesByRango, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock, getEstadosAtencion, getSeguimientosAtencion } from "../Atencion.api";
 import { syncPacientesRangoFechas } from "../../../api/Sync.api";
 import Swal from "sweetalert2";
@@ -10,7 +10,6 @@ import AtencionForm from "../components/AtencionForm";
 import SyncModal from "../components/SyncModal";
 import ExportDateRangeModal from "../components/ExportDateRangeModal";
 import AtencionTable from '../components/AtencionTable';
-import { Card, CardHeader, CardBody, Button } from '../../../components/notus';
 import { prepareAtencionesPorServicio } from "../utils";
 
 export default function AtencionesPage() {
@@ -23,13 +22,9 @@ export default function AtencionesPage() {
   const [atenciones, setAtenciones] = useState<Atencion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<string | null>(() => {
-    const ayer = new Date();
-    ayer.setDate(ayer.getDate() - 1);
-    return ayer.toLocaleDateString('en-CA'); // YYYY-MM-DD en zona local
-  });
-  const [estados, setEstados] = useState<any[]>([]);
-  const [seguimientos, setSeguimientos] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [estados, setEstados] = useState<EstadoAtencion[]>([]);
+  const [seguimientos, setSeguimientos] = useState<SeguimientoAtencion[]>([]);
   const [selectedEstadoId, setSelectedEstadoId] = useState<number | null>(null);
   const [selectedSeguimientoId, setSelectedSeguimientoId] = useState<number | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
@@ -38,7 +33,7 @@ export default function AtencionesPage() {
   const { auth } = useAuth();
   const { subscribe } = useWebSocket();
 
-  const loadAtenciones = async () => {
+  const loadAtenciones = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getAtenciones(0, 500, selectedDate ?? undefined);
@@ -50,11 +45,11 @@ export default function AtencionesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate]);
 
   useEffect(() => {
     loadAtenciones();
-  }, []);
+  }, [loadAtenciones]);
 
   // cargar listas para filtros
   useEffect(() => {
@@ -74,10 +69,7 @@ export default function AtencionesPage() {
     })();
   }, []);
 
-  // recargar cuando cambie la fecha seleccionada
-  useEffect(() => {
-    loadAtenciones();
-  }, [selectedDate]);
+
 
   // Suscribirse a eventos WebSocket para atenciones
   useEffect(() => {
@@ -136,8 +128,9 @@ export default function AtencionesPage() {
           </div>
         `,
       });
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.detail || 'Error al sincronizar datos';
+    } catch (error) {
+      const axiosErr = error as { response?: { data?: { detail?: string } } };
+      const errorMsg = axiosErr.response?.data?.detail || 'Error al sincronizar datos';
       Swal.fire('Error', errorMsg, 'error');
     }
   };
@@ -183,15 +176,15 @@ export default function AtencionesPage() {
         timer: 3000,
         showConfirmButton: false
       });
-    } catch (error: any) {
+    } catch (error) {
       setIsExporting(false);
       console.error('Error al exportar:', error);
-      
-      if (error?.message !== 'Exportación cancelada') {
+      const exportErr = error as { message?: string };
+      if (exportErr?.message !== 'Exportación cancelada') {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: error?.message || 'No se pudo exportar los datos',
+          text: exportErr?.message || 'No se pudo exportar los datos',
           confirmButtonColor: '#1938bc'
         });
       }
@@ -269,7 +262,7 @@ export default function AtencionesPage() {
 
   const closeEditor = async () => {
     if (heldLockId) {
-      try { await releaseAtencionLock(heldLockId); } catch (_) { /* best-effort */ }
+      try { await releaseAtencionLock(heldLockId); } catch { /* best-effort */ }
       setHeldLockId(null);
     }
     setShowEditAtencion(false);
@@ -280,7 +273,7 @@ export default function AtencionesPage() {
   useEffect(() => {
     const handler = () => {
       if (heldLockId) {
-        try { releaseAtencionLock(heldLockId); } catch (_) { /* ignore */ }
+        try { releaseAtencionLock(heldLockId); } catch { /* ignore */ }
       }
     };
     window.addEventListener('beforeunload', handler);
@@ -290,152 +283,251 @@ export default function AtencionesPage() {
 
 
   return (
-    <div>
-      <Card>
-        <CardHeader color="lightBlue" className="flex justify-between items-center">
+    <div className="animate-fade-in-up">
+      {/* Header de la página */}
+      <div
+        className="rounded-2xl mb-6 overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #0d1f6b 0%, #1a338e 55%, #2248b3 100%)',
+          boxShadow: '0 4px 20px rgba(13,31,107,0.2)',
+        }}
+      >
+        {/* Fondo decorativo */}
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: 'radial-gradient(circle at 90% 50%, rgba(14,165,233,0.15) 0%, transparent 50%)',
+            borderRadius: 'inherit',
+            pointerEvents: 'none',
+          }}
+        />
+        <div className="relative flex items-center justify-between px-6 py-4 gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <i className="fas fa-clipboard-list text-2xl text-white"></i>
-            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Atenciones</h6>
+            <div
+              className="flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ width: '42px', height: '42px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
+            >
+              <i className="fas fa-clipboard-list" style={{ color: 'white', fontSize: '1.1rem' }} />
+            </div>
+            <div>
+              <h2 style={{ fontFamily: "'Sora', sans-serif", color: 'white', fontSize: '1.05rem', fontWeight: 700, margin: 0, lineHeight: 1.3 }}>
+                Gestión de Atenciones
+              </h2>
+              <p style={{ color: 'rgba(147,174,245,0.8)', fontSize: '0.78rem', margin: 0 }}>
+                {atenciones.length > 0 ? `${atenciones.length} registro${atenciones.length !== 1 ? 's' : ''} cargados` : 'Cargando...'}
+              </p>
+            </div>
           </div>
+
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
             const isAdmin = role.includes('ADMINISTRADOR');
             const canAdd = isAdmin || role.includes('ASESOR') || role.includes('FACTURADOR');
-
             return (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
                 {canAdd && (
-                  <Button
+                  <button
                     onClick={() => setShowAddAtencion(true)}
-                    color="white"
-                    size="sm"
+                    className="ui-btn ui-btn-ghost"
+                    style={{ height: '38px' }}
                   >
-                    <i className="fas fa-plus mr-2"></i>
-                    AGREGAR ATENCIÓN
-                  </Button>
+                    <i className="fas fa-plus" style={{ fontSize: '0.8rem' }} />
+                    Agregar Atención
+                  </button>
                 )}
-
                 {isAdmin && (
                   <>
-                    <Button
+                    <button
                       onClick={() => setShowSyncModal(true)}
-                      color="white"
-                      size="sm"
+                      className="ui-btn ui-btn-ghost"
+                      style={{ height: '38px' }}
                       title="Sincronizar desde Clínica Florida"
                     >
-                      <i className="fas fa-sync-alt mr-2"></i>
-                      SINCRONIZAR
-                    </Button>
-
-                    <Button
+                      <i className="fas fa-sync-alt" style={{ fontSize: '0.8rem' }} />
+                      Sincronizar
+                    </button>
+                    <button
                       onClick={() => setShowExportModal(true)}
-                      color="white"
-                      size="sm"
+                      className="ui-btn ui-btn-ghost"
+                      style={{ height: '38px' }}
                       title="Exportar a Excel"
                     >
-                      <i className="fas fa-file-excel mr-2"></i>
-                      EXPORTAR
-                    </Button>
+                      <i className="fas fa-file-excel" style={{ fontSize: '0.8rem' }} />
+                      Exportar
+                    </button>
                   </>
                 )}
               </div>
             );
           })()}
-        </CardHeader>
-        
-        <CardBody>
-          {/* Filtros y búsqueda */}
-          <div className="mb-8 flex flex-col lg:flex-row gap-4 items-center justify-between">
-            {/* Filtros a la izquierda */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Select estado/seguimiento con diseño mejorado estilo Notus */}
-              <div className="relative">
-                <select
-                  value={selectedFilter ?? ''}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setSelectedFilter(v || null);
-                    if (!v) {
+        </div>
+      </div>
+
+      {/* Tarjeta principal */}
+      <div className="ui-card animate-fade-in-up stagger-1">
+        {/* Barra de filtros */}
+        <div
+          style={{
+            padding: '1rem 1.5rem',
+            borderBottom: '1px solid var(--surface-border)',
+            background: 'var(--brand-50)',
+          }}
+        >
+          <div className="flex flex-col sm:flex-row gap-3 items-center flex-wrap">
+            {/* Filtro estado/seguimiento */}
+            <div className="relative" style={{ minWidth: '240px', flex: '0 0 auto' }}>
+              <i
+                className="fas fa-filter"
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--brand-400)',
+                  fontSize: '0.78rem',
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                }}
+              />
+              <select
+                value={selectedFilter ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setSelectedFilter(v || null);
+                  if (!v) {
+                    setSelectedEstadoId(null);
+                    setSelectedSeguimientoId(null);
+                  } else {
+                    const [type, id] = v.split(':');
+                    if (type === 'estado') {
+                      setSelectedEstadoId(Number(id));
+                      setSelectedSeguimientoId(null);
+                    } else if (type === 'seguimiento') {
+                      setSelectedSeguimientoId(Number(id));
+                      setSelectedEstadoId(null);
+                    } else {
                       setSelectedEstadoId(null);
                       setSelectedSeguimientoId(null);
-                    } else {
-                      const [type, id] = v.split(':');
-                      if (type === 'estado') {
-                        setSelectedEstadoId(Number(id));
-                        setSelectedSeguimientoId(null);
-                      } else if (type === 'seguimiento') {
-                        setSelectedSeguimientoId(Number(id));
-                        setSelectedEstadoId(null);
-                      } else {
-                        setSelectedEstadoId(null);
-                        setSelectedSeguimientoId(null);
-                      }
                     }
-                  }}
-                  className="h-[52px] pl-4 pr-10 bg-white border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-700 shadow-sm hover:shadow-lg hover:border-blue-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition-all duration-200 cursor-pointer appearance-none min-w-[260px]"
-                  title="Filtrar por estado o seguimiento"
-                >
-                  <option value="">Estado / Seguimiento</option>
-                  {estados.length > 0 && (
-                    <optgroup label="Estados" className="font-semibold">
-                      {estados.map((st: any) => (
-                        <option key={`estado-${st.id}`} value={`estado:${st.id}`}>{st.nombre}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                  {seguimientos.length > 0 && (
-                    <optgroup label="Seguimientos" className="font-semibold">
-                      {seguimientos.map((sg: any) => (
-                        <option key={`seguimiento-${sg.id}`} value={`seguimiento:${sg.id}`}>{sg.nombre}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                  <i className="fas fa-chevron-down text-blue-500 text-sm"></i>
-                </div>
-              </div>
-
-              {/* Date picker mejorado - wrapper clickeable */}
-              <div 
-                className="relative group cursor-pointer"
-                onClick={(e) => {
-                  const input = e.currentTarget.querySelector('input[type="date"]') as HTMLInputElement;
-                  if (input && e.target === e.currentTarget) {
-                    input.showPicker?.();
                   }
                 }}
+                className="ui-input"
+                style={{ paddingLeft: '2rem', height: '40px', fontSize: '0.875rem' }}
+                title="Filtrar por estado o seguimiento"
               >
-                <input
-                  type="date"
-                  value={selectedDate ?? ''}
-                  onChange={(e) => setSelectedDate(e.target.value ? e.target.value : null)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    (e.target as HTMLInputElement).showPicker?.();
-                  }}
-                  className="h-[52px] w-full px-4 bg-white border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-700 shadow-sm hover:shadow-lg hover:border-blue-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition-all duration-200 cursor-pointer min-w-[200px]"
-                  style={{ colorScheme: 'light' }}
-                  title="Filtrar por fecha de atención"
-                />
-              </div>
+                <option value="">Estado / Seguimiento</option>
+                {estados.length > 0 && (
+                  <optgroup label="Estados">
+                    {estados.map((st) => (
+                      <option key={`estado-${st.id}`} value={`estado:${st.id}`}>{st.nombre}</option>
+                    ))}
+                  </optgroup>
+                )}
+                {seguimientos.length > 0 && (
+                  <optgroup label="Seguimientos">
+                    {seguimientos.map((sg) => (
+                      <option key={`seguimiento-${sg.id}`} value={`seguimiento:${sg.id}`}>{sg.nombre}</option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
             </div>
 
-            {/* Buscador a la derecha */}
-            <div className="relative max-w-md w-full lg:w-auto lg:min-w-[350px]">
-              <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            {/* Filtro por fecha */}
+            <div className="relative" style={{ minWidth: '190px', flex: '0 0 auto' }}>
+              <i
+                className="fas fa-calendar-alt"
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--brand-400)',
+                  fontSize: '0.78rem',
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                }}
+              />
               <input
-                type="text"
-                placeholder="Buscar atenciones..."
-                value={searchTerm}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 h-[52px] border-2 border-gray-200 rounded-lg bg-white font-medium shadow-sm hover:shadow-lg hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-all duration-200"
-                title="Buscar por: ID Atención, ID Paciente, Nombre Paciente o Empresa"
+                type="date"
+                value={selectedDate ?? ''}
+                onChange={(e) => setSelectedDate(e.target.value || null)}
+                className="ui-input"
+                style={{ paddingLeft: '2rem', height: '40px', fontSize: '0.875rem', colorScheme: 'light' }}
+                title="Filtrar por fecha de atención"
               />
             </div>
-          </div>
 
-          <AtencionTable 
+            {/* Limpiar filtros */}
+            {(selectedFilter || selectedDate) && (
+              <button
+                onClick={() => {
+                  setSelectedFilter(null);
+                  setSelectedEstadoId(null);
+                  setSelectedSeguimientoId(null);
+                  setSelectedDate(null);
+                }}
+                className="ui-btn ui-btn-outline"
+                style={{ height: '40px', fontSize: '0.8rem', gap: '6px' }}
+                title="Limpiar filtros"
+              >
+                <i className="fas fa-times" style={{ fontSize: '0.75rem' }} />
+                Limpiar
+              </button>
+            )}
+
+            {/* Buscador */}
+            <div className="relative ml-auto" style={{ minWidth: '280px', flex: '1 1 280px', maxWidth: '400px' }}>
+              <i
+                className="fas fa-search"
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.78rem',
+                  pointerEvents: 'none',
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Buscar por ID, paciente, empresa..."
+                value={searchTerm}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                className="ui-input"
+                style={{ paddingLeft: '2.2rem', height: '40px', fontSize: '0.875rem' }}
+                title="Buscar por: ID Atención, ID Paciente, Nombre Paciente o Empresa"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    padding: '2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <i className="fas fa-times-circle" style={{ fontSize: '0.85rem' }} />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Tabla */}
+        <div style={{ padding: '1.25rem 1.5rem' }}>
+          <AtencionTable
             atenciones={atenciones}
             loading={loading}
             searchTerm={searchTerm}
@@ -445,8 +537,8 @@ export default function AtencionesPage() {
             attemptEdit={attemptEdit}
             handleEliminar={handleEliminar}
           />
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       <SyncModal
         isOpen={showSyncModal}
@@ -463,8 +555,8 @@ export default function AtencionesPage() {
 
       {showAddAtencion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <AtencionForm 
-            onCancel={() => setShowAddAtencion(false)} 
+          <AtencionForm
+            onCancel={() => setShowAddAtencion(false)}
             onSave={async (data: NewAtencionConPaciente) => {
               setLoading(true);
               try {
@@ -476,12 +568,12 @@ export default function AtencionesPage() {
                 });
                 setShowAddAtencion(false);
                 await Swal.fire({ icon: 'success', title: 'Atención creada', text: `Atención creada correctamente.` });
-              } catch (err: any) {
+              } catch (err) {
                 console.error("Error creando atención:", err);
-                const detail = err.response?.data?.detail || err.message || '';
+                const axiosErr = err as { response?: { data?: { detail?: string }; status?: number }; message?: string };
+                const detail = axiosErr.response?.data?.detail || axiosErr.message || '';
                 let userMsg = 'No se pudo crear la atención.';
-                // Detect common duplicate/constraint messages
-                if (err?.response?.status === 409) {
+                if (axiosErr?.response?.status === 409) {
                   userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
                 } else if (typeof detail === 'string' && /duplicate|already exists|unique|integrityerror|duplicate entry/i.test(detail)) {
                   userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
@@ -500,25 +592,25 @@ export default function AtencionesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <AtencionForm
             onCancel={closeEditor}
-            onSave={async () => {}} // No se usa en modo edición
+            onSave={async () => {}}
             onUpdate={async (id: string, data: UpdateAtencion) => {
               setLoading(true);
               try {
                 const actualizada = await updateAtencion(id, data);
-                setAtenciones((prev: Atencion[]) => 
+                setAtenciones((prev: Atencion[]) =>
                   prev.map((a: Atencion) => a.id_atencion === id ? actualizada : a)
                 );
-                // release lock if held
                 if (heldLockId) {
-                  try { await releaseAtencionLock(heldLockId); } catch (e) { /* best-effort */ }
+                  try { await releaseAtencionLock(heldLockId); } catch { /* best-effort */ }
                   setHeldLockId(null);
                 }
                 setShowEditAtencion(false);
                 setEditAtencion(null);
                 await Swal.fire({ icon: 'success', title: 'Atención actualizada', text: `Atención actualizada correctamente.` });
-              } catch (err: any) {
+              } catch (err) {
                 console.error("Error actualizando atención:", err);
-                const errorMsg = err.response?.data?.detail || 'No se pudo actualizar la atención.';
+                const axiosErr = err as { response?: { data?: { detail?: string } } };
+                const errorMsg = axiosErr.response?.data?.detail || 'No se pudo actualizar la atención.';
                 await Swal.fire({ icon: 'error', title: 'Error', text: errorMsg });
               } finally { setLoading(false); }
             }}
