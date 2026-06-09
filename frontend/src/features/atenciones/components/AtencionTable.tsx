@@ -90,17 +90,21 @@ export default function AtencionTable({
       return true;
     });
 
-    return [...byFilters].sort((a: any, b: any) => {
-      const dateA = new Date(a.fecha_atencion);
-      const dateB = new Date(b.fecha_atencion);
-      return dateB.getTime() - dateA.getTime();
-    });
+    return [...byFilters].sort((a, b) =>
+      (b.fecha_atencion ?? '').localeCompare(a.fecha_atencion ?? '')
+    );
   }, [atenciones, searchTerm, selectedEstadoId, selectedSeguimientoId]);
 
-  // Resultados efectivos: locales primero, remotos como fallback
+  // Función auxiliar de ordenamiento: más reciente → más antiguo
+  const sortByFechaDesc = (list: Atencion[]) =>
+    [...list].sort((a, b) =>
+      (b.fecha_atencion ?? '').localeCompare(a.fecha_atencion ?? '')
+    );
+
+  // Resultados efectivos: locales primero (ya ordenados), remotos como fallback (se ordenan aquí)
   const effectiveData = useMemo(() => {
     if (displayed.length > 0) return displayed;
-    if (remoteResults && remoteResults.length > 0) return remoteResults;
+    if (remoteResults && remoteResults.length > 0) return sortByFechaDesc(remoteResults);
     return [];
   }, [displayed, remoteResults]);
 

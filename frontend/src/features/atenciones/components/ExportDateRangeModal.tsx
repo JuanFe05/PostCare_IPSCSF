@@ -75,6 +75,8 @@ const ExportDateRangeModal = ({
                   className="w-full px-4 py-2.5 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
                   disabled={isLoading}
                   calendarClassName="shadow-xl"
+                  popperPlacement="bottom-start"
+                  popperProps={{ strategy: 'fixed' }}
                 />
                 <FiCalendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-600 pointer-events-none" size={18} />
               </div>
@@ -95,6 +97,8 @@ const ExportDateRangeModal = ({
                   className="w-full px-4 py-2.5 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
                   disabled={isLoading}
                   calendarClassName="shadow-xl"
+                  popperPlacement="bottom-start"
+                  popperProps={{ strategy: 'fixed' }}
                 />
                 <FiCalendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-600 pointer-events-none" size={18} />
               </div>
