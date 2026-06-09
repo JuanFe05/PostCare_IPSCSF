@@ -2,7 +2,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { SidebarProvider, useSidebar } from './SidebarContext';
 import { Outlet } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 function DashboardContent() {
   const { collapsed } = useSidebar();

@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useForm, Controller } from 'react-hook-form';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import type { NewAtencionConPaciente, UpdateAtencion, Atencion, TipoDocumento, Empresa, EstadoAtencion, SeguimientoAtencion, ServicioOption } from '../types';

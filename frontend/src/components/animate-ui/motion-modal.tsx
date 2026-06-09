@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion, type HTMLMotionProps, type Transition } from 'motion/react';
+import { AnimatePresence, motion, type HTMLMotionProps, type Transition } from 'framer-motion';
 
 /* ─────────────────────────────────────────────
    Types

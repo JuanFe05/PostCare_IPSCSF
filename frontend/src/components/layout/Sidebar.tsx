@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import logoIPS from "../../assets/IPS.png";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from './SidebarContext';
