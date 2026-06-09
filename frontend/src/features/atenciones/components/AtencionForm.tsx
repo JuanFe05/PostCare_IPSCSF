@@ -293,7 +293,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
     observacion?: string;
   };
 
-  const { register, handleSubmit: rhfHandleSubmit, setValue, watch, control, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit: rhfHandleSubmit, setValue, reset, watch, control, formState: { errors } } = useForm<FormValues>({
     mode: 'onChange',
     defaultValues: {
       idTipoDocumento: 0,
@@ -314,7 +314,31 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
 
   const observacion = watch('observacion') || '';
 
-  // Cargar cat\u00e1logos y paciente en paralelo (optimizado)
+  // Reiniciar formulario cuando se abre en modo edición con nuevos datos
+  useEffect(() => {
+    if (isOpen && isEditMode && initialData) {
+      reset({
+        idTipoDocumento: 0,
+        idPaciente: initialData.id_paciente || '',
+        email: initialData.email || '',
+        telefonoUno: initialData.telefono_uno || '',
+        telefonoDos: initialData.telefono_dos || '',
+        primerNombre: '',
+        segundoNombre: '',
+        primerApellido: '',
+        segundoApellido: '',
+        idAtencion: initialData.id_atencion?.replace('T', '') || '',
+        fechaIngreso: initialData.fecha_atencion ? initialData.fecha_atencion.split('T')[0] : '',
+        idEmpresa: initialData.id_empresa || 0,
+        idEstado: initialData.id_estado_atencion || 0,
+        idSeguimiento: initialData.id_seguimiento_atencion || 0,
+        observacion: initialData.observacion || ''
+      });
+      setSelectedServicios(initialData.servicios?.map(s => s.id_servicio) || []);
+    }
+  }, [isOpen, isEditMode, initialData?.id_atencion]);
+
+  // Cargar catálogos y paciente en paralelo (optimizado)
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);

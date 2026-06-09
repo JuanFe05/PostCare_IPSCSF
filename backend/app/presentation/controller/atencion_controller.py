@@ -7,7 +7,6 @@ from datetime import date
 from app.configuration.app.database import get_db
 from app.configuration.security.security_dependencies import get_current_user
 from app.presentation.dto.atencion_paciente_dto import (
-    AtencionCreateDto,
     AtencionUpdateDto,
     AtencionDetalleResponseDto,
     AtencionListResponseDto,
@@ -46,61 +45,6 @@ def get_all_atenciones(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error obteniendo atenciones: {str(e)}")
-
-
-@router.get("/{atencion_id}", response_model=AtencionDetalleResponseDto, tags=["Atenciones"])
-def get_atencion_by_id(
-    atencion_id: str,
-    db: Session = Depends(get_db)
-):
-    """
-    Obtiene una atención por ID con toda la información:
-    - Datos de la atención
-    - Datos completos del paciente
-    - Datos de la empresa
-    - Estado y seguimiento
-    - Lista de servicios
-    """
-    atencion = AtencionService.get_atencion_by_id(db, atencion_id)
-    if not atencion:
-        raise HTTPException(status_code=404, detail="Atención no encontrada")
-    return atencion
-
-
-@router.get("/paciente/{paciente_id}", response_model=List[AtencionDetalleResponseDto], tags=["Atenciones"])
-def get_atenciones_by_paciente(
-    paciente_id: str,
-    db: Session = Depends(get_db)
-):
-    """Obtiene todas las atenciones de un paciente específico"""
-    try:
-        return AtencionService.get_atenciones_by_paciente(db, paciente_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error obteniendo atenciones del paciente: {str(e)}")
-
-
-@router.get("/empresa/{empresa_id}", response_model=List[AtencionListResponseDto], tags=["Atenciones"])
-def get_atenciones_by_empresa(
-    empresa_id: int,
-    db: Session = Depends(get_db)
-):
-    """Obtiene todas las atenciones de una empresa específica"""
-    try:
-        return AtencionService.get_atenciones_by_empresa(db, empresa_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error obteniendo atenciones de la empresa: {str(e)}")
-
-
-@router.get("/estado/{estado_id}", response_model=List[AtencionListResponseDto], tags=["Atenciones"])
-def get_atenciones_by_estado(
-    estado_id: int,
-    db: Session = Depends(get_db)
-):
-    """Obtiene todas las atenciones por estado"""
-    try:
-        return AtencionService.get_atenciones_by_estado(db, estado_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error obteniendo atenciones por estado: {str(e)}")
 
 
 @router.get("/buscar", response_model=List[AtencionListResponseDto], tags=["Atenciones"])
@@ -146,28 +90,6 @@ async def create_atencion_con_paciente(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creando atención con paciente: {str(e)}")
-
-
-@router.post("", response_model=AtencionDetalleResponseDto, tags=["Atenciones"], status_code=201)
-async def create_atencion(
-    atencion_data: AtencionCreateDto,
-    db: Session = Depends(get_db)
-):
-    """
-    Crea una nueva atención.
-    
-    El paciente debe existir previamente.
-    Se pueden asignar servicios en la creación.
-    """
-    try:
-        result = AtencionService.create_atencion(db, atencion_data)
-        # Emitir evento WebSocket
-        await ws_manager.send_event("create", "atenciones", result.model_dump(mode='json') if hasattr(result, 'model_dump') else dict(result))
-        return result
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error creando atención: {str(e)}")
 
 
 @router.put("/{atencion_id}", response_model=AtencionDetalleResponseDto, tags=["Atenciones"])

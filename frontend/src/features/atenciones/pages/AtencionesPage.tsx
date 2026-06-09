@@ -6,7 +6,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from "../../../hooks/useAuth";
 import { useWebSocket } from "../../../hooks/useWebSocket";
 import type { Atencion, NewAtencionConPaciente, UpdateAtencion, EstadoAtencion, SeguimientoAtencion } from "../types";
-import { getAtenciones, getAtencionesByRango, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock, getEstadosAtencion, getSeguimientosAtencion } from "../Atencion.api";
+import { getAtenciones, getAtencionesByRango, searchAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock, getEstadosAtencion, getSeguimientosAtencion } from "../Atencion.api";
 import { syncPacientesRangoFechas } from "../../../api/Sync.api";
 import Swal from "sweetalert2";
 import AtencionForm from "../components/AtencionForm";
@@ -16,8 +16,8 @@ import AtencionTable from '../components/AtencionTable';
 import { prepareAtencionesPorServicio } from "../utils";
 
 // Input personalizado para el DatePicker de fecha de atención
-const DateFilterInput = React.forwardRef<HTMLButtonElement, { value?: string; onClick?: () => void; isActive?: boolean }>(
-  ({ value, onClick, isActive }, ref) => (
+const DateFilterInput = React.forwardRef<HTMLButtonElement, { value?: string; onClick?: () => void; isActive?: boolean; onClear?: (e: React.MouseEvent) => void }>(
+  ({ value, onClick, isActive, onClear }, ref) => (
     <button
       type="button"
       ref={ref}
@@ -26,7 +26,18 @@ const DateFilterInput = React.forwardRef<HTMLButtonElement, { value?: string; on
     >
       <i className="fas fa-calendar-alt" style={{ fontSize: '0.8rem', flexShrink: 0 }} />
       <span className="atf-filter-btn-label">{value || 'Fecha atención'}</span>
-      {!isActive && <i className="fas fa-chevron-down atf-chevron" />}
+      {isActive ? (
+        <button
+          type="button"
+          className="atf-active-clear"
+          onClick={(e) => { e.stopPropagation(); onClear?.(e); }}
+          title="Quitar filtro de fecha"
+        >
+          <i className="fas fa-times" />
+        </button>
+      ) : (
+        <i className="fas fa-chevron-down atf-chevron" />
+      )}
     </button>
   )
 );
@@ -41,6 +52,9 @@ export default function AtencionesPage() {
   const [atenciones, setAtenciones] = useState<Atencion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [remoteResults, setRemoteResults] = useState<Atencion[] | null>(null);
+  const [isRemoteSearching, setIsRemoteSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [estados, setEstados] = useState<EstadoAtencion[]>([]);
   const [seguimientos, setSeguimientos] = useState<SeguimientoAtencion[]>([]);
@@ -312,6 +326,55 @@ export default function AtencionesPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [heldLockId]);
 
+  // Búsqueda remota: cuando los filtros locales no encuentran la atención en los 500 cargados,
+  // consulta la BD completa buscando por ID Atención o ID Paciente.
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    if (!searchTerm.trim()) {
+      setRemoteResults(null);
+      setIsRemoteSearching(false);
+      return;
+    }
+
+    const term = searchTerm.trim().toLowerCase();
+    const hasLocal = atenciones.some((a) => {
+      if (selectedEstadoId && Number(a.id_estado_atencion) !== Number(selectedEstadoId)) return false;
+      if (selectedSeguimientoId && Number(a.id_seguimiento_atencion ?? -1) !== Number(selectedSeguimientoId)) return false;
+      return (
+        String(a.id_atencion ?? '').toLowerCase().includes(term) ||
+        String(a.id_paciente ?? '').toLowerCase().includes(term) ||
+        String(a.nombre_paciente ?? '').toLowerCase().includes(term) ||
+        String(a.nombre_empresa ?? '').toLowerCase().includes(term) ||
+        String(a.nombre_estado_atencion ?? '').toLowerCase().includes(term)
+      );
+    });
+
+    if (hasLocal) {
+      setRemoteResults(null);
+      setIsRemoteSearching(false);
+      return;
+    }
+
+    // No hay resultados locales → buscar en la BD después de un debounce
+    setIsRemoteSearching(true);
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        const results = await searchAtenciones({ search: searchTerm.trim(), limit: 500 });
+        setRemoteResults(results);
+      } catch (err) {
+        console.warn('Búsqueda remota de atenciones fallida:', err);
+        setRemoteResults([]);
+      } finally {
+        setIsRemoteSearching(false);
+      }
+    }, 450);
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchTerm, atenciones, selectedEstadoId, selectedSeguimientoId]);
+
 
 
   return (
@@ -507,23 +570,21 @@ export default function AtencionesPage() {
                 onChange={(date: Date | null) => setSelectedDate(date)}
                 dateFormat="dd/MM/yyyy"
                 maxDate={new Date()}
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
                 popperClassName="atf-datepicker-popper"
-                customInput={<DateFilterInput isActive={!!selectedDate} />}
+                customInput={
+                  <DateFilterInput
+                    isActive={!!selectedDate}
+                    onClear={() => setSelectedDate(null)}
+                  />
+                }
               />
-              {selectedDate && (
-                <button
-                  type="button"
-                  className="atf-clear-standalone"
-                  onClick={() => setSelectedDate(null)}
-                  title="Quitar filtro de fecha"
-                >
-                  <i className="fas fa-times" />
-                </button>
-              )}
             </div>
 
             {/* ── Limpiar todos ── */}
-            {(selectedFilter || selectedDate) && (
+            {(selectedFilter !== null && selectedDate !== null) && (
               <button
                 type="button"
                 onClick={() => {
@@ -557,31 +618,41 @@ export default function AtencionesPage() {
               />
               <input
                 type="text"
-                placeholder="Buscar por ID, paciente, empresa..."
+                placeholder="Buscar por ID Atención o ID Paciente..."
                 value={searchTerm}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                 className="ui-input"
-                style={{ paddingLeft: '2.2rem', height: '40px', fontSize: '0.875rem' }}
-                title="Buscar por: ID Atención, ID Paciente, Nombre Paciente o Empresa"
+                style={{ paddingLeft: '2.2rem', paddingRight: searchTerm ? '2.2rem' : '0.75rem', height: '40px', fontSize: '0.875rem' }}
+                title="Buscar por ID Atención o ID Paciente"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
+                  title="Limpiar búsqueda"
                   style={{
                     position: 'absolute',
-                    right: '10px',
+                    right: '8px',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--text-muted)',
-                    padding: '2px',
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: 'var(--text-muted, #94a3b8)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                    cursor: 'pointer',
+                    padding: 0,
+                    lineHeight: 1,
+                    transition: 'background 0.15s',
                   }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-500, #3b82f6)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'var(--text-muted, #94a3b8)')}
                 >
-                  <i className="fas fa-times-circle" style={{ fontSize: '0.85rem' }} />
+                  <i className="fas fa-times" />
                 </button>
               )}
             </div>
@@ -599,6 +670,8 @@ export default function AtencionesPage() {
             auth={auth}
             attemptEdit={attemptEdit}
             handleEliminar={handleEliminar}
+            remoteResults={remoteResults}
+            isRemoteSearching={isRemoteSearching}
           />
         </div>
       </div>

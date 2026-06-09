@@ -13,6 +13,8 @@ interface AtencionTableProps {
   auth: any;
   attemptEdit: (atencion: Atencion) => void;
   handleEliminar: (id: string, nombrePaciente: string) => Promise<void>;
+  remoteResults?: Atencion[] | null;
+  isRemoteSearching?: boolean;
 }
 
 export default function AtencionTable({ 
@@ -23,7 +25,9 @@ export default function AtencionTable({
   selectedSeguimientoId,
   auth,
   attemptEdit,
-  handleEliminar 
+  handleEliminar,
+  remoteResults = null,
+  isRemoteSearching = false,
 }: AtencionTableProps) {
   // ==================== Estado ====================
   const [pageIndex, setPageIndex] = useState(0);
@@ -67,9 +71,8 @@ export default function AtencionTable({
   });
 
   // ==================== Valores Derivados (Memoized) ====================
-  // Calcular lista filtrada + ordenada
+  // Calcular lista filtrada + ordenada (resultados locales)
   const displayed = useMemo(() => {
-    // Filtrar por búsqueda
     const filtered = atenciones.filter((a: Atencion) => {
       if (!searchTerm) return true;
       const q = searchTerm.trim().toLowerCase();
@@ -81,35 +84,40 @@ export default function AtencionTable({
       return idMatch || idPacienteMatch || pacienteMatch || empresaMatch || estadoMatch;
     });
 
-    // Aplicar filtros por estado/seguimiento
     const byFilters = filtered.filter((a: Atencion) => {
       if (selectedEstadoId && Number(a.id_estado_atencion) !== Number(selectedEstadoId)) return false;
       if (selectedSeguimientoId && Number(a.id_seguimiento_atencion ?? -1) !== Number(selectedSeguimientoId)) return false;
       return true;
     });
 
-    // Ordenar por fecha_atencion descendente (más reciente primero)
-    const sorted = [...byFilters].sort((a: any, b: any) => {
+    return [...byFilters].sort((a: any, b: any) => {
       const dateA = new Date(a.fecha_atencion);
       const dateB = new Date(b.fecha_atencion);
       return dateB.getTime() - dateA.getTime();
     });
-    
-    return sorted;
   }, [atenciones, searchTerm, selectedEstadoId, selectedSeguimientoId]);
 
+  // Resultados efectivos: locales primero, remotos como fallback
+  const effectiveData = useMemo(() => {
+    if (displayed.length > 0) return displayed;
+    if (remoteResults && remoteResults.length > 0) return remoteResults;
+    return [];
+  }, [displayed, remoteResults]);
+
+  const isFromRemote = displayed.length === 0 && remoteResults != null && remoteResults.length > 0;
+
   // Calcular datos paginados
-  const pageCount = Math.ceil(displayed.length / pageSize);
+  const pageCount = Math.ceil(effectiveData.length / pageSize);
   const paginatedData = useMemo(() => {
     const start = pageIndex * pageSize;
-    return displayed.slice(start, start + pageSize);
-  }, [displayed, pageIndex, pageSize]);
+    return effectiveData.slice(start, start + pageSize);
+  }, [effectiveData, pageIndex, pageSize]);
 
   // ==================== Efectos ====================
-  // Reset page cuando cambia el filtro
+  // Reset page cuando cambia el filtro o la fuente de resultados
   useEffect(() => {
     setPageIndex(0);
-  }, [searchTerm, selectedEstadoId, selectedSeguimientoId]);
+  }, [searchTerm, selectedEstadoId, selectedSeguimientoId, isFromRemote]);
 
   // ==================== Renderizado ====================
   const headers = visibleColumns.map(c => c.Header);
@@ -132,7 +140,33 @@ export default function AtencionTable({
     );
   }
 
-  if (displayed.length === 0) {
+  if (displayed.length === 0 && effectiveData.length === 0) {
+    if (isRemoteSearching) {
+      return (
+        <Table headers={headers} color="light">
+          <tr>
+            <td colSpan={visibleColumns.length} className="p-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>
+              <i className="fas fa-spinner fa-spin mr-2" style={{ color: 'var(--brand-500)' }} />
+              Buscando en base de datos...
+            </td>
+          </tr>
+        </Table>
+      );
+    }
+
+    if (remoteResults !== null) {
+      return (
+        <Table headers={headers} color="light">
+          <tr>
+            <td colSpan={visibleColumns.length} className="p-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>
+              <i className="fas fa-database mr-2" />
+              No se encontró ninguna atención con "<strong>{searchTerm}</strong>" en la base de datos.
+            </td>
+          </tr>
+        </Table>
+      );
+    }
+
     return (
       <Table headers={headers} color="light">
         <tr>
@@ -147,6 +181,27 @@ export default function AtencionTable({
   // Renderizar con paginación
   return (
     <div>
+      {isFromRemote && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.45rem 0.85rem',
+            marginBottom: '0.75rem',
+            borderRadius: '8px',
+            background: 'rgba(34,72,179,0.08)',
+            border: '1px solid rgba(34,72,179,0.2)',
+            fontSize: '0.75rem',
+            color: 'var(--brand-700, #1a338e)',
+          }}
+        >
+          <i className="fas fa-database" style={{ fontSize: '0.7rem' }} />
+          <span>
+            Resultado de búsqueda en base de datos completa.
+          </span>
+        </div>
+      )}
       <Table headers={headers}>
         {paginatedData.map((atencion: Atencion, ridx: number) => {
           const globalIdx = pageIndex * pageSize + ridx;
@@ -169,7 +224,7 @@ export default function AtencionTable({
         pageOptions={Array.from({ length: pageCount }, (_, i) => i)}
         canPreviousPage={pageIndex > 0}
         canNextPage={pageIndex < pageCount - 1}
-        dataLength={displayed.length}
+        dataLength={effectiveData.length}
         pageSize={pageSize}
         gotoPage={setPageIndex}
         nextPage={() => setPageIndex(prev => Math.min(prev + 1, pageCount - 1))}

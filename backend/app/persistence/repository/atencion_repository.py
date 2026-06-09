@@ -131,10 +131,11 @@ def search_atenciones(
     filters = []
     
     if search_term:
-        # Buscar en ID de atención, nombre del paciente
+        # Buscar en ID de atención, ID de paciente y nombre del paciente
         filters.append(
             or_(
                 Atencion.id.ilike(f"%{search_term}%"),
+                Atencion.id_paciente.ilike(f"%{search_term}%"),
                 Atencion.paciente.has(
                     or_(
                         Atencion.paciente.property.mapper.class_.primer_nombre.ilike(f"%{search_term}%"),
