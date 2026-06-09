@@ -6,7 +6,7 @@ import { login } from '../../api/Auth.api';
 import { useAuth } from '../../hooks/useAuth';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FiUser, FiLock, FiEye, FiEyeOff, FiAlertCircle, FiLogIn } from 'react-icons/fi';
 
 const schema = z.object({

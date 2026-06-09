@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { useSidebar } from './SidebarContext';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 const Header = () => {
   const { collapsed, toggle } = useSidebar();
