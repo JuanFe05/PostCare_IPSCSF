@@ -67,6 +67,7 @@ def get_all_atenciones(
         
         query = query.filter(Atencion.fecha_ingreso >= start, Atencion.fecha_ingreso <= end)
 
+    query = query.order_by(Atencion.fecha_ingreso.desc())
     return query.offset(skip).limit(limit).all()
 
 
