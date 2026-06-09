@@ -1,5 +1,5 @@
 import client from '../../api/Users.api';
-import type { Paciente, PacienteCreateDto, PacienteUpdateDto } from './types';
+import type { Paciente, PacienteUpdateDto } from './types';
 
 export const getPacientes = async (search?: string): Promise<Paciente[]> => {
   const params: any = { skip: 0, limit: 500 };
@@ -12,11 +12,6 @@ export const getPacientes = async (search?: string): Promise<Paciente[]> => {
 
 export const getPacienteById = async (id: string): Promise<Paciente> => {
   const response = await client.get<Paciente>(`/pacientes/${id}`);
-  return response.data;
-};
-
-export const createPaciente = async (data: PacienteCreateDto): Promise<Paciente> => {
-  const response = await client.post<Paciente>('/pacientes', data);
   return response.data;
 };
 

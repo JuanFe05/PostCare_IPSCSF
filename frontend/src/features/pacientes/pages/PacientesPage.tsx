@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, type ChangeEvent } from 'react';
+﻿import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../../hooks/useAuth';
 import { useWebSocket } from '../../../hooks/useWebSocket';
@@ -14,6 +14,9 @@ export default function PacientesPage() {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [remoteResults, setRemoteResults] = useState<Paciente[] | null>(null);
+  const [isRemoteSearching, setIsRemoteSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showEditPaciente, setShowEditPaciente] = useState(false);
   const [editPaciente, setEditPaciente] = useState<Paciente | null>(null);
   const [heldLockId, setHeldLockId] = useState<string | null>(null);
@@ -160,6 +163,54 @@ export default function PacientesPage() {
     setSearchTerm(e.target.value);
   };
 
+  // Búsqueda remota: cuando el filtro local no encuentra al paciente en los 500 cargados,
+  // consulta la BD completa para recuperar la información del paciente buscado.
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    if (!searchTerm.trim()) {
+      setRemoteResults(null);
+      setIsRemoteSearching(false);
+      return;
+    }
+
+    const term = searchTerm.trim().toLowerCase();
+    const hasLocal = pacientes.some(
+      (p) =>
+        p.id.toLowerCase().includes(term) ||
+        p.primer_nombre?.toLowerCase().includes(term) ||
+        p.segundo_nombre?.toLowerCase().includes(term) ||
+        p.primer_apellido?.toLowerCase().includes(term) ||
+        p.segundo_apellido?.toLowerCase().includes(term) ||
+        p.tipo_documento_codigo?.toLowerCase().includes(term) ||
+        p.email?.toLowerCase().includes(term)
+    );
+
+    if (hasLocal) {
+      setRemoteResults(null);
+      setIsRemoteSearching(false);
+      return;
+    }
+
+    // No hay resultados locales → buscar en la BD después de un debounce
+    setIsRemoteSearching(true);
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        const results = await getPacientes(searchTerm.trim());
+        setRemoteResults(results);
+      } catch (err) {
+        console.warn('Búsqueda remota de pacientes fallida:', err);
+        setRemoteResults([]);
+      } finally {
+        setIsRemoteSearching(false);
+      }
+    }, 450);
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchTerm, pacientes]);
+
   const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
 
   return (
@@ -239,13 +290,43 @@ export default function PacientesPage() {
             />
             <input
               type="text"
-              placeholder="Buscar pacientes..."
+              placeholder="Buscar por ID..."
               value={searchTerm}
               onChange={handleSearch}
               className="ui-input"
-              style={{ paddingLeft: '2.2rem', height: '40px', fontSize: '0.875rem' }}
-              title="Buscar por: ID, Nombre, Apellido o Email"
+              style={{ paddingLeft: '2.2rem', paddingRight: searchTerm ? '2.2rem' : '0.75rem', height: '40px', fontSize: '0.875rem' }}
+              title="Buscar por ID del paciente"
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                title="Limpiar búsqueda"
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: 'var(--text-muted, #94a3b8)',
+                  color: 'white',
+                  fontSize: '0.6rem',
+                  cursor: 'pointer',
+                  padding: 0,
+                  lineHeight: 1,
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-500, #3b82f6)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'var(--text-muted, #94a3b8)')}
+              >
+                <i className="fas fa-times" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -258,6 +339,8 @@ export default function PacientesPage() {
             auth={auth}
             attemptEdit={attemptEdit}
             handleEliminar={handleEliminar}
+            remoteResults={remoteResults}
+            isRemoteSearching={isRemoteSearching}
           />
         </div>
       </div>
