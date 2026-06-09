@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import type { ChangeEvent } from "react";
 import { useAuth } from '../../../hooks/useAuth';
 import type { Usuario } from "../types";
@@ -123,6 +123,17 @@ export default function UsersPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [heldLockId]);
 
+  // Cuenta dinámica: refleja los registros visibles tras aplicar el filtro de búsqueda
+  const filteredCountUsers = useMemo(() => {
+    if (!searchTerm.trim()) return usuarios.length;
+    const q = searchTerm.trim().toLowerCase();
+    return usuarios.filter((u) => (
+      String(u.id ?? '').toLowerCase().includes(q) ||
+      String(u.username ?? '').toLowerCase().includes(q) ||
+      String(u.email ?? '').toLowerCase().includes(q)
+    )).length;
+  }, [usuarios, searchTerm]);
+
   return (
     <div className="animate-fade-in-up">
       {/* Header de la página */}
@@ -156,7 +167,11 @@ export default function UsersPage() {
                 Gestión de Usuarios
               </h2>
               <p style={{ color: 'rgba(147,174,245,0.8)', fontSize: '0.78rem', margin: 0 }}>
-                {usuarios.length > 0 ? `${usuarios.length} registro${usuarios.length !== 1 ? 's' : ''} cargados` : 'Cargando...'}
+                {loading
+                  ? 'Cargando...'
+                  : filteredCountUsers !== usuarios.length
+                  ? `${filteredCountUsers} de ${usuarios.length} registro${usuarios.length !== 1 ? 's' : ''}`
+                  : `${usuarios.length} registro${usuarios.length !== 1 ? 's' : ''} cargados`}
               </p>
             </div>
           </div>

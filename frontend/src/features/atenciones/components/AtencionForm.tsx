@@ -531,7 +531,10 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                         onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
                         dateFormat="dd/MM/yyyy"
                         placeholderText="Seleccione una fecha"
-                        className={`w-full px-4 py-2.5 pl-10 border rounded-lg text-sm transition-all outline-none focus:ring-2 focus:ring-offset-0 ${errors.fechaIngreso ? 'border-red-300 bg-red-50/40 focus:ring-red-200 focus:border-red-400' : 'border-gray-200 focus:ring-blue-100 focus:border-blue-400'}`}
+                        showMonthDropdown
+                        showYearDropdown
+                        dropdownMode="select"
+                        className={`w-full px-4 py-2.5 pl-10 border rounded-lg text-sm transition-all outline-none cursor-pointer hover:border-blue-300 focus:ring-2 focus:ring-offset-0 bg-white ${errors.fechaIngreso ? 'border-red-300 bg-red-50/40 focus:ring-red-200 focus:border-red-400' : 'border-gray-200 focus:ring-blue-100 focus:border-blue-400'}`}
                         popperClassName="atf-datepicker-popper"
                         calendarClassName="shadow-xl"
                         wrapperClassName="w-full"
@@ -626,7 +629,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                   type="tel"
                   inputMode="numeric"
                   onBlur={(e) => { const v = e.target.value.trim(); setValue('telefonoUno', v); }}
-                  placeholder="3001234567"
+                  placeholder="Teléfono principal (obligatorio)"
                   hasError={!!errors.telefonoUno}
                   icon={<FiPhone size={14} />}
                 />
@@ -641,7 +644,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                   type="tel"
                   inputMode="numeric"
                   onBlur={(e) => { const v = e.target.value.trim(); setValue('telefonoDos', v); }}
-                  placeholder="3001234567"
+                  placeholder="Teléfono alternativo (opcional)"
                   hasError={!!errors.telefonoDos}
                   icon={<FiPhone size={14} />}
                 />
@@ -657,7 +660,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                   })}
                   type="text"
                   onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('primerNombre', v); }}
-                  placeholder="JUAN"
+                  placeholder="Primer nombre (obligatorio)"
                   hasError={!!errors.primerNombre}
                   icon={<FiUser size={14} />}
                 />
@@ -671,7 +674,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                   })}
                   type="text"
                   onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('segundoNombre', v); }}
-                  placeholder="CARLOS"
+                  placeholder="Segundo nombre (opcional)"
                   hasError={!!errors.segundoNombre}
                   icon={<FiUser size={14} />}
                 />
@@ -687,7 +690,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                   })}
                   type="text"
                   onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('primerApellido', v); }}
-                  placeholder="PÉREZ"
+                  placeholder="Primer apellido (obligatorio)"
                   hasError={!!errors.primerApellido}
                   icon={<FiUser size={14} />}
                 />
@@ -701,7 +704,7 @@ export default function AtencionForm({ onCancel, onSave, onUpdate, initialData, 
                   })}
                   type="text"
                   onBlur={(e) => { const v = e.target.value.trim().toUpperCase(); setValue('segundoApellido', v); }}
-                  placeholder="GARCÍA"
+                  placeholder="Segundo apellido (opcional)"
                   hasError={!!errors.segundoApellido}
                   icon={<FiUser size={14} />}
                 />

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from "react";
+﻿import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import type { ChangeEvent } from "react";
 import React from "react";
 import DatePicker from 'react-datepicker';
@@ -71,7 +71,11 @@ export default function AtencionesPage() {
   const loadAtenciones = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAtenciones(0, 500, selectedDate ? selectedDate.toISOString().split('T')[0] : undefined);
+      const fecha = selectedDate ? selectedDate.toISOString().split('T')[0] : undefined;
+      // Cuando se filtra por fecha específica, se eliminan restricciones para obtener
+      // TODOS los registros de ese día (el backend soporta hasta 100 000)
+      const limit = fecha ? 100000 : 500;
+      const data = await getAtenciones(0, limit, fecha);
       console.log("Atenciones recibidas:", data);
       console.log("Total de atenciones:", data.length);
       setAtenciones(data);
@@ -326,6 +330,38 @@ export default function AtencionesPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [heldLockId]);
 
+  // Cuenta dinámica: refleja los registros actualmente visibles tras aplicar todos los filtros
+  const filteredCount = useMemo(() => {
+    const source = (remoteResults !== null && remoteResults.length > 0 && !atenciones.some((a) => {
+      if (!searchTerm.trim()) return true;
+      const q = searchTerm.trim().toLowerCase();
+      return (
+        String(a.id_atencion ?? '').toLowerCase().includes(q) ||
+        String(a.id_paciente ?? '').toLowerCase().includes(q) ||
+        String(a.nombre_paciente ?? '').toLowerCase().includes(q) ||
+        String(a.nombre_empresa ?? '').toLowerCase().includes(q) ||
+        String(a.nombre_estado_atencion ?? '').toLowerCase().includes(q)
+      );
+    })) ? remoteResults : atenciones;
+
+    return source.filter((a) => {
+      if (searchTerm.trim()) {
+        const q = searchTerm.trim().toLowerCase();
+        const matches = (
+          String(a.id_atencion ?? '').toLowerCase().includes(q) ||
+          String(a.id_paciente ?? '').toLowerCase().includes(q) ||
+          String(a.nombre_paciente ?? '').toLowerCase().includes(q) ||
+          String(a.nombre_empresa ?? '').toLowerCase().includes(q) ||
+          String(a.nombre_estado_atencion ?? '').toLowerCase().includes(q)
+        );
+        if (!matches) return false;
+      }
+      if (selectedEstadoId && Number(a.id_estado_atencion) !== Number(selectedEstadoId)) return false;
+      if (selectedSeguimientoId && Number(a.id_seguimiento_atencion ?? -1) !== Number(selectedSeguimientoId)) return false;
+      return true;
+    }).length;
+  }, [atenciones, remoteResults, searchTerm, selectedEstadoId, selectedSeguimientoId]);
+
   // Búsqueda remota: cuando los filtros locales no encuentran la atención en los 500 cargados,
   // consulta la BD completa buscando por ID Atención o ID Paciente.
   useEffect(() => {
@@ -411,7 +447,11 @@ export default function AtencionesPage() {
                 Gestión de Atenciones
               </h2>
               <p style={{ color: 'rgba(147,174,245,0.8)', fontSize: '0.78rem', margin: 0 }}>
-                {atenciones.length > 0 ? `${atenciones.length} registro${atenciones.length !== 1 ? 's' : ''} cargados` : 'Cargando...'}
+                {loading
+                  ? 'Cargando...'
+                  : filteredCount !== atenciones.length
+                  ? `${filteredCount} de ${atenciones.length} registro${atenciones.length !== 1 ? 's' : ''}`
+                  : `${atenciones.length} registro${atenciones.length !== 1 ? 's' : ''} cargados`}
               </p>
             </div>
           </div>

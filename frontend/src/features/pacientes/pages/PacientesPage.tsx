@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, type ChangeEvent } from 'react';
+﻿import { useState, useEffect, useRef, useMemo, type ChangeEvent } from 'react';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../../hooks/useAuth';
 import { useWebSocket } from '../../../hooks/useWebSocket';
@@ -213,6 +213,23 @@ export default function PacientesPage() {
 
   const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
 
+  // Cuenta dinámica: refleja los registros actualmente visibles tras aplicar el filtro de búsqueda
+  const filteredCount = useMemo(() => {
+    if (!searchTerm.trim()) return pacientes.length;
+    const term = searchTerm.trim().toLowerCase();
+    const localCount = pacientes.filter((p) => (
+      p.id.toLowerCase().includes(term) ||
+      p.primer_nombre?.toLowerCase().includes(term) ||
+      p.segundo_nombre?.toLowerCase().includes(term) ||
+      p.primer_apellido?.toLowerCase().includes(term) ||
+      p.segundo_apellido?.toLowerCase().includes(term) ||
+      p.tipo_documento_codigo?.toLowerCase().includes(term) ||
+      p.email?.toLowerCase().includes(term)
+    )).length;
+    if (localCount > 0) return localCount;
+    return remoteResults?.length ?? 0;
+  }, [pacientes, remoteResults, searchTerm]);
+
   return (
     <div className="animate-fade-in-up">
       {/* Header de la página */}
@@ -246,7 +263,11 @@ export default function PacientesPage() {
                 Gestión de Pacientes
               </h2>
               <p style={{ color: 'rgba(147,174,245,0.8)', fontSize: '0.78rem', margin: 0 }}>
-                {pacientes.length > 0 ? `${pacientes.length} registro${pacientes.length !== 1 ? 's' : ''} cargados` : 'Cargando...'}
+                {loading
+                  ? 'Cargando...'
+                  : filteredCount !== pacientes.length
+                  ? `${filteredCount} de ${pacientes.length} registro${pacientes.length !== 1 ? 's' : ''}`
+                  : `${pacientes.length} registro${pacientes.length !== 1 ? 's' : ''} cargados`}
               </p>
             </div>
           </div>
