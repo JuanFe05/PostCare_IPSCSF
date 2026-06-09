@@ -6,7 +6,6 @@ from typing import List, Optional
 from app.configuration.app.database import get_db
 from app.configuration.security.security_dependencies import get_current_user
 from app.presentation.dto.paciente_dto import (
-    PacienteCreateDto,
     PacienteUpdateDto,
     PacienteResponseDto
 )
@@ -61,31 +60,6 @@ def get_paciente_by_id(
         raise HTTPException(status_code=404, detail=f"Paciente con ID {paciente_id} no encontrado")
     
     return _map_to_response_dto(paciente)
-
-
-@router.post("", response_model=PacienteResponseDto, tags=["Pacientes"], status_code=201)
-async def create_paciente(
-    data: PacienteCreateDto,
-    db: Session = Depends(get_db)
-):
-    """
-    Crea un nuevo paciente.
-    
-    El ID del paciente (número de documento) debe ser único.
-    """
-    try:
-        paciente = PacienteService.create(db, data.model_dump())
-        db.commit()
-        db.refresh(paciente)
-        result = _map_to_response_dto(paciente)
-        # Emitir evento WebSocket
-        await ws_manager.send_event("create", "pacientes", result.model_dump(mode='json') if hasattr(result, 'model_dump') else dict(result))
-        return result
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error creando paciente: {str(e)}")
 
 
 @router.put("/{paciente_id}", response_model=PacienteResponseDto, tags=["Pacientes"])

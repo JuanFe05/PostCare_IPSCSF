@@ -2,9 +2,8 @@
 import client from "../../api/Users.api";
 import type { 
   Atencion, 
-  NewAtencion, 
-  UpdateAtencion,
   NewAtencionConPaciente,
+  UpdateAtencion,
   TipoDocumento,
   Empresa,
   EstadoAtencion,
@@ -35,47 +34,18 @@ export const getAtencionesByRango = async (fechaInicio: string, fechaFin: string
   return Array.isArray(resp.data) ? resp.data : [resp.data];
 };
 
-export const getAtencion = async (id: string): Promise<Atencion> => {
-  const resp = await client.get(`/atenciones/${id}`);
-  return resp.data;
-};
-
-export const getAtencionesByPaciente = async (pacienteId: string): Promise<Atencion[]> => {
-  const resp = await client.get(`/atenciones/paciente/${pacienteId}`);
-  return Array.isArray(resp.data) ? resp.data : [resp.data];
-};
-
-export const getAtencionesByEmpresa = async (empresaId: number): Promise<Atencion[]> => {
-  const resp = await client.get(`/atenciones/empresa/${empresaId}`);
-  return Array.isArray(resp.data) ? resp.data : [resp.data];
-};
-
-export const getAtencionesByEstado = async (estadoId: number): Promise<Atencion[]> => {
-  const resp = await client.get(`/atenciones/estado/${estadoId}`);
-  return Array.isArray(resp.data) ? resp.data : [resp.data];
-};
-
 export const searchAtenciones = async (params: {
   search?: string;
-  empresa_id?: number;
-  estado_id?: number;
   skip?: number;
   limit?: number;
 }): Promise<Atencion[]> => {
   const queryParams = new URLSearchParams();
   if (params.search) queryParams.append('search', params.search);
-  if (params.empresa_id) queryParams.append('empresa_id', String(params.empresa_id));
-  if (params.estado_id) queryParams.append('estado_id', String(params.estado_id));
   if (params.skip !== undefined) queryParams.append('skip', String(params.skip));
   if (params.limit !== undefined) queryParams.append('limit', String(params.limit));
   
   const resp = await client.get(`/atenciones/buscar?${queryParams.toString()}`);
   return Array.isArray(resp.data) ? resp.data : [resp.data];
-};
-
-export const createAtencion = async (payload: NewAtencion): Promise<Atencion> => {
-  const resp = await client.post("/atenciones", payload);
-  return resp.data;
 };
 
 export const createAtencionConPaciente = async (payload: NewAtencionConPaciente): Promise<Atencion> => {

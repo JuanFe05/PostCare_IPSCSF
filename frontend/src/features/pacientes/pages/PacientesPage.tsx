@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, type ChangeEvent } from 'react';
+﻿import { useState, useEffect, useRef, useMemo, type ChangeEvent } from 'react';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../../hooks/useAuth';
 import { useWebSocket } from '../../../hooks/useWebSocket';
@@ -7,7 +7,6 @@ import { getPacientes, deletePaciente, updatePaciente, acquirePacienteLock, rele
 import PacienteForm from '../components/PacienteForm';
 import PacienteTable from '../components/PacienteTable';
 import { exportToExcel } from '../../../utils/exportToExcel';
-import { Card, CardHeader, CardBody, Button } from '../../../components/notus';
 
 export default function PacientesPage() {
   const { auth } = useAuth();
@@ -15,6 +14,9 @@ export default function PacientesPage() {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [remoteResults, setRemoteResults] = useState<Paciente[] | null>(null);
+  const [isRemoteSearching, setIsRemoteSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showEditPaciente, setShowEditPaciente] = useState(false);
   const [editPaciente, setEditPaciente] = useState<Paciente | null>(null);
   const [heldLockId, setHeldLockId] = useState<string | null>(null);
@@ -161,44 +163,196 @@ export default function PacientesPage() {
     setSearchTerm(e.target.value);
   };
 
+  // Búsqueda remota: cuando el filtro local no encuentra al paciente en los 500 cargados,
+  // consulta la BD completa para recuperar la información del paciente buscado.
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    if (!searchTerm.trim()) {
+      setRemoteResults(null);
+      setIsRemoteSearching(false);
+      return;
+    }
+
+    const term = searchTerm.trim().toLowerCase();
+    const hasLocal = pacientes.some(
+      (p) =>
+        p.id.toLowerCase().includes(term) ||
+        p.primer_nombre?.toLowerCase().includes(term) ||
+        p.segundo_nombre?.toLowerCase().includes(term) ||
+        p.primer_apellido?.toLowerCase().includes(term) ||
+        p.segundo_apellido?.toLowerCase().includes(term) ||
+        p.tipo_documento_codigo?.toLowerCase().includes(term) ||
+        p.email?.toLowerCase().includes(term)
+    );
+
+    if (hasLocal) {
+      setRemoteResults(null);
+      setIsRemoteSearching(false);
+      return;
+    }
+
+    // No hay resultados locales → buscar en la BD después de un debounce
+    setIsRemoteSearching(true);
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        const results = await getPacientes(searchTerm.trim());
+        setRemoteResults(results);
+      } catch (err) {
+        console.warn('Búsqueda remota de pacientes fallida:', err);
+        setRemoteResults([]);
+      } finally {
+        setIsRemoteSearching(false);
+      }
+    }, 450);
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchTerm, pacientes]);
+
   const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
 
+  // Cuenta dinámica: refleja los registros actualmente visibles tras aplicar el filtro de búsqueda
+  const filteredCount = useMemo(() => {
+    if (!searchTerm.trim()) return pacientes.length;
+    const term = searchTerm.trim().toLowerCase();
+    const localCount = pacientes.filter((p) => (
+      p.id.toLowerCase().includes(term) ||
+      p.primer_nombre?.toLowerCase().includes(term) ||
+      p.segundo_nombre?.toLowerCase().includes(term) ||
+      p.primer_apellido?.toLowerCase().includes(term) ||
+      p.segundo_apellido?.toLowerCase().includes(term) ||
+      p.tipo_documento_codigo?.toLowerCase().includes(term) ||
+      p.email?.toLowerCase().includes(term)
+    )).length;
+    if (localCount > 0) return localCount;
+    return remoteResults?.length ?? 0;
+  }, [pacientes, remoteResults, searchTerm]);
+
   return (
-    <div>
-      <Card>
-        <CardHeader color="lightBlue" className="flex justify-between items-center">
+    <div className="animate-fade-in-up">
+      {/* Header de la página */}
+      <div
+        className="rounded-2xl mb-6 overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #0d1f6b 0%, #1a338e 55%, #2248b3 100%)',
+          boxShadow: '0 4px 20px rgba(13,31,107,0.2)',
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: 'radial-gradient(circle at 90% 50%, rgba(14,165,233,0.15) 0%, transparent 50%)',
+            borderRadius: 'inherit',
+            pointerEvents: 'none',
+          }}
+        />
+        <div className="relative flex items-center justify-between px-6 py-4 gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <i className="fas fa-user-injured text-2xl text-white"></i>
-            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Pacientes</h6>
-          </div>
-          {role === 'ADMINISTRADOR' && (
-            <Button
-              color="white"
-              size="sm"
-              onClick={() => exportToExcel(pacientes, 'pacientes')}
+            <div
+              className="flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ width: '42px', height: '42px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
             >
-              <i className="fas fa-file-excel mr-2"></i>
-              EXPORTAR
-            </Button>
-          )}
-        </CardHeader>
-        
-        <CardBody>
-          {/* Buscador */}
-          <div className="mb-8 flex justify-end">
-            <div className="relative max-w-md w-full">
-              <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              <input
-                type="text"
-                placeholder="Buscar pacientes..."
-                value={searchTerm}
-                onChange={handleSearch}
-                className="w-full pl-12 pr-4 h-[52px] border-2 border-gray-200 rounded-lg bg-white font-medium shadow-sm hover:shadow-lg hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-all duration-200"
-                title="Buscar por: ID, Nombre, Apellido o Email"
-              />
+              <i className="fas fa-user-injured" style={{ color: 'white', fontSize: '1.1rem' }} />
+            </div>
+            <div>
+              <h2 style={{ fontFamily: "'Sora', sans-serif", color: 'white', fontSize: '1.05rem', fontWeight: 700, margin: 0, lineHeight: 1.3 }}>
+                Gestión de Pacientes
+              </h2>
+              <p style={{ color: 'rgba(147,174,245,0.8)', fontSize: '0.78rem', margin: 0 }}>
+                {loading
+                  ? 'Cargando...'
+                  : filteredCount !== pacientes.length
+                  ? `${filteredCount} de ${pacientes.length} registro${pacientes.length !== 1 ? 's' : ''}`
+                  : `${pacientes.length} registro${pacientes.length !== 1 ? 's' : ''} cargados`}
+              </p>
             </div>
           </div>
+          {role === 'ADMINISTRADOR' && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => exportToExcel(pacientes, 'pacientes')}
+                className="ui-btn ui-btn-ghost"
+                style={{ height: '38px' }}
+              >
+                <i className="fas fa-file-excel" style={{ fontSize: '0.8rem' }} />
+                Exportar
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
+      {/* Tarjeta principal */}
+      <div className="ui-card animate-fade-in-up stagger-1">
+        {/* Barra de búsqueda */}
+        <div
+          style={{
+            padding: '1rem 1.5rem',
+            borderBottom: '1px solid var(--surface-border)',
+            background: 'var(--brand-50)',
+          }}
+        >
+          <div className="relative ml-auto" style={{ minWidth: '280px', flex: '1 1 280px', maxWidth: '400px' }}>
+            <i
+              className="fas fa-search"
+              style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--text-muted)',
+                fontSize: '0.78rem',
+                pointerEvents: 'none',
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Buscar por ID..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="ui-input"
+              style={{ paddingLeft: '2.2rem', paddingRight: searchTerm ? '2.2rem' : '0.75rem', height: '40px', fontSize: '0.875rem' }}
+              title="Buscar por ID del paciente"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                title="Limpiar búsqueda"
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: 'var(--text-muted, #94a3b8)',
+                  color: 'white',
+                  fontSize: '0.6rem',
+                  cursor: 'pointer',
+                  padding: 0,
+                  lineHeight: 1,
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-500, #3b82f6)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'var(--text-muted, #94a3b8)')}
+              >
+                <i className="fas fa-times" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Tabla */}
+        <div style={{ padding: '1.25rem 1.5rem' }}>
           <PacienteTable
             pacientes={pacientes}
             loading={loading}
@@ -206,39 +360,37 @@ export default function PacientesPage() {
             auth={auth}
             attemptEdit={attemptEdit}
             handleEliminar={handleEliminar}
-          />
-        </CardBody>
-      </Card>
-
-      {showEditPaciente && editPaciente && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <PacienteForm
-            isEditMode
-            initialData={editPaciente}
-            onCancel={closeEditor}
-            onUpdate={async (id: string, data: any) => {
-              setLoading(true);
-              try {
-                await updatePaciente(id, data);
-                await loadPacientes();
-                // release lock if held
-                if (heldLockId) {
-                  try { await releasePacienteLock(heldLockId); } catch (e) { /* best-effort */ }
-                  setHeldLockId(null);
-                }
-                setShowEditPaciente(false);
-                setEditPaciente(null);
-                await Swal.fire('Actualizado', 'Paciente actualizado correctamente', 'success');
-              } catch (err: any) {
-                const errorMsg = err.response?.data?.detail || 'No se pudo actualizar el paciente';
-                await Swal.fire('Error', errorMsg, 'error');
-              } finally {
-                setLoading(false);
-              }
-            }}
+            remoteResults={remoteResults}
+            isRemoteSearching={isRemoteSearching}
           />
         </div>
-      )}
+      </div>
+
+      <PacienteForm
+        isOpen={showEditPaciente}
+        isEditMode
+        initialData={editPaciente ?? undefined}
+        onCancel={closeEditor}
+        onUpdate={async (id: string, data: any) => {
+          setLoading(true);
+          try {
+            await updatePaciente(id, data);
+            await loadPacientes();
+            if (heldLockId) {
+              try { await releasePacienteLock(heldLockId); } catch (e) { /* best-effort */ }
+              setHeldLockId(null);
+            }
+            setShowEditPaciente(false);
+            setEditPaciente(null);
+            await Swal.fire('Actualizado', 'Paciente actualizado correctamente', 'success');
+          } catch (err: any) {
+            const errorMsg = err.response?.data?.detail || 'No se pudo actualizar el paciente';
+            await Swal.fire('Error', errorMsg, 'error');
+          } finally {
+            setLoading(false);
+          }
+        }}
+      />
     </div>
   );
 }

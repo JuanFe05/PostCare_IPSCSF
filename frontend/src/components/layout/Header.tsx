@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { useSidebar } from './SidebarContext';
+import { motion } from 'motion/react';
 
 const Header = () => {
   const { collapsed, toggle } = useSidebar();
@@ -20,46 +21,84 @@ const Header = () => {
   }, []);
 
   return (
-    <nav
-      className="fixed top-0 right-0 z-40 bg-white shadow-md"
+    <motion.nav
+      className="fixed top-0 right-0 z-40"
+      animate={{ left: collapsed ? 72 : 240 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       style={{
-        left: collapsed ? '72px' : '240px',
-        transition: 'left 280ms cubic-bezier(0.4, 0, 0.2, 1)',
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(226,232,240,0.8)',
+        boxShadow: '0 1px 12px 0 rgba(13,31,107,0.07)',
       }}
     >
-      <div className="px-6 py-4">
+      <div className="px-5 py-3">
         <div className="flex items-center justify-between">
-          {/* Toggle button */}
+          {/* Toggle */}
           <button
             onClick={toggle}
-            className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors focus:outline-none cursor-pointer"
-            style={{ background: '#f1f5f9' }}
-            onMouseEnter={e => (e.currentTarget.style.background = '#e2e8f0')}
-            onMouseLeave={e => (e.currentTarget.style.background = '#f1f5f9')}
+            className="flex items-center justify-center rounded-xl focus:outline-none cursor-pointer"
+            style={{
+              width: '36px',
+              height: '36px',
+              background: '#f0f4f9',
+              border: '1px solid #e2e8f0',
+              transition: 'background 150ms, box-shadow 150ms',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = '#e2e8f0';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(26,51,142,0.12)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = '#f0f4f9';
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
+            }}
             title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
           >
-            <svg
-              width="18" height="18" viewBox="0 0 18 18" fill="none"
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
               style={{
                 transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
                 transition: 'transform 280ms cubic-bezier(0.4, 0, 0.2, 1)',
-                flexShrink: 0,
               }}
             >
-              <rect x="2" y="4" width="14" height="1.5" rx="0.75" fill="#1a338e" />
-              <rect x="2" y="8.25" width="9" height="1.5" rx="0.75" fill="#1a338e" />
-              <rect x="2" y="12.5" width="14" height="1.5" rx="0.75" fill="#1a338e" />
+              <rect x="1" y="3" width="14" height="1.5" rx="0.75" fill="#1a338e" />
+              <rect x="1" y="7.25" width="9" height="1.5" rx="0.75" fill="#1a338e" />
+              <rect x="1" y="11.5" width="14" height="1.5" rx="0.75" fill="#1a338e" />
             </svg>
           </button>
 
-          {/* Title + user (right side) */}
-          <div className="text-right">
-            <h1 className="text-base font-bold text-gray-800 leading-tight">Panel de Gestión IPSCSF</h1>
-            <p className="text-xs text-gray-400">{username} · {role}</p>
+          {/* Right: título + usuario */}
+          <div className="flex items-center gap-4">
+            {/* Separador visual */}
+            <div style={{ width: '1px', height: '28px', background: '#e2e8f0' }} />
+            {/* Info usuario */}
+            <div className="text-right">
+              <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.82rem', fontWeight: 700, color: '#0f172a', margin: 0, lineHeight: 1.3 }}>
+                {username ?? 'Usuario'}
+              </p>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.7rem', color: '#94a3b8', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {role}
+              </p>
+            </div>
+            {/* Avatar */}
+            <div
+              className="flex items-center justify-center rounded-full text-white font-bold"
+              style={{
+                width: '34px',
+                height: '34px',
+                background: 'linear-gradient(135deg, #1a338e, #2e5fd4)',
+                fontSize: '0.8rem',
+                fontFamily: "'Sora', sans-serif",
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(26,51,142,0.3)',
+              }}
+            >
+              {username ? username.charAt(0).toUpperCase() : 'U'}
+            </div>
           </div>
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 

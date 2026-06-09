@@ -8,16 +8,42 @@ interface StatCardProps {
 
 export function StatCard({ label, value, iconClass, iconBgClass }: StatCardProps) {
   return (
-    <div className="relative flex flex-col min-w-0 break-words bg-white w-full shadow-lg rounded overflow-hidden">
-      <div className="px-5 py-5">
-        <div className="flex items-center justify-between">
-          <div className="flex-1 min-w-0 pr-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">{label}</p>
-            <p className="text-2xl font-bold text-gray-700 truncate">{value}</p>
-          </div>
-          <div className={`w-12 h-12 rounded-full ${iconBgClass} flex items-center justify-center flex-shrink-0 shadow-md`}>
-            <i className={`${iconClass} text-white text-lg`}></i>
-          </div>
+    <div
+      className="ui-card animate-fade-in-up"
+      style={{ padding: '1.1rem 1.25rem' }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p
+            style={{
+              fontSize: '0.68rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: 'var(--text-muted)',
+              margin: '0 0 0.35rem 0',
+            }}
+          >
+            {label}
+          </p>
+          <p
+            style={{
+              fontFamily: "'Sora', sans-serif",
+              fontSize: '1.6rem',
+              fontWeight: 800,
+              color: '#0d1f6b',
+              margin: 0,
+              lineHeight: 1.1,
+            }}
+          >
+            {value}
+          </p>
+        </div>
+        <div
+          className={`flex items-center justify-center flex-shrink-0 rounded-xl ${iconBgClass}`}
+          style={{ width: '44px', height: '44px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+        >
+          <i className={`${iconClass} text-white`} style={{ fontSize: '1.1rem' }}></i>
         </div>
       </div>
     </div>
@@ -26,13 +52,13 @@ export function StatCard({ label, value, iconClass, iconBgClass }: StatCardProps
 
 export function SkeletonCard() {
   return (
-    <div className="bg-white rounded overflow-hidden shadow-lg p-5 animate-pulse">
-      <div className="flex items-center justify-between">
-        <div className="flex-1 space-y-2 pr-3">
-          <div className="h-2.5 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-7 bg-gray-200 rounded w-1/2"></div>
+    <div className="ui-card animate-pulse" style={{ padding: '1.1rem 1.25rem' }}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 space-y-2">
+          <div className="h-2.5 rounded" style={{ width: '60%', background: 'var(--surface-border)' }}></div>
+          <div className="h-7 rounded" style={{ width: '45%', background: 'var(--surface-border)' }}></div>
         </div>
-        <div className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0"></div>
+        <div className="rounded-xl flex-shrink-0" style={{ width: '44px', height: '44px', background: 'var(--surface-border)' }}></div>
       </div>
     </div>
   );

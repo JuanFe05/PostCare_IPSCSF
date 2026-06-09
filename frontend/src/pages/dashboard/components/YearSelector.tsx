@@ -7,35 +7,35 @@ interface YearSelectorProps {
 
 export default function YearSelector({ selectedYear, yearOptions, onChange }: YearSelectorProps) {
   return (
-    <div className="relative">
-      <div className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center">
-        <i className="fas fa-calendar-alt text-sm" style={{ color: '#1a338e' }}></i>
+    <div className="relative flex-shrink-0">
+      <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+        <i className="fas fa-calendar-alt" style={{ color: 'rgba(147,174,245,0.9)', fontSize: '0.78rem' }}></i>
       </div>
       <select
-        className="appearance-none pl-9 pr-9 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer focus:outline-none transition-all"
-        onFocus={e => {
-          e.currentTarget.style.borderColor = '#1a338e';
-          e.currentTarget.style.boxShadow = '0 0 0 2px rgba(26,51,142,0.2)';
-        }}
-        onBlur={e => {
-          e.currentTarget.style.borderColor = '';
-          e.currentTarget.style.boxShadow = '';
-        }}
-        onMouseEnter={e => {
-          if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = '#1a338e';
-        }}
-        onMouseLeave={e => {
-          if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = '';
+        className="appearance-none"
+        style={{
+          height: '38px',
+          paddingLeft: '2rem',
+          paddingRight: '2rem',
+          fontSize: '0.85rem',
+          fontWeight: 700,
+          background: 'rgba(255,255,255,0.12)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          borderRadius: '0.5rem',
+          color: 'white',
+          cursor: 'pointer',
+          minWidth: '100px',
+          outline: 'none',
         }}
         value={selectedYear}
         onChange={e => onChange(Number(e.target.value))}
       >
         {yearOptions.map(y => (
-          <option key={y} value={y}>{y}</option>
+          <option key={y} value={y} style={{ background: '#1a338e', color: 'white' }}>{y}</option>
         ))}
       </select>
       <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-        <i className="fas fa-chevron-down text-gray-400 text-xs"></i>
+        <i className="fas fa-chevron-down" style={{ color: 'rgba(147,174,245,0.8)', fontSize: '0.65rem' }}></i>
       </div>
     </div>
   );

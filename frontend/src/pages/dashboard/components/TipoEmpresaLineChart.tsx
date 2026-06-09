@@ -10,7 +10,6 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import type { Atencion } from '../../../features/atenciones/types';
-import Card, { CardHeader } from '../../../components/notus/Card';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -108,12 +107,27 @@ export default function TipoEmpresaPolarChart({ atenciones, loading }: TipoEmpre
   }, [atenciones]);
 
   return (
-    <Card>
-      <CardHeader color="lightBlue">
-        <div>
-          <h3 className="text-white text-xl font-bold leading-tight">Atenciones por Tipo de Empresa</h3>
+    <div className="ui-card overflow-hidden">
+      {/* Chart header */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #0d1f6b 0%, #1a338e 55%, #2248b3 100%)',
+          padding: '0.875rem 1.25rem',
+        }}
+      >
+        <div className="flex items-center gap-2.5">
+          <div
+            className="flex items-center justify-center rounded-lg flex-shrink-0"
+            style={{ width: '32px', height: '32px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
+          >
+            <i className="fas fa-chart-bar" style={{ color: 'white', fontSize: '0.85rem' }} />
+          </div>
+          <h3 style={{ fontFamily: "'Sora', sans-serif", color: 'white', fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>
+            Atenciones por Tipo de Empresa
+          </h3>
         </div>
-      </CardHeader>
+      </div>
+      {/* Chart body */}
       <div
         className="px-6 py-5"
         style={{ background: 'linear-gradient(160deg, #1a2060 0%, #0f1640 100%)', minHeight: '360px' }}
@@ -122,7 +136,7 @@ export default function TipoEmpresaPolarChart({ atenciones, loading }: TipoEmpre
           <div className="flex items-center justify-center" style={{ height: '320px' }}>
             <div
               className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2"
-              style={{ borderColor: '#1a338e' }}
+              style={{ borderColor: '#93aef5' }}
             ></div>
           </div>
         ) : atenciones.length === 0 ? (
@@ -135,6 +149,6 @@ export default function TipoEmpresaPolarChart({ atenciones, loading }: TipoEmpre
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

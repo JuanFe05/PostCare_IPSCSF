@@ -4,6 +4,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { FiCalendar } from 'react-icons/fi';
 import { IoMdDownload } from 'react-icons/io';
 import { MdError, MdInfo } from 'react-icons/md';
+import { FormModal, SectionCard, FieldGroup, ModalFooter } from '../../../components/animate-ui/form-modal';
 
 interface ExportDateRangeModalProps {
   isOpen: boolean;
@@ -48,71 +49,42 @@ const ExportDateRangeModal = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
-        onClick={handleClose}
-      />
-      
-      {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform transition-all">
-        {/* Header */}
-        <div className="px-6 py-5 rounded-t-2xl" style={{ backgroundColor: '#1a338e' }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div>
-                <h2 className="text-xl font-bold text-white">Exportar Atenciones</h2>
-                <p className="text-blue-100 text-sm">Seleccione el rango de fechas</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Body */}
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-6">
-            {/* Fecha Inicio */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Fecha Inicio
-              </label>
+    <FormModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Exportar Atenciones"
+      subtitle="Seleccione el rango de fechas"
+      icon={<IoMdDownload size={20} />}
+      maxWidth="max-w-md"
+    >
+      <form onSubmit={handleSubmit} id="export-form" className="space-y-4">
+        <SectionCard index={0} icon={<FiCalendar />} title="Rango de Fechas">
+          <div className="space-y-4">
+            <FieldGroup label="Fecha Inicio">
               <div className="relative">
                 <DatePicker
                   selected={startDate}
-                  onChange={(date) => {
-                    setStartDate(date);
-                    setError('');
-                  }}
+                  onChange={(date) => { setStartDate(date); setError(''); }}
                   selectsStart
                   startDate={startDate || undefined}
                   endDate={endDate || undefined}
                   maxDate={new Date()}
                   dateFormat="dd/MM/yyyy"
                   placeholderText="Seleccione fecha inicio"
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
                   disabled={isLoading}
                   calendarClassName="shadow-xl"
                 />
-                <FiCalendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-600" size={20} />
+                <FiCalendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-600 pointer-events-none" size={18} />
               </div>
-            </div>
+            </FieldGroup>
 
-            {/* Fecha Fin */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Fecha Fin
-              </label>
+            <FieldGroup label="Fecha Fin">
               <div className="relative">
                 <DatePicker
                   selected={endDate}
-                  onChange={(date) => {
-                    setEndDate(date);
-                    setError('');
-                  }}
+                  onChange={(date) => { setEndDate(date); setError(''); }}
                   selectsEnd
                   startDate={startDate || undefined}
                   endDate={endDate || undefined}
@@ -120,23 +92,21 @@ const ExportDateRangeModal = ({
                   maxDate={new Date()}
                   dateFormat="dd/MM/yyyy"
                   placeholderText="Seleccione fecha fin"
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
                   disabled={isLoading}
                   calendarClassName="shadow-xl"
                 />
-                <FiCalendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-600" size={20} />
+                <FiCalendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-600 pointer-events-none" size={18} />
               </div>
-            </div>
+            </FieldGroup>
 
-            {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 animate-shake">
-                <MdError className="w-5 h-5" />
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+                <MdError className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm font-medium">{error}</span>
               </div>
             )}
 
-            {/* Info Box */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex gap-3">
                 <MdInfo className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
@@ -150,41 +120,17 @@ const ExportDateRangeModal = ({
               </div>
             </div>
           </div>
+        </SectionCard>
 
-          {/* Footer */}
-          <div className="flex gap-3 mt-8">
-            <button
-              type="button"
-              onClick={handleClose}
-              disabled={isLoading}
-              className="flex-1 px-6 py-3 bg-red-400 hover:bg-red-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading || !startDate || !endDate}
-              className="flex-1 px-6 py-3 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-lg" style={{ backgroundColor: '#1a338e' }} onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#152156')} onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#1a338e')}
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Exportando...</span>
-                </>
-              ) : (
-                <>
-                  <IoMdDownload size={24} />
-                  <span>Exportar</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <ModalFooter
+          onCancel={handleClose}
+          isLoading={isLoading}
+          submitLabel="Exportar"
+          formId="export-form"
+          submitDisabled={!startDate || !endDate}
+        />
+      </form>
+    </FormModal>
   );
 };
 

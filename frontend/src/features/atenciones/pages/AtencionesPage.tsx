@@ -1,17 +1,46 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import type { ChangeEvent } from "react";
+import React from "react";
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from "../../../hooks/useAuth";
 import { useWebSocket } from "../../../hooks/useWebSocket";
-import type { Atencion, NewAtencionConPaciente, UpdateAtencion } from "../types";
-import { getAtenciones, getAtencionesByRango, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock, getEstadosAtencion, getSeguimientosAtencion } from "../Atencion.api";
+import type { Atencion, NewAtencionConPaciente, UpdateAtencion, EstadoAtencion, SeguimientoAtencion } from "../types";
+import { getAtenciones, getAtencionesByRango, searchAtenciones, createAtencionConPaciente, updateAtencion, deleteAtencion, acquireAtencionLock, releaseAtencionLock, checkAtencionLock, getEstadosAtencion, getSeguimientosAtencion } from "../Atencion.api";
 import { syncPacientesRangoFechas } from "../../../api/Sync.api";
 import Swal from "sweetalert2";
 import AtencionForm from "../components/AtencionForm";
 import SyncModal from "../components/SyncModal";
 import ExportDateRangeModal from "../components/ExportDateRangeModal";
 import AtencionTable from '../components/AtencionTable';
-import { Card, CardHeader, CardBody, Button } from '../../../components/notus';
 import { prepareAtencionesPorServicio } from "../utils";
+
+// Input personalizado para el DatePicker de fecha de atención
+const DateFilterInput = React.forwardRef<HTMLButtonElement, { value?: string; onClick?: () => void; isActive?: boolean; onClear?: (e: React.MouseEvent) => void }>(
+  ({ value, onClick, isActive, onClear }, ref) => (
+    <button
+      type="button"
+      ref={ref}
+      onClick={onClick}
+      className={`atf-filter-btn${isActive ? ' atf-filter-btn--active' : ''}`}
+    >
+      <i className="fas fa-calendar-alt" style={{ fontSize: '0.8rem', flexShrink: 0 }} />
+      <span className="atf-filter-btn-label">{value || 'Fecha atención'}</span>
+      {isActive ? (
+        <button
+          type="button"
+          className="atf-active-clear"
+          onClick={(e) => { e.stopPropagation(); onClear?.(e); }}
+          title="Quitar filtro de fecha"
+        >
+          <i className="fas fa-times" />
+        </button>
+      ) : (
+        <i className="fas fa-chevron-down atf-chevron" />
+      )}
+    </button>
+  )
+);
 
 export default function AtencionesPage() {
   const [showAddAtencion, setShowAddAtencion] = useState(false);
@@ -23,25 +52,30 @@ export default function AtencionesPage() {
   const [atenciones, setAtenciones] = useState<Atencion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<string | null>(() => {
-    const ayer = new Date();
-    ayer.setDate(ayer.getDate() - 1);
-    return ayer.toLocaleDateString('en-CA'); // YYYY-MM-DD en zona local
-  });
-  const [estados, setEstados] = useState<any[]>([]);
-  const [seguimientos, setSeguimientos] = useState<any[]>([]);
+  const [remoteResults, setRemoteResults] = useState<Atencion[] | null>(null);
+  const [isRemoteSearching, setIsRemoteSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [estados, setEstados] = useState<EstadoAtencion[]>([]);
+  const [seguimientos, setSeguimientos] = useState<SeguimientoAtencion[]>([]);
   const [selectedEstadoId, setSelectedEstadoId] = useState<number | null>(null);
   const [selectedSeguimientoId, setSelectedSeguimientoId] = useState<number | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [heldLockId, setHeldLockId] = useState<string | null>(null);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
 
   const { auth } = useAuth();
   const { subscribe } = useWebSocket();
 
-  const loadAtenciones = async () => {
+  const loadAtenciones = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAtenciones(0, 500, selectedDate ?? undefined);
+      const fecha = selectedDate ? selectedDate.toISOString().split('T')[0] : undefined;
+      // Cuando se filtra por fecha específica, se eliminan restricciones para obtener
+      // TODOS los registros de ese día (el backend soporta hasta 100 000)
+      const limit = fecha ? 100000 : 500;
+      const data = await getAtenciones(0, limit, fecha);
       console.log("Atenciones recibidas:", data);
       console.log("Total de atenciones:", data.length);
       setAtenciones(data);
@@ -50,10 +84,21 @@ export default function AtencionesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate]);
 
   useEffect(() => {
     loadAtenciones();
+  }, [loadAtenciones]);
+
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target as Node)) {
+        setShowFilterDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   // cargar listas para filtros
@@ -74,10 +119,7 @@ export default function AtencionesPage() {
     })();
   }, []);
 
-  // recargar cuando cambie la fecha seleccionada
-  useEffect(() => {
-    loadAtenciones();
-  }, [selectedDate]);
+
 
   // Suscribirse a eventos WebSocket para atenciones
   useEffect(() => {
@@ -136,8 +178,9 @@ export default function AtencionesPage() {
           </div>
         `,
       });
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.detail || 'Error al sincronizar datos';
+    } catch (error) {
+      const axiosErr = error as { response?: { data?: { detail?: string } } };
+      const errorMsg = axiosErr.response?.data?.detail || 'Error al sincronizar datos';
       Swal.fire('Error', errorMsg, 'error');
     }
   };
@@ -183,15 +226,15 @@ export default function AtencionesPage() {
         timer: 3000,
         showConfirmButton: false
       });
-    } catch (error: any) {
+    } catch (error) {
       setIsExporting(false);
       console.error('Error al exportar:', error);
-      
-      if (error?.message !== 'Exportación cancelada') {
+      const exportErr = error as { message?: string };
+      if (exportErr?.message !== 'Exportación cancelada') {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: error?.message || 'No se pudo exportar los datos',
+          text: exportErr?.message || 'No se pudo exportar los datos',
           confirmButtonColor: '#1938bc'
         });
       }
@@ -269,7 +312,7 @@ export default function AtencionesPage() {
 
   const closeEditor = async () => {
     if (heldLockId) {
-      try { await releaseAtencionLock(heldLockId); } catch (_) { /* best-effort */ }
+      try { await releaseAtencionLock(heldLockId); } catch { /* best-effort */ }
       setHeldLockId(null);
     }
     setShowEditAtencion(false);
@@ -280,162 +323,385 @@ export default function AtencionesPage() {
   useEffect(() => {
     const handler = () => {
       if (heldLockId) {
-        try { releaseAtencionLock(heldLockId); } catch (_) { /* ignore */ }
+        try { releaseAtencionLock(heldLockId); } catch { /* ignore */ }
       }
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [heldLockId]);
 
+  // Cuenta dinámica: refleja los registros actualmente visibles tras aplicar todos los filtros
+  const filteredCount = useMemo(() => {
+    const source = (remoteResults !== null && remoteResults.length > 0 && !atenciones.some((a) => {
+      if (!searchTerm.trim()) return true;
+      const q = searchTerm.trim().toLowerCase();
+      return (
+        String(a.id_atencion ?? '').toLowerCase().includes(q) ||
+        String(a.id_paciente ?? '').toLowerCase().includes(q) ||
+        String(a.nombre_paciente ?? '').toLowerCase().includes(q) ||
+        String(a.nombre_empresa ?? '').toLowerCase().includes(q) ||
+        String(a.nombre_estado_atencion ?? '').toLowerCase().includes(q)
+      );
+    })) ? remoteResults : atenciones;
+
+    return source.filter((a) => {
+      if (searchTerm.trim()) {
+        const q = searchTerm.trim().toLowerCase();
+        const matches = (
+          String(a.id_atencion ?? '').toLowerCase().includes(q) ||
+          String(a.id_paciente ?? '').toLowerCase().includes(q) ||
+          String(a.nombre_paciente ?? '').toLowerCase().includes(q) ||
+          String(a.nombre_empresa ?? '').toLowerCase().includes(q) ||
+          String(a.nombre_estado_atencion ?? '').toLowerCase().includes(q)
+        );
+        if (!matches) return false;
+      }
+      if (selectedEstadoId && Number(a.id_estado_atencion) !== Number(selectedEstadoId)) return false;
+      if (selectedSeguimientoId && Number(a.id_seguimiento_atencion ?? -1) !== Number(selectedSeguimientoId)) return false;
+      return true;
+    }).length;
+  }, [atenciones, remoteResults, searchTerm, selectedEstadoId, selectedSeguimientoId]);
+
+  // Búsqueda remota: cuando los filtros locales no encuentran la atención en los 500 cargados,
+  // consulta la BD completa buscando por ID Atención o ID Paciente.
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    if (!searchTerm.trim()) {
+      setRemoteResults(null);
+      setIsRemoteSearching(false);
+      return;
+    }
+
+    const term = searchTerm.trim().toLowerCase();
+    const hasLocal = atenciones.some((a) => {
+      if (selectedEstadoId && Number(a.id_estado_atencion) !== Number(selectedEstadoId)) return false;
+      if (selectedSeguimientoId && Number(a.id_seguimiento_atencion ?? -1) !== Number(selectedSeguimientoId)) return false;
+      return (
+        String(a.id_atencion ?? '').toLowerCase().includes(term) ||
+        String(a.id_paciente ?? '').toLowerCase().includes(term) ||
+        String(a.nombre_paciente ?? '').toLowerCase().includes(term) ||
+        String(a.nombre_empresa ?? '').toLowerCase().includes(term) ||
+        String(a.nombre_estado_atencion ?? '').toLowerCase().includes(term)
+      );
+    });
+
+    if (hasLocal) {
+      setRemoteResults(null);
+      setIsRemoteSearching(false);
+      return;
+    }
+
+    // No hay resultados locales → buscar en la BD después de un debounce
+    setIsRemoteSearching(true);
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        const results = await searchAtenciones({ search: searchTerm.trim(), limit: 500 });
+        setRemoteResults(results);
+      } catch (err) {
+        console.warn('Búsqueda remota de atenciones fallida:', err);
+        setRemoteResults([]);
+      } finally {
+        setIsRemoteSearching(false);
+      }
+    }, 450);
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchTerm, atenciones, selectedEstadoId, selectedSeguimientoId]);
+
 
 
   return (
-    <div>
-      <Card>
-        <CardHeader color="lightBlue" className="flex justify-between items-center">
+    <div className="animate-fade-in-up">
+      {/* Header de la página */}
+      <div
+        className="rounded-2xl mb-6 overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #0d1f6b 0%, #1a338e 55%, #2248b3 100%)',
+          boxShadow: '0 4px 20px rgba(13,31,107,0.2)',
+        }}
+      >
+        {/* Fondo decorativo */}
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: 'radial-gradient(circle at 90% 50%, rgba(14,165,233,0.15) 0%, transparent 50%)',
+            borderRadius: 'inherit',
+            pointerEvents: 'none',
+          }}
+        />
+        <div className="relative flex items-center justify-between px-6 py-4 gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <i className="fas fa-clipboard-list text-2xl text-white"></i>
-            <h6 className="text-lg font-bold text-white uppercase m-0">Gestión de Atenciones</h6>
+            <div
+              className="flex items-center justify-center rounded-xl flex-shrink-0"
+              style={{ width: '42px', height: '42px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
+            >
+              <i className="fas fa-clipboard-list" style={{ color: 'white', fontSize: '1.1rem' }} />
+            </div>
+            <div>
+              <h2 style={{ fontFamily: "'Sora', sans-serif", color: 'white', fontSize: '1.05rem', fontWeight: 700, margin: 0, lineHeight: 1.3 }}>
+                Gestión de Atenciones
+              </h2>
+              <p style={{ color: 'rgba(147,174,245,0.8)', fontSize: '0.78rem', margin: 0 }}>
+                {loading
+                  ? 'Cargando...'
+                  : filteredCount !== atenciones.length
+                  ? `${filteredCount} de ${atenciones.length} registro${atenciones.length !== 1 ? 's' : ''}`
+                  : `${atenciones.length} registro${atenciones.length !== 1 ? 's' : ''} cargados`}
+              </p>
+            </div>
           </div>
+
           {(() => {
             const role = String(auth?.user?.role_name ?? '').trim().toUpperCase();
             const isAdmin = role.includes('ADMINISTRADOR');
             const canAdd = isAdmin || role.includes('ASESOR') || role.includes('FACTURADOR');
-
             return (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
                 {canAdd && (
-                  <Button
+                  <button
                     onClick={() => setShowAddAtencion(true)}
-                    color="white"
-                    size="sm"
+                    className="ui-btn ui-btn-ghost"
+                    style={{ height: '38px' }}
                   >
-                    <i className="fas fa-plus mr-2"></i>
-                    AGREGAR ATENCIÓN
-                  </Button>
+                    <i className="fas fa-plus" style={{ fontSize: '0.8rem' }} />
+                    Agregar Atención
+                  </button>
                 )}
-
                 {isAdmin && (
                   <>
-                    <Button
+                    <button
                       onClick={() => setShowSyncModal(true)}
-                      color="white"
-                      size="sm"
+                      className="ui-btn ui-btn-ghost"
+                      style={{ height: '38px' }}
                       title="Sincronizar desde Clínica Florida"
                     >
-                      <i className="fas fa-sync-alt mr-2"></i>
-                      SINCRONIZAR
-                    </Button>
-
-                    <Button
+                      <i className="fas fa-sync-alt" style={{ fontSize: '0.8rem' }} />
+                      Sincronizar
+                    </button>
+                    <button
                       onClick={() => setShowExportModal(true)}
-                      color="white"
-                      size="sm"
+                      className="ui-btn ui-btn-ghost"
+                      style={{ height: '38px' }}
                       title="Exportar a Excel"
                     >
-                      <i className="fas fa-file-excel mr-2"></i>
-                      EXPORTAR
-                    </Button>
+                      <i className="fas fa-file-excel" style={{ fontSize: '0.8rem' }} />
+                      Exportar
+                    </button>
                   </>
                 )}
               </div>
             );
           })()}
-        </CardHeader>
-        
-        <CardBody>
-          {/* Filtros y búsqueda */}
-          <div className="mb-8 flex flex-col lg:flex-row gap-4 items-center justify-between">
-            {/* Filtros a la izquierda */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Select estado/seguimiento con diseño mejorado estilo Notus */}
-              <div className="relative">
-                <select
-                  value={selectedFilter ?? ''}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setSelectedFilter(v || null);
-                    if (!v) {
+        </div>
+      </div>
+
+      {/* Tarjeta principal */}
+      <div className="ui-card animate-fade-in-up stagger-1">
+        {/* Barra de filtros */}
+        <div
+          style={{
+            padding: '1rem 1.5rem',
+            borderBottom: '1px solid var(--surface-border)',
+            background: 'var(--brand-50)',
+          }}
+        >
+          <div className="flex flex-col sm:flex-row gap-3 items-center flex-wrap">
+
+            {/* ── Filtro unificado Estado / Seguimiento ── */}
+            <div className="atf-filter-wrap" ref={filterDropdownRef}>
+              <button
+                type="button"
+                className={`atf-filter-btn${(selectedEstadoId !== null || selectedSeguimientoId !== null) ? ' atf-filter-btn--active' : ''}`}
+                onClick={() => setShowFilterDropdown(v => !v)}
+              >
+                <i className="fas fa-layer-group" style={{ fontSize: '0.78rem', flexShrink: 0 }} />
+                <span className="atf-filter-btn-label">
+                  {selectedEstadoId !== null
+                    ? (estados.find(s => s.id === selectedEstadoId)?.nombre ?? 'Estado')
+                    : selectedSeguimientoId !== null
+                    ? (seguimientos.find(s => s.id === selectedSeguimientoId)?.nombre ?? 'Seguimiento')
+                    : 'Estado / Seguimiento'}
+                </span>
+                {(selectedEstadoId !== null || selectedSeguimientoId !== null) ? (
+                  <button
+                    type="button"
+                    className="atf-active-clear"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setSelectedEstadoId(null);
                       setSelectedSeguimientoId(null);
-                    } else {
-                      const [type, id] = v.split(':');
-                      if (type === 'estado') {
-                        setSelectedEstadoId(Number(id));
-                        setSelectedSeguimientoId(null);
-                      } else if (type === 'seguimiento') {
-                        setSelectedSeguimientoId(Number(id));
-                        setSelectedEstadoId(null);
-                      } else {
-                        setSelectedEstadoId(null);
-                        setSelectedSeguimientoId(null);
-                      }
-                    }
-                  }}
-                  className="h-[52px] pl-4 pr-10 bg-white border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-700 shadow-sm hover:shadow-lg hover:border-blue-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition-all duration-200 cursor-pointer appearance-none min-w-[260px]"
-                  title="Filtrar por estado o seguimiento"
-                >
-                  <option value="">Estado / Seguimiento</option>
-                  {estados.length > 0 && (
-                    <optgroup label="Estados" className="font-semibold">
-                      {estados.map((st: any) => (
-                        <option key={`estado-${st.id}`} value={`estado:${st.id}`}>{st.nombre}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                  {seguimientos.length > 0 && (
-                    <optgroup label="Seguimientos" className="font-semibold">
-                      {seguimientos.map((sg: any) => (
-                        <option key={`seguimiento-${sg.id}`} value={`seguimiento:${sg.id}`}>{sg.nombre}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                  <i className="fas fa-chevron-down text-blue-500 text-sm"></i>
-                </div>
-              </div>
+                      setSelectedFilter(null);
+                      setShowFilterDropdown(false);
+                    }}
+                    title="Quitar filtro"
+                  >
+                    <i className="fas fa-times" />
+                  </button>
+                ) : (
+                  <i className={`fas fa-chevron-down atf-chevron${showFilterDropdown ? ' atf-chevron--open' : ''}`} />
+                )}
+              </button>
 
-              {/* Date picker mejorado - wrapper clickeable */}
-              <div 
-                className="relative group cursor-pointer"
-                onClick={(e) => {
-                  const input = e.currentTarget.querySelector('input[type="date"]') as HTMLInputElement;
-                  if (input && e.target === e.currentTarget) {
-                    input.showPicker?.();
-                  }
-                }}
-              >
-                <input
-                  type="date"
-                  value={selectedDate ?? ''}
-                  onChange={(e) => setSelectedDate(e.target.value ? e.target.value : null)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    (e.target as HTMLInputElement).showPicker?.();
-                  }}
-                  className="h-[52px] w-full px-4 bg-white border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-700 shadow-sm hover:shadow-lg hover:border-blue-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition-all duration-200 cursor-pointer min-w-[200px]"
-                  style={{ colorScheme: 'light' }}
-                  title="Filtrar por fecha de atención"
-                />
-              </div>
+              {showFilterDropdown && (
+                <div className="atf-panel">
+                  {/* Estados */}
+                  {estados.length > 0 && (
+                    <div className="atf-section">
+                      <div className="atf-section-header">
+                        <span className="atf-section-dot" style={{ background: '#3b82f6' }} />
+                        Estados
+                      </div>
+                      {estados.map((st) => (
+                        <button
+                          key={st.id}
+                          type="button"
+                          className={`atf-option${selectedEstadoId === st.id ? ' atf-option--selected' : ''}`}
+                          onClick={() => {
+                            setSelectedEstadoId(st.id);
+                            setSelectedSeguimientoId(null);
+                            setSelectedFilter(`estado:${st.id}`);
+                            setShowFilterDropdown(false);
+                          }}
+                        >
+                          <i className="fas fa-check atf-option-check" style={{ opacity: selectedEstadoId === st.id ? 1 : 0, color: '#3b82f6' }} />
+                          {st.nombre}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {/* Seguimientos */}
+                  {seguimientos.length > 0 && (
+                    <div className="atf-section">
+                      <div className="atf-section-header">
+                        <span className="atf-section-dot" style={{ background: '#10b981' }} />
+                        Seguimientos
+                      </div>
+                      {seguimientos.map((sg) => (
+                        <button
+                          key={sg.id}
+                          type="button"
+                          className={`atf-option${selectedSeguimientoId === sg.id ? ' atf-option--selected' : ''}`}
+                          onClick={() => {
+                            setSelectedSeguimientoId(sg.id);
+                            setSelectedEstadoId(null);
+                            setSelectedFilter(`seguimiento:${sg.id}`);
+                            setShowFilterDropdown(false);
+                          }}
+                        >
+                          <i className="fas fa-check atf-option-check" style={{ opacity: selectedSeguimientoId === sg.id ? 1 : 0, color: '#10b981' }} />
+                          {sg.nombre}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Buscador a la derecha */}
-            <div className="relative max-w-md w-full lg:w-auto lg:min-w-[350px]">
-              <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              <input
-                type="text"
-                placeholder="Buscar atenciones..."
-                value={searchTerm}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 h-[52px] border-2 border-gray-200 rounded-lg bg-white font-medium shadow-sm hover:shadow-lg hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-all duration-200"
-                title="Buscar por: ID Atención, ID Paciente, Nombre Paciente o Empresa"
+            {/* ── Filtro de fecha con trigger personalizado ── */}
+            <div className="atf-filter-wrap">
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date: Date | null) => setSelectedDate(date)}
+                dateFormat="dd/MM/yyyy"
+                maxDate={new Date()}
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
+                popperClassName="atf-datepicker-popper"
+                customInput={
+                  <DateFilterInput
+                    isActive={!!selectedDate}
+                    onClear={() => setSelectedDate(null)}
+                  />
+                }
               />
             </div>
-          </div>
 
-          <AtencionTable 
+            {/* ── Limpiar todos ── */}
+            {(selectedFilter !== null && selectedDate !== null) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedFilter(null);
+                  setSelectedEstadoId(null);
+                  setSelectedSeguimientoId(null);
+                  setSelectedDate(null);
+                }}
+                className="ui-btn ui-btn-outline"
+                style={{ height: '38px', fontSize: '0.78rem', gap: '5px' }}
+                title="Limpiar todos los filtros"
+              >
+                <i className="fas fa-times" style={{ fontSize: '0.7rem' }} />
+                Limpiar todo
+              </button>
+            )}
+
+            {/* Buscador */}
+            <div className="relative ml-auto" style={{ minWidth: '280px', flex: '1 1 280px', maxWidth: '400px' }}>
+              <i
+                className="fas fa-search"
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.78rem',
+                  pointerEvents: 'none',
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Buscar por ID Atención o ID Paciente..."
+                value={searchTerm}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                className="ui-input"
+                style={{ paddingLeft: '2.2rem', paddingRight: searchTerm ? '2.2rem' : '0.75rem', height: '40px', fontSize: '0.875rem' }}
+                title="Buscar por ID Atención o ID Paciente"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  title="Limpiar búsqueda"
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: 'var(--text-muted, #94a3b8)',
+                    color: 'white',
+                    fontSize: '0.6rem',
+                    cursor: 'pointer',
+                    padding: 0,
+                    lineHeight: 1,
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--brand-500, #3b82f6)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'var(--text-muted, #94a3b8)')}
+                >
+                  <i className="fas fa-times" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Tabla */}
+        <div style={{ padding: '1.25rem 1.5rem' }}>
+          <AtencionTable
             atenciones={atenciones}
             loading={loading}
             searchTerm={searchTerm}
@@ -444,9 +710,11 @@ export default function AtencionesPage() {
             auth={auth}
             attemptEdit={attemptEdit}
             handleEliminar={handleEliminar}
+            remoteResults={remoteResults}
+            isRemoteSearching={isRemoteSearching}
           />
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       <SyncModal
         isOpen={showSyncModal}
@@ -461,73 +729,67 @@ export default function AtencionesPage() {
         isLoading={isExporting}
       />
 
-      {showAddAtencion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <AtencionForm 
-            onCancel={() => setShowAddAtencion(false)} 
-            onSave={async (data: NewAtencionConPaciente) => {
-              setLoading(true);
-              try {
-                const nueva = await createAtencionConPaciente(data);
-                setAtenciones((prev: Atencion[]) => {
-                  const exists = prev.some(a => a.id_atencion === nueva.id_atencion);
-                  if (exists) return prev;
-                  return [nueva, ...prev];
-                });
-                setShowAddAtencion(false);
-                await Swal.fire({ icon: 'success', title: 'Atención creada', text: `Atención creada correctamente.` });
-              } catch (err: any) {
-                console.error("Error creando atención:", err);
-                const detail = err.response?.data?.detail || err.message || '';
-                let userMsg = 'No se pudo crear la atención.';
-                // Detect common duplicate/constraint messages
-                if (err?.response?.status === 409) {
-                  userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
-                } else if (typeof detail === 'string' && /duplicate|already exists|unique|integrityerror|duplicate entry/i.test(detail)) {
-                  userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
-                } else if (detail) {
-                  userMsg = detail;
-                }
-                await Swal.fire({ icon: 'error', title: 'Error', text: userMsg });
-              } finally { setLoading(false); }
-            }}
-            userId={auth?.user?.id}
-          />
-        </div>
-      )}
+      <AtencionForm
+        isOpen={showAddAtencion}
+        onCancel={() => setShowAddAtencion(false)}
+        onSave={async (data: NewAtencionConPaciente) => {
+          setLoading(true);
+          try {
+            const nueva = await createAtencionConPaciente(data);
+            setAtenciones((prev: Atencion[]) => {
+              const exists = prev.some(a => a.id_atencion === nueva.id_atencion);
+              if (exists) return prev;
+              return [nueva, ...prev];
+            });
+            setShowAddAtencion(false);
+            await Swal.fire({ icon: 'success', title: 'Atención creada', text: `Atención creada correctamente.` });
+          } catch (err) {
+            console.error("Error creando atención:", err);
+            const axiosErr = err as { response?: { data?: { detail?: string }; status?: number }; message?: string };
+            const detail = axiosErr.response?.data?.detail || axiosErr.message || '';
+            let userMsg = 'No se pudo crear la atención.';
+            if (axiosErr?.response?.status === 409) {
+              userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
+            } else if (typeof detail === 'string' && /duplicate|already exists|unique|integrityerror|duplicate entry/i.test(detail)) {
+              userMsg = 'Ya existe una atención con ese Id. Verifique el Id Atención e inténtelo de nuevo.';
+            } else if (detail) {
+              userMsg = detail;
+            }
+            await Swal.fire({ icon: 'error', title: 'Error', text: userMsg });
+          } finally { setLoading(false); }
+        }}
+        userId={auth?.user?.id}
+      />
 
-      {showEditAtencion && editAtencion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <AtencionForm
-            onCancel={closeEditor}
-            onSave={async () => {}} // No se usa en modo edición
-            onUpdate={async (id: string, data: UpdateAtencion) => {
-              setLoading(true);
-              try {
-                const actualizada = await updateAtencion(id, data);
-                setAtenciones((prev: Atencion[]) => 
-                  prev.map((a: Atencion) => a.id_atencion === id ? actualizada : a)
-                );
-                // release lock if held
-                if (heldLockId) {
-                  try { await releaseAtencionLock(heldLockId); } catch (e) { /* best-effort */ }
-                  setHeldLockId(null);
-                }
-                setShowEditAtencion(false);
-                setEditAtencion(null);
-                await Swal.fire({ icon: 'success', title: 'Atención actualizada', text: `Atención actualizada correctamente.` });
-              } catch (err: any) {
-                console.error("Error actualizando atención:", err);
-                const errorMsg = err.response?.data?.detail || 'No se pudo actualizar la atención.';
-                await Swal.fire({ icon: 'error', title: 'Error', text: errorMsg });
-              } finally { setLoading(false); }
-            }}
-            initialData={editAtencion}
-            isEditMode={true}
-            userId={auth?.user?.id}
-          />
-        </div>
-      )}
+      <AtencionForm
+        isOpen={showEditAtencion}
+        onCancel={closeEditor}
+        onSave={async () => {}}
+        onUpdate={async (id: string, data: UpdateAtencion) => {
+          setLoading(true);
+          try {
+            const actualizada = await updateAtencion(id, data);
+            setAtenciones((prev: Atencion[]) =>
+              prev.map((a: Atencion) => a.id_atencion === id ? actualizada : a)
+            );
+            if (heldLockId) {
+              try { await releaseAtencionLock(heldLockId); } catch { /* best-effort */ }
+              setHeldLockId(null);
+            }
+            setShowEditAtencion(false);
+            setEditAtencion(null);
+            await Swal.fire({ icon: 'success', title: 'Atención actualizada', text: `Atención actualizada correctamente.` });
+          } catch (err) {
+            console.error("Error actualizando atención:", err);
+            const axiosErr = err as { response?: { data?: { detail?: string } } };
+            const errorMsg = axiosErr.response?.data?.detail || 'No se pudo actualizar la atención.';
+            await Swal.fire({ icon: 'error', title: 'Error', text: errorMsg });
+          } finally { setLoading(false); }
+        }}
+        initialData={editAtencion ?? undefined}
+        isEditMode={true}
+        userId={auth?.user?.id}
+      />
     </div>
   );
 }

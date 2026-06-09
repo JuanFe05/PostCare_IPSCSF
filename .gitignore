@@ -307,6 +307,10 @@ sketch
 .agents/
 .claude/
 .github/
+<<<<<<< HEAD
+skills-lock.json
+=======
 skills-lock.json
 .env.production
 docker-compose.prod.yml
+>>>>>>> 022a45c75c47fb578c6c47ba9cb46fe05db919b7
